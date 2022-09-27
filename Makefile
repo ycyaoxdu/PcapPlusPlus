@@ -33,6 +33,8 @@ EXAMPLE_GRE_REASM	:= Examples/GreReassembly
 EXAMPLE_RIP_REASM	:= Examples/RipReassembly
 EXAMPLE_OSPF_REASM	:= Examples/OspfReassembly
 EXAMPLE_L2TP_REASM	:= Examples/L2tpReassembly
+EXAMPLE_ESP_REASM       := Examples/EspReassembly
+EXAMPLE_BGP_REASM       := Examples/BgpReassembly
 
 
 UNAME := $(shell uname)
@@ -63,6 +65,8 @@ all: libs
 	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) RipReassembly
 	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) OspfReassembly
 	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) L2tpReassembly
+        @cd $(EXAMPLE_ESP_REASM)         && $(MAKE) EspReassembly
+	@cd $(EXAMPLE_BGP_REASM)         && $(MAKE) BgpReassembly
 
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) DpdkTrafficFilter
@@ -93,6 +97,8 @@ endif
 	$(CP) $(EXAMPLE_RIP_REASM)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_OSPF_REASM)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_L2TP_REASM)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_ESP_REASM)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_BGP_REASM)/Bin/* ./Dist/examples
 
 ifdef USE_DPDK
 	$(CP) $(EXAMPLE_DPDK1)/Bin/* ./Dist/examples
@@ -155,6 +161,8 @@ clean:
 	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) clean
 	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) clean
 	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) clean
+	@cd $(EXAMPLE_ESP_REASM)         && $(MAKE) clean
+	@cd $(EXAMPLE_BGP_REASM)         && $(MAKE) clean
 
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) clean
