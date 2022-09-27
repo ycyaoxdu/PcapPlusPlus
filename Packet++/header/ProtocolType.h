@@ -63,10 +63,19 @@ namespace pcpp
 	const ProtocolType HTTPResponse = 0x40;
 
 	/**
+	 * OSPF protocol
+	 */
+	const ProtocolType OSPF = 0x59;
+
+	/**
 	 * HTTP protocol (aggregation bitmask of HTTP request and HTTP response protocols)
 	 */
 	const ProtocolType HTTP = 0x60;
 
+	/**
+	 * L2TP protocol
+	 */
+	const ProtocolType L2TP = 0x73;
 	/**
 	 * ARP protocol
 	 */
@@ -82,6 +91,11 @@ namespace pcpp
 	 */
 	const ProtocolType ICMP = 0x200;
 
+	/**
+	 * RIP protocol
+	 */
+	const ProtocolType RIP = 0x208; // 0x208 = 520(the port RIP use)
+	
 	/**
 	 * PPPoE session protocol
 	 */

@@ -28,6 +28,11 @@ EXAMPLE_IP_DEFRAG    := Examples/IPDefragUtil
 EXAMPLE_TLS_FP       := Examples/TLSFingerprinting
 EXAMPLE_DPDK2        := Examples/DpdkBridge
 EXAMPLE_KNI_PONG     := Examples/KniPong
+EXAMPLE_UDP_REASM	:= Examples/UdpReassembly
+EXAMPLE_GRE_REASM	:= Examples/GreReassembly
+EXAMPLE_RIP_REASM	:= Examples/RipReassembly
+EXAMPLE_OSPF_REASM	:= Examples/OspfReassembly
+EXAMPLE_L2TP_REASM	:= Examples/L2tpReassembly
 
 
 UNAME := $(shell uname)
@@ -52,6 +57,13 @@ all: libs
 	@cd $(EXAMPLE_IP_FRAG)           && $(MAKE) IPFragUtil
 	@cd $(EXAMPLE_IP_DEFRAG)         && $(MAKE) IPDefragUtil
 	@cd $(EXAMPLE_TLS_FP)            && $(MAKE) TLSFingerprinting
+
+	@cd $(EXAMPLE_UDP_REASM)         && $(MAKE) UdpReassembly
+	@cd $(EXAMPLE_GRE_REASM)         && $(MAKE) GreReassembly
+	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) RipReassembly
+	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) OspfReassembly
+	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) L2tpReassembly
+
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) DpdkTrafficFilter
 	@cd $(EXAMPLE_DPDK2)             && $(MAKE) DpdkBridge
@@ -75,6 +87,13 @@ endif
 	$(CP) $(EXAMPLE_IP_FRAG)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_IP_DEFRAG)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_TLS_FP)/Bin/* ./Dist/examples
+
+	$(CP) $(EXAMPLE_UDP_REASM)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_GRE_REASM)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_RIP_REASM)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_OSPF_REASM)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_L2TP_REASM)/Bin/* ./Dist/examples
+
 ifdef USE_DPDK
 	$(CP) $(EXAMPLE_DPDK1)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_DPDK2)/Bin/* ./Dist/examples
@@ -130,6 +149,13 @@ clean:
 	@cd $(EXAMPLE_IP_DEFRAG)         && $(MAKE) clean
 	@cd $(EXAMPLE_TLS_FP)            && $(MAKE) clean
 	@cd $(FUZZERS_HOME)              && $(MAKE) clean
+
+	@cd $(EXAMPLE_UDP_REASM)         && $(MAKE) clean
+	@cd $(EXAMPLE_GRE_REASM)         && $(MAKE) clean
+	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) clean
+	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) clean
+	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) clean
+
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) clean
 	@cd $(EXAMPLE_DPDK2)             && $(MAKE) clean
