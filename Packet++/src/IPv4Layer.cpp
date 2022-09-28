@@ -13,6 +13,7 @@
 #include "PayloadLayer.h"
 #include "TcpLayer.h"
 #include "UdpLayer.h"
+#include "SctpLayer.h"
 #include <sstream>
 #include <string.h>
 
@@ -332,6 +333,11 @@ void IPv4Layer::parseNextLayer()
 						  ? static_cast<Layer *>(new IPv6Layer(payload, payloadLen, this, m_Packet))
 						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
 		break;
+	case PACKETPP_IPPROTO_SCTP: 
+		m_NextLayer = SctpLayer::isDataValid(payload, payloadLen)
+			? static_cast<Layer*>(new SctpLayer(payload, payloadLen, this, m_Packet))
+			: static_cast<Layer*>(new PayloadLayer(payload, payloadLen, this, m_Packet)); 
+		break;	
 	case PACKETPP_IPPROTO_OSPF:
 		m_NextLayer = OspfLayer::isDataValid(payload, payloadLen)
 						  ? static_cast<Layer *>(new OspfLayer(payload, payloadLen, this, m_Packet))
@@ -370,6 +376,9 @@ void IPv4Layer::computeCalculateFields()
 		case IGMPv2:
 		case IGMPv3:
 			ipHdr->protocol = PACKETPP_IPPROTO_IGMP;
+			break;
+		case SCTP:
+			ipHdr->protocol = PACKETPP_IPPROTO_SCTP;
 			break;
 		case OSPF:
 			ipHdr->protocol = PACKETPP_IPPROTO_OSPF;

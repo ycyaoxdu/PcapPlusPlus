@@ -3,16 +3,15 @@
 #include "EndianPortable.h"
 #include "SctpLayer.h"
 #include "PayloadLayer.h"
+#include "GtpLayer.h"
+#include "EndianPortable.h"
+#include "TcpLayer.h"
 #include "IPv4Layer.h"
 #include "IPv6Layer.h"
-#include "DnsLayer.h"
-#include "DhcpLayer.h"
-#include "DhcpV6Layer.h"
-#include "VxlanLayer.h"
-#include "SipLayer.h"
-#include "RadiusLayer.h"
-#include "GtpLayer.h"
-#include "NtpLayer.h"
+#include "HttpLayer.h"
+#include "SSLLayer.h"
+#include "BgpLayer.h"
+#include "TelnetLayer.h"
 #include "PacketUtils.h"
 #include "Logger.h"
 #include <string.h>
@@ -109,30 +108,17 @@ void SctpLayer::parseNextLayer()
 	uint8_t* sctpData = m_Data + sizeof(sctphdr);
 	size_t sctpDataLen = m_DataLen - sizeof(sctphdr);
 
-	if ((portSrc == 68 && portDst == 67) || (portSrc == 67 && portDst == 68) || (portSrc == 67 && portDst == 67))
-		m_NextLayer = new DhcpLayer(sctpData, sctpDataLen, this, m_Packet);
-	else if (VxlanLayer::isVxlanPort(portDst))
-		m_NextLayer = new VxlanLayer(sctpData, sctpDataLen, this, m_Packet);
-	else if (DnsLayer::isDataValid(sctpData, sctpDataLen) && (DnsLayer::isDnsPort(portDst) || DnsLayer::isDnsPort(portSrc)))
-		m_NextLayer = new DnsLayer(sctpData, sctpDataLen, this, m_Packet);
-	else if(SipLayer::isSipPort(portDst) || SipLayer::isSipPort(portSrc))
-	{
-		if (SipRequestFirstLine::parseMethod((char*)sctpData, sctpDataLen) != SipRequestLayer::SipMethodUnknown)
-			m_NextLayer = new SipRequestLayer(sctpData, sctpDataLen, this, m_Packet);
-		else if (SipResponseFirstLine::parseStatusCode((char*)sctpData, sctpDataLen) != SipResponseLayer::SipStatusCodeUnknown
-						&& SipResponseFirstLine::parseVersion((char*)sctpData, sctpDataLen) != "")
-			m_NextLayer = new SipResponseLayer(sctpData, sctpDataLen, this, m_Packet);
-		else
-			m_NextLayer = new PayloadLayer(sctpData, sctpDataLen, this, m_Packet);
-	}
-	else if ((RadiusLayer::isRadiusPort(portDst) || RadiusLayer::isRadiusPort(portSrc)) && RadiusLayer::isDataValid(sctpData, sctpDataLen))
-		m_NextLayer = new RadiusLayer(sctpData, sctpDataLen, this, m_Packet);
-	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) && GtpV1Layer::isGTPv1(sctpData, sctpDataLen))
+	if (HttpMessage::isHttpPort(portDst) && HttpRequestFirstLine::parseMethod((char*)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
+		m_NextLayer = new HttpRequestLayer(sctpData, sctpDataLen, this, m_Packet);
+	else if (HttpMessage::isHttpPort(portSrc) && HttpResponseFirstLine::parseStatusCode((char*)payload, payloadLen) != HttpResponseLayer::HttpStatusCodeUnknown)
+		m_NextLayer = new HttpResponseLayer(sctpData, sctpDataLen, this, m_Packet);
+	if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
+		GtpV1Layer::isGTPv1(sctpData, sctpDataLen))
 		m_NextLayer = new GtpV1Layer(sctpData, sctpDataLen, this, m_Packet);
-	else if ((DhcpV6Layer::isDhcpV6Port(portSrc) || DhcpV6Layer::isDhcpV6Port(portDst)) && (DhcpV6Layer::isDataValid(sctpData, sctpDataLen)))
-		m_NextLayer = new DhcpV6Layer(sctpData, sctpDataLen, this, m_Packet);
-	else if ((NtpLayer::isNTPPort(portSrc) || NtpLayer::isNTPPort(portDst)) && NtpLayer::isDataValid(sctpData, sctpDataLen))
-		m_NextLayer = new NtpLayer(sctpData, sctpDataLen, this, m_Packet);
+	else if (SSLLayer::IsSSLMessage(portSrc, portDst, sctpData, sctpDataLen))
+		m_NextLayer = SSLLayer::createSSLMessage(sctpData, sctpDataLen, this, m_Packet);
+	else if (BgpLayer::isBgpPort(portSrc, portDst))
+		m_NextLayer = BgpLayer::parseBgpLayer(sctpData, sctpDataLen, this, m_Packet);
 	else
 		m_NextLayer = new PayloadLayer(sctpData, sctpDataLen, this, m_Packet);
 }
@@ -152,6 +138,27 @@ std::string SctpLayer::toString() const
 	dstPortStream << getDstPort();
 
 	return "SCTP Layer, Src port: " + srcPortStream.str() + ", Dst port: " + dstPortStream.str();
+}
+
+std::string SctpLayer::toString() const
+{
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
+}
+
+void SctpLayer::ToStructuredOutput(std::ostream &os) const
+{
+
+	os << "Sctp Header:" << '\n';
+	os << "\t"
+	   << "Source port: \t" << getSrcPort() << '\n';		
+	os << "\t"
+	   << "Destination port: \t" << getDstPort() << '\n'
+	os << "\t"
+	   << "Checksum: \t" << calculateChecksum() << '\n';
+	os << "\t"
+	
 }
 
 } // namespace pcpp

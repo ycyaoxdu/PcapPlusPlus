@@ -24,9 +24,9 @@ namespace pcpp
 		/** Destination port */
 		uint16_t portDst;
 		/** Verification Tag */
-		uint16_t tag;
+		uint32_t tag;
 		/**  Checksum */
-		uint16_t Checksum;
+		uint32_t Checksum;
 	};
 #pragma pack(pop)
 
