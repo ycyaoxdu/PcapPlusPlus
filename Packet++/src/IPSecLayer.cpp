@@ -121,10 +121,26 @@ void ESPLayer::parseNextLayer()
 	m_NextLayer = new PayloadLayer(m_Data + headerLen, m_DataLen - headerLen, this, m_Packet);
 }
 
+void ESPLayer::ToStructuredOutput(std::ostream &os) const
+{
+	os << "ESP Header:" << '\n';
+	os << "\t"
+	   << "SPI: \t" << std::hex << getSPI() << '\n';
+	os << "\t"
+	   << "Sequence Number: \t" << std::hex << getSequenceNumber() << '\n';
+	   
+	//os << "payload: " << getLayerPayload() << "\n"
+
+	os << std::endl;
+}
+
 std::string ESPLayer::toString() const
 {
-	std::ostringstream stream;
-	stream << "ESP Layer, SPI: 0x" << std::hex << getSPI();
+	std::stringstream stream;
+
+	//stream << "ESP Layer, SPI: 0x" << std::hex << getSPI();
+	ToStructuredOutput(stream);
+
 	return stream.str();
 }
 

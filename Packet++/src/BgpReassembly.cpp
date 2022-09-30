@@ -11,13 +11,10 @@
 
 namespace pcpp
 {
-
 //获取元组名称
 std::string BgpReassembly::getTupleName(IPAddress src, IPAddress dst)
 {
-
 	std::stringstream stream;
-
 	std::string sourceIP = src.toString();
 	std::string destIP = dst.toString();
 
@@ -41,8 +38,8 @@ BgpReassembly::ReassemblyStatus BgpReassembly::reassemblePacket(RawPacket *bgpRa
 
 BgpReassembly::ReassemblyStatus BgpReassembly::reassemblePacket(Packet &bgpData)
 {
-	// 1.判断包的类型
 
+	// 1.判断包的类型
 	IPAddress srcIP, dstIP;
 	if (bgpData.isPacketOfType(IP))
 	{
@@ -93,11 +90,9 @@ BgpReassembly::ReassemblyStatus BgpReassembly::reassemblePacket(Packet &bgpData)
 	uint8_t *data = bgpLayer->getData();
 	size_t len = bgpLayer->getDataLen();
 	std::string type = bgpLayer->getMessageTypeAsString();
-
 	BgpPacketData packetdata(data, len, tupleName, type);
 
 	// 4.处理信息
-
 	// send the data to the callback
 	if (m_OnBgpMessageReadyCallback != NULL)
 	{

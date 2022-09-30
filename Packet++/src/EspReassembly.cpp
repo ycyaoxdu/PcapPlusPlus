@@ -15,16 +15,13 @@ namespace pcpp
 //获取元组名称
 std::string EspReassembly::getTupleName(IPAddress src, IPAddress dst)
 {
-
 	std::stringstream stream;
-
 	std::string sourceIP = src.toString();
 	std::string destIP = dst.toString();
 
 	// for IPv6 addresses, replace ':' with '_'
 	std::replace(sourceIP.begin(), sourceIP.end(), ':', '_');
 	std::replace(destIP.begin(), destIP.end(), ':', '_');
-
 	std::string protocol("esp");
     stream << sourceIP << '-' << destIP << '-' << protocol;
 
@@ -42,10 +39,10 @@ EspReassembly::ReassemblyStatus EspReassembly::reassemblePacket(RawPacket *espRa
 EspReassembly::ReassemblyStatus EspReassembly::reassemblePacket(Packet &espData)
 {
 	// 1.判断包的类型
-
 	IPAddress srcIP, dstIP;
 	if (espData.isPacketOfType(IP))
 	{
+
 	  //不确定是否要按照颠倒顺序获取
 	  //const IPLayer *ipLayer = espData.getLayerOfType<IPLayer>(true);
 	  const IPLayer *ipLayer = espData.getLayerOfType<IPLayer>();
@@ -60,7 +57,7 @@ EspReassembly::ReassemblyStatus EspReassembly::reassemblePacket(Packet &espData)
 		return NonIpPacket;
 
 	// Ignore non-Esp packets
-	EspLayer *espLayer = espData.getLayerOfType<EspLayer>(true); // lookup in reverse order
+	ESPLayer *espLayer = espData.getLayerOfType<ESPLayer>(true); // lookup in reverse order
 	if (espLayer == NULL)
 	{
 		return NonEspPacket;
@@ -95,7 +92,6 @@ EspReassembly::ReassemblyStatus EspReassembly::reassemblePacket(Packet &espData)
 	EspPacketData packetdata(data, len, tupleName);
 
 	// 4.处理信息
-
 	// send the data to the callback
 	if (m_OnEspMessageReadyCallback != NULL)
 	{
