@@ -54,12 +54,14 @@ static struct option BgpAssemblyOptions[] = {{"interface", required_argument, 0,
  * A singleton class containing the configuration as requested by the user. This singleton is used throughout the
  * application
  */
+
 class GlobalConfig
 {
   private:
 	/**
 	 * A private c'tor (as this is a singleton)
 	 */
+
 	GlobalConfig()
 	{
 		writeMetadata = false;
@@ -93,7 +95,6 @@ class GlobalConfig
 		// if user chooses to write to a directory other than the current directory - add the dir path to the return value
 		if (!outputDir.empty())
 			stream << outputDir << SEPARATOR;
-
 		stream << name;
 
 		// return the file path
@@ -105,6 +106,7 @@ class GlobalConfig
 	 * Open a file stream. Inputs are the filename to open and a flag indicating whether to append to an existing file
 	 * or overwrite it. Return value is a pointer to the new file stream
 	 */
+
 	std::ostream *openFileStream(std::string fileName, bool reopen)
 	{
 		// if the user chooses to write only to console, don't open anything and return std::cout
@@ -142,6 +144,7 @@ class GlobalConfig
 		// This is a lazy implementation - the instance isn't created until the user requests it for the first time.
 		// the side of the LRU list is determined by the max number of allowed open files at any point in time. Default
 		// is DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES but the user can choose another number
+
 		if (m_RecentFilesWithActivity == NULL)
 			m_RecentFilesWithActivity = new pcpp::LRUList<std::string>(maxOpenFiles);
 
@@ -158,7 +161,6 @@ class GlobalConfig
 		static GlobalConfig instance;
 		return instance;
 	}
-
 };
 
 //++++++ok
@@ -167,6 +169,7 @@ class GlobalConfig
  * A struct to contain all data save on a specific connection. It contains the file streams to write to and also stats
  * data on the connection
  */
+
 struct BgpReassemblyData
 {
 	std::ostream *fileStream;
@@ -298,9 +301,7 @@ static void OnBgpMessageReadyCallback(pcpp::BgpPacketData *bgpData, void *userCo
 	4. 将数据写入打开的文件里
  */
 
-
 	// 1.
-
 	// extract the manager from the user cookie
 	BgpReassemblyMgr *mgr = (BgpReassemblyMgr *)userCookie;
 
@@ -313,18 +314,15 @@ static void OnBgpMessageReadyCallback(pcpp::BgpPacketData *bgpData, void *userCo
 	}
 
 	// 2. 
-
 	//  if filestream isn't open yet
 	if (iter->second.fileStream == NULL)
 	{
 		// 2.1 
-
 		std::string nameToCloseFile;
 		int result =
 			GlobalConfig::getInstance().getRecentFilesWithActivity()->put(bgpData->getTupleName(), &nameToCloseFile);
 
 		// 2.2
-
 		// 等于1，需要关闭最近未使用
 		if (result == 1)
 		{
@@ -344,27 +342,22 @@ static void OnBgpMessageReadyCallback(pcpp::BgpPacketData *bgpData, void *userCo
 		}
 
 		// 2.3 
-
 		std::string name = bgpData->getTupleName() + "- " + bgpData->getType() + ".txt";
 		std::string fileName = GlobalConfig::getInstance().getFileName(name);
 
 		// 2.4
-
 		// open the file in overwrite mode (if this is the first time the file is opened) or in append mode (if it was already opened before)
 		iter->second.fileStream = GlobalConfig::getInstance().openFileStream(fileName, iter->second.reopenFileStream);
 	}
 
 	// 3.
-
 	// count number of packets and bytes in each side of the connection
 	iter->second.numOfDataPackets++;
 	iter->second.bytes += (int)bgpData->getDataLength();
 
 	// 4. 
-
 	// write the new data to the file
 	iter->second.fileStream->write((char*)bgpData->getData(), bgpData->getDataLength());
-
 }
 
 //++++++ok
@@ -388,6 +381,7 @@ static void onApplicationInterrupted(void *cookie)
 /**
  * packet capture callback - called whenever a packet arrives on the live device (in live device capturing mode)
  */
+
 static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *bgpReassemblyCookie)
 {
 	// get a pointer to the BGP reassembly instance and feed the packet arrived to it
@@ -399,6 +393,7 @@ static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, 
 /**
  * The method responsible for BGP reassembly on pcap/pcapng files
  */
+
 void doBgpReassemblyOnPcapFile(std::string fileName, pcpp::BgpReassembly &bgpReassembly, std::string bpfFilter = "")
 {
 	// open input file (pcap or pcapng file)
@@ -435,7 +430,9 @@ void doBgpReassemblyOnPcapFile(std::string fileName, pcpp::BgpReassembly &bgpRea
 /**
  * The method responsible for BGP reassembly on live traffic
  */
+
 void doBgpReassemblyOnLiveTraffic(pcpp::PcapLiveDevice *dev, pcpp::BgpReassembly &bgpReassembly,
+
 								  std::string bpfFilter = "")
 {
 	// try to open device
@@ -456,6 +453,7 @@ void doBgpReassemblyOnLiveTraffic(pcpp::PcapLiveDevice *dev, pcpp::BgpReassembly
 
 	// register the on app close event to print summary stats on app termination
 	bool shouldStop = false;
+
 	pcpp::ApplicationEventHandler::getInstance().onApplicationInterrupted(onApplicationInterrupted, &shouldStop);
 
 	// run in an endless loop until the user presses ctrl+c
@@ -469,9 +467,11 @@ void doBgpReassemblyOnLiveTraffic(pcpp::PcapLiveDevice *dev, pcpp::BgpReassembly
 	std::cout << "Done! " << std::endl;
 }
 
+
 /**
  * main method of this utility
  */
+
 int main(int argc, char *argv[])
 {
 	pcpp::AppName::init(argc, argv);
@@ -480,8 +480,10 @@ int main(int argc, char *argv[])
 	std::string inputPcapFileName;
 	std::string bpfFilter;
 	std::string outputDir;
+
 	bool writeMetadata = false;
 	bool writeToConsole = false;
+
 	size_t maxOpenFiles = DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES;
 
 	int optionIndex = 0;
@@ -555,11 +557,13 @@ int main(int argc, char *argv[])
 	{
 		doBgpReassemblyOnPcapFile(inputPcapFileName, bgpReassembly, bpfFilter);
 	}
+
 	else // analyze in live traffic mode
 	{
 		// extract pcap live device by interface name or IP address
 		pcpp::PcapLiveDevice *dev =
 			pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIpOrName(interfaceNameOrIP);
+
 		if (dev == NULL)
 			EXIT_WITH_ERROR("Couldn't find interface by provided IP address or name");
 

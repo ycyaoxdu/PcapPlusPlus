@@ -29,6 +29,7 @@
 #endif
 
 // unless the user chooses otherwise - default number of concurrent used file descriptors is 500
+
 #define DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES 500
 
 static struct option EspAssemblyOptions[] = {{"interface", required_argument, 0, 'i'},
@@ -42,6 +43,8 @@ static struct option EspAssemblyOptions[] = {{"interface", required_argument, 0,
 											 {"help", no_argument, 0, 'h'},
 											 {"version", no_argument, 0, 'v'},
 											 {0, 0, 0, 0}};
+
+
 
 //
 //
@@ -93,7 +96,6 @@ class GlobalConfig
 		// if user chooses to write to a directory other than the current directory - add the dir path to the return value
 		if (!outputDir.empty())
 			stream << outputDir << SEPARATOR;
-
 		stream << name;
 
 		// return the file path
@@ -130,7 +132,6 @@ class GlobalConfig
 			// close the file stream
 			std::ofstream *fstream = (std::ofstream *)fileStream;
 			fstream->close();
-
 			// free the memory of the file stream
 			delete fstream;
 		}
@@ -139,6 +140,7 @@ class GlobalConfig
 	//++++++ok
 	pcpp::LRUList<std::string> *getRecentFilesWithActivity()
 	{
+
 		// This is a lazy implementation - the instance isn't created until the user requests it for the first time.
 		// the side of the LRU list is determined by the max number of allowed open files at any point in time. Default
 		// is DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES but the user can choose another number
@@ -153,24 +155,27 @@ class GlobalConfig
 	/**
 	 * The singleton implementation of this class
 	 */
+
 	static GlobalConfig &getInstance()
 	{
 		static GlobalConfig instance;
 		return instance;
 	}
-
 };
+
+
 
 //++++++ok
 // 存储某一元组的数据包
+
 /**
  * A struct to contain all data save on a specific connection. It contains the file streams to write to and also stats
  * data on the connection
  */
+
 struct EspReassemblyData
 {
 	std::ostream *fileStream;
-
 	// flags indicating whether the file was already opened before. If the answer is yes, next time it'll
 	// be opened in append mode (and not in overwrite mode)
 	bool reopenFileStream;
@@ -182,6 +187,7 @@ struct EspReassemblyData
 	/**
 	 * the default c'tor
 	 */
+
 	EspReassemblyData()
 	{
 		fileStream = NULL;
@@ -216,15 +222,18 @@ struct EspReassemblyData
 	}
 };
 
+
 // 五元组->数据统计的map
 // typedef representing the manager and its iterator
 typedef std::map<std::string, EspReassemblyData> EspReassemblyMgr;
+
 typedef std::map<std::string, EspReassemblyData>::iterator EspReassemblyMgrIter;
 
 //++++++ok
 /**
  * Print application usage
  */
+
 void printUsage()
 {
 	std::cout << std::endl
@@ -272,12 +281,14 @@ void printAppVersion()
 /**
  * Go over all interfaces and output their names
  */
+
 void listInterfaces()
 {
 	const std::vector<pcpp::PcapLiveDevice *> &devList =
 		pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDevicesList();
 
 	std::cout << std::endl << "Network interfaces:" << std::endl;
+
 	for (std::vector<pcpp::PcapLiveDevice *>::const_iterator iter = devList.begin(); iter != devList.end(); iter++)
 	{
 		std::cout << "    -> Name: '" << (*iter)->getName()
@@ -298,14 +309,16 @@ static void OnEspMessageReadyCallback(pcpp::EspPacketData *espData, void *userCo
 	4. 将数据写入打开的文件里
  */
 
-
 	// 1.
 
 	// extract the manager from the user cookie
+
 	EspReassemblyMgr *mgr = (EspReassemblyMgr *)userCookie;
 
 	// check if this tuple already appears in the manager. If not add it
+
 	EspReassemblyMgrIter iter = mgr->find(espData->getTupleName());
+
 	if (iter == mgr->end())
 	{
 		mgr->insert(std::make_pair(espData->getTupleName(), EspReassemblyData()));
@@ -324,7 +337,6 @@ static void OnEspMessageReadyCallback(pcpp::EspPacketData *espData, void *userCo
 			GlobalConfig::getInstance().getRecentFilesWithActivity()->put(espData->getTupleName(), &nameToCloseFile);
 
 		// 2.2
-
 		// 等于1，需要关闭最近未使用
 		if (result == 1)
 		{
@@ -336,7 +348,6 @@ static void OnEspMessageReadyCallback(pcpp::EspPacketData *espData, void *userCo
 					// close the file
 					GlobalConfig::getInstance().closeFileSteam(iter2->second.fileStream);
 					iter2->second.fileStream = NULL;
-
 					// set the reopen flag to true to indicate that next time this file will be opened it will be opened in append mode (and not overwrite mode)
 					iter2->second.reopenFileStream = true;
 				}
@@ -346,16 +357,16 @@ static void OnEspMessageReadyCallback(pcpp::EspPacketData *espData, void *userCo
 		// 2.3 
 
 		std::string name = espData->getTupleName() + ".txt";
+
 		std::string fileName = GlobalConfig::getInstance().getFileName(name);
 
 		// 2.4
-
 		// open the file in overwrite mode (if this is the first time the file is opened) or in append mode (if it was already opened before)
+
 		iter->second.fileStream = GlobalConfig::getInstance().openFileStream(fileName, iter->second.reopenFileStream);
 	}
 
 	// 3.
-
 	// count number of packets and bytes in each side of the connection
 	iter->second.numOfDataPackets++;
 	iter->second.bytes += (int)espData->getDataLength();
@@ -364,13 +375,15 @@ static void OnEspMessageReadyCallback(pcpp::EspPacketData *espData, void *userCo
 
 	// write the new data to the file
 	iter->second.fileStream->write((char*)espData->getData(), espData->getDataLength());
-
 }
+
+
 
 //++++++ok
 /**
  * The callback to be called when application is terminated by ctrl-c. Stops the endless while loop
  */
+
 static void onApplicationInterrupted(void *cookie)
 {
 	bool *shouldStop = (bool *)cookie;
@@ -388,6 +401,7 @@ static void onApplicationInterrupted(void *cookie)
 /**
  * packet capture callback - called whenever a packet arrives on the live device (in live device capturing mode)
  */
+
 static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *espReassemblyCookie)
 {
 	// get a pointer to the ESP reassembly instance and feed the packet arrived to it
@@ -480,8 +494,10 @@ int main(int argc, char *argv[])
 	std::string inputPcapFileName;
 	std::string bpfFilter;
 	std::string outputDir;
+
 	bool writeMetadata = false;
 	bool writeToConsole = false;
+
 	size_t maxOpenFiles = DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES;
 
 	int optionIndex = 0;
@@ -560,6 +576,7 @@ int main(int argc, char *argv[])
 		// extract pcap live device by interface name or IP address
 		pcpp::PcapLiveDevice *dev =
 			pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIpOrName(interfaceNameOrIP);
+
 		if (dev == NULL)
 			EXIT_WITH_ERROR("Couldn't find interface by provided IP address or name");
 
