@@ -28,13 +28,13 @@ EXAMPLE_IP_DEFRAG    := Examples/IPDefragUtil
 EXAMPLE_TLS_FP       := Examples/TLSFingerprinting
 EXAMPLE_DPDK2        := Examples/DpdkBridge
 EXAMPLE_KNI_PONG     := Examples/KniPong
-EXAMPLE_UDP_REASM	:= Examples/UdpReassembly
-EXAMPLE_GRE_REASM	:= Examples/GreReassembly
-EXAMPLE_RIP_REASM	:= Examples/RipReassembly
-EXAMPLE_OSPF_REASM	:= Examples/OspfReassembly
-EXAMPLE_L2TP_REASM	:= Examples/L2tpReassembly
-EXAMPLE_ESP_REASM       := Examples/EspReassembly
-EXAMPLE_BGP_REASM       := Examples/BgpReassembly
+EXAMPLE_UDP_REASM	 := Examples/UdpReassembly
+EXAMPLE_GRE_REASM	 := Examples/GreReassembly
+EXAMPLE_RIP_REASM	 := Examples/RipReassembly
+EXAMPLE_OSPF_REASM	 := Examples/OspfReassembly
+EXAMPLE_L2TP_REASM	 := Examples/L2tpReassembly
+EXAMPLE_ESP_REASM    := Examples/EspReassembly
+EXAMPLE_BGP_REASM    := Examples/BgpReassembly
 
 
 UNAME := $(shell uname)
@@ -63,9 +63,9 @@ all: libs
 	@cd $(EXAMPLE_UDP_REASM)         && $(MAKE) UdpReassembly
 	@cd $(EXAMPLE_GRE_REASM)         && $(MAKE) GreReassembly
 	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) RipReassembly
-	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) OspfReassembly
-	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) L2tpReassembly
-        @cd $(EXAMPLE_ESP_REASM)         && $(MAKE) EspReassembly
+	@cd $(EXAMPLE_OSPF_REASM)        && $(MAKE) OspfReassembly
+	@cd $(EXAMPLE_L2TP_REASM)        && $(MAKE) L2tpReassembly
+	@cd $(EXAMPLE_ESP_REASM)         && $(MAKE) EspReassembly
 	@cd $(EXAMPLE_BGP_REASM)         && $(MAKE) BgpReassembly
 
 ifdef USE_DPDK
