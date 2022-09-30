@@ -11,13 +11,14 @@
  */
 namespace pcpp
 {
+
 //ESP数据包类
 class EspPacketData
 {
   public:
 	//构造函数
-	EspPacketData(const uint8_t *espData, size_t espDataLength, std::string tupleName)
-        : m_Data(espData), m_DataLen(espDataLength), m_TupleName(tupleName)
+	EspPacketData(const uint8_t *EspData, size_t EspDataLength, std::string tupleName)
+        : m_Data(EspData), m_DataLen(EspDataLength), m_TupleName(tupleName)
 	{
 	}
 	  
@@ -71,9 +72,7 @@ class EspReassembly
 	}
 
 	ReassemblyStatus reassemblePacket(Packet &espData);
-
 	ReassemblyStatus reassemblePacket(RawPacket *espRawData);
-
 	std::string getTupleName(IPAddress src, IPAddress dst);
 
   private:
@@ -92,10 +91,10 @@ class EspReassembly
 		  : srcIP(src), dstIP(dst), tupleName(tName), number(n)
 	  {
 	  }
+
 	};
 
 	typedef std::map<std::string, EspReassemblyData> FragmentList;
-
 	FragmentList m_FragmentList;
 	OnEspMessageReady m_OnEspMessageReadyCallback;
     void *m_CallbackUserCookie;

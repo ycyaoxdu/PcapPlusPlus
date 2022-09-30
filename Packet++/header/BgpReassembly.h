@@ -11,6 +11,7 @@
  */
 namespace pcpp
 {
+
 //BGP数据包类
 class BgpPacketData
 {
@@ -20,7 +21,7 @@ class BgpPacketData
         : m_Data(BgpData), m_DataLen(BgpDataLength), m_TupleName(tupleName), m_Type(type)
 	{
 	}
-	  
+
 	//获取包数据的指针
 	const uint8_t *getData() const
 	{
@@ -45,7 +46,6 @@ class BgpPacketData
 		return m_Type;
 	}
 
-
   private:
 	const uint8_t *m_Data;     //数据指针
 	size_t m_DataLen;          //数据长度
@@ -61,6 +61,7 @@ class BgpReassembly
 	 * @typedef OnBgpMessageReady
 	 * A callback invoked when new data arrives
 	 */
+
 	typedef void (*OnBgpMessageReady)(pcpp::BgpPacketData *bgpData, void *userCookie);
 
 	/**
@@ -68,6 +69,7 @@ class BgpReassembly
 	 */
 	enum ReassemblyStatus
 	{
+
 		NonIpPacket,
 		NonBgpPacket,
 		BgpMessageHandled,
@@ -103,7 +105,6 @@ class BgpReassembly
 	};
 
 	typedef std::map<std::string, BgpReassemblyData> FragmentList;
-
 	FragmentList m_FragmentList;
 	OnBgpMessageReady m_OnBgpMessageReadyCallback;
     void *m_CallbackUserCookie;
