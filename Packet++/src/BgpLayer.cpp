@@ -11,7 +11,7 @@ namespace pcpp
 // ~~~~~~~~
 // BgpLayer
 // ~~~~~~~~
-
+ 
 size_t BgpLayer::getHeaderLen() const
 {
 	if (m_DataLen < sizeof(bgp_common_header))

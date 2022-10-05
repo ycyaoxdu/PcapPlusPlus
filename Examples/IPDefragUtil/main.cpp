@@ -1,3 +1,10 @@
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <stdlib.h>
+#include <string.h>
+#include "PcapPlusPlusVersion.h"
+
 #include "GreLayer.h"
 #include "IPReassembly.h"
 #include "IPv4Layer.h"
@@ -7,18 +14,18 @@
 #include "LRUList.h"
 #include "Packet.h"
 #include "PcapFileDevice.h"
-#include "PcapPlusPlusVersion.h"
+
 #include "ProtocolType.h"
 #include "Reassembly.h"
 #include "SystemUtils.h"
 #include "UdpLayer.h"
+#include "BgpLayer.h"
+#include "TcpLayer.h"
+#include "HttpLayer.h"
 #include "getopt.h"
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <stdlib.h>
-#include <string.h>
+
 #include <string>
+#include "EndianPortable.h"
 
 #define EXIT_WITH_ERROR(reason)                                                                                        \
 	do                                                                                                                 \
@@ -33,6 +40,54 @@
 #else
 #define SEPARATOR '/'
 #endif
+//zhz
+std::string printTcpFlags(pcpp::TcpLayer tcpLayer)
+{
+	std::string result = "";
+	if (tcpLayer.getTcpHeader()->synFlag == 1)
+		result += "SYN ";
+	if (tcpLayer.getTcpHeader()->ackFlag == 1)
+		result += "ACK ";
+	if (tcpLayer.getTcpHeader()->pshFlag == 1)
+		result += "PSH ";
+	if (tcpLayer.getTcpHeader()->cwrFlag == 1)
+		result += "CWR ";
+	if (tcpLayer.getTcpHeader()->urgFlag == 1)
+		result += "URG ";
+	if (tcpLayer.getTcpHeader()->eceFlag == 1)
+		result += "ECE ";
+	if (tcpLayer.getTcpHeader()->rstFlag == 1)
+		result += "RST ";
+	if (tcpLayer.getTcpHeader()->finFlag == 1)
+		result += "FIN ";
+
+	return result;
+}
+std::string printTcpOptionType(pcpp::TcpOptionType optionType)
+{
+	switch (optionType)
+	{
+	case pcpp::PCPP_TCPOPT_NOP:
+		return "NOP";
+	case pcpp::PCPP_TCPOPT_TIMESTAMP:
+		return "Timestamp";
+	default:
+		return "Other";
+	}
+}
+std::string printHttpMethod(pcpp::HttpRequestLayer::HttpMethod httpMethod)
+{
+	switch (httpMethod)
+	{
+	case pcpp::HttpRequestLayer::HttpGET:
+		return "GET";
+	case pcpp::HttpRequestLayer::HttpPOST:
+		return "POST";
+	default:
+		return "Other";
+	}
+}
+
 
 // unless the user chooses otherwise - default number of concurrent used file descl2tptors is 500
 #define DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES 500
@@ -399,7 +454,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 	pcpp::IPReassembly ipReassembly;
 
 	pcpp::IPReassembly::ReassemblyStatus status;
-
+ 
 	// read all packet from input file
 	while (reader->getNextPacket(rawPacket))
 	{
@@ -540,8 +595,208 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					// esp handle
 					break;
 				case pcpp::TCP:
+				{
 					// tcp handle
+					protoname = "tcp";
+
+					pcpp::TcpLayer tcpLayer(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
+					
+
+					uint16_t PortSrc = tcpLayer.getSrcPort();
+					uint16_t PortDst = tcpLayer.getDstPort();
+
+					// next layer
+					tcpLayer.parseNextLayer();
+					nextLayer = tcpLayer.getNextLayer();
+
+				
+					if (nextLayer->getProtocol() == pcpp::HTTPRequest)
+					{
+						protoname = "http";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::HttpRequestLayer httpRequestLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+
+						//print
+						// print HTTP method and URI. Both appear in the first line of the HTTP request
+						std::cout << std::endl
+							<< "HTTP Request method: " << printHttpMethod(httpRequestLayer.getFirstLine()->getMethod()) << std::endl
+							<< "HTTP Request  URI: " << httpRequestLayer.getFirstLine()->getUri() << std::endl
+						<<std::endl;
+
+						// print values of the following HTTP field: Host, User-Agent and Cookie
+						std::cout
+							<< "HTTP Request host: " << httpRequestLayer.getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << std::endl
+							<< "HTTP Request user-agent: " << httpRequestLayer.getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << std::endl
+							<< "HTTP Request cookie: " << httpRequestLayer.getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << std::endl
+						<<std::endl;
+						// print the full URL of this request
+						std::cout << "HTTP full URL: " << httpRequestLayer.getUrl() << std::endl;
+
+						//or save...
+
+						
+					}
+					else if(nextLayer->getProtocol() == pcpp::HTTPResponse)
+					{
+						protoname = "http";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::HttpResponseLayer httpResponseLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+						//print print values of the following HTTP field: Content
+						std::cout
+							<<"HTTP Response content length: "<<atoi(httpResponseLayer.getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue().c_str()) <<std::endl
+							<<"HTTP Response content type: "<<httpResponseLayer.getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() <<std::endl
+						<<std::endl;
+						//or save...   不知http部分是否足够，看http这几个层的实现好像信息部分就只有这些，没找到payload
+					}
+					else if (nextLayer->getProtocol() == pcpp::SSL)
+					{
+						protoname = "ssl";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+					}
+					else if (nextLayer->getProtocol() == pcpp::BGP)
+					{
+						protoname = "bgp";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+
+						// bgp协议五种类型判断自动创建  不同类型有获取不同信息的接口 主要的都打印出来了
+						// bgp协议可能是自嵌套协议？这个有待确定 只会影响Update类型的BGP协议 有时间如果需要的话可以讨论一下这块儿
+						pcpp::BgpLayer* bgpLayer =  pcpp::BgpLayer::parseBgpLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+
+						switch (bgpLayer->getBgpMessageType())
+						{
+							case pcpp::BgpLayer::Open:
+							{
+								pcpp::BgpOpenMessageLayer bgpOpenLayer = pcpp::BgpOpenMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+								std::cout
+									<<"BGP the size of the BGP message: "<<bgpOpenLayer.getHeaderLen()<<std::endl
+									<<"BGP autonomous system number of the sender: "<<be16toh(bgpOpenLayer.getOpenMsgHeader()->myAutonomousSystem)<<std::endl
+									<<"BGP the number of seconds the sender proposes for the value of the Hold Time: "<<be16toh(bgpOpenLayer.getOpenMsgHeader()->holdTime)<<std::endl
+									<<"BGP the total length of the Optional Parameters field: "<< bgpOpenLayer.getOpenMsgHeader()->optionalParameterLength<<std::endl
+									<<"BGP the BGP identifier as IPv4Address object: "<<bgpOpenLayer.getBgpId().toString()<<std::endl
+									<<"BGP the length in [bytes] of the optional parameters data in the message: "<<bgpOpenLayer.getOptionalParametersLength()<<std::endl
+									<<std::endl;
+									// std::vector<pcpp::BgpOpenMessageLayer::optional_parameter> optionalParams;
+									// bgpOpenLayer.getOptionalParameters(optionalParams);
+								break;
+							}
+								
+							case pcpp::BgpLayer::Update:
+							{
+								pcpp::BgpUpdateMessageLayer bgpUpdateLayer=pcpp::BgpUpdateMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+								std::cout
+									<<"BGP the size of the BGP message: "<<bgpUpdateLayer.getHeaderLen()<<std::endl
+									<<"BGP the size in [bytes] of the Withdrawn Routes data: "<<bgpUpdateLayer.getWithdrawnRoutesLength()<<std::endl
+									<<"BGP the size in [bytes] of the Path Attributes data: "<<bgpUpdateLayer.getPathAttributesLength()<<std::endl
+									<<"BGP the size in [bytes] of the Network Layer Reachability Info"<<bgpUpdateLayer.getNetworkLayerReachabilityInfoLength()<<std::endl
+								<<std::endl;
+								std::vector<pcpp::BgpUpdateMessageLayer::prefix_and_ip> withdrawnRoutes;
+								bgpUpdateLayer.getWithdrawnRoutes(withdrawnRoutes);
+								pcpp::BgpUpdateMessageLayer::prefix_and_ip wr;
+								for(int i = 0;i<withdrawnRoutes.size();i++)
+								{
+									wr = withdrawnRoutes[i];
+									std::cout<<"IPv4 address mask: "<<wr.prefix<<" IPv4 address: "<<wr.ipAddr.toString()<<std::endl;
+								}
+								
+								std::vector<pcpp::BgpUpdateMessageLayer::path_attribute> pathAttributes;
+								bgpUpdateLayer.getPathAttributes(pathAttributes);
+								pcpp::BgpUpdateMessageLayer::path_attribute pathAttr;
+								for(int i=0;i<pathAttributes.size();i++)
+								{
+									pathAttr = pathAttributes[i];
+									std::cout	
+										<<"BGP Path attribute flags"<<pathAttr.flags<<std::endl
+										<<"BGP Path attribute type"<<pathAttr.type<<std::endl
+										<<"BGP Path attribute length"<<pathAttr.length<<std::endl
+									<<std::endl;
+										//另外还有 pathAttr.data 类型是一个数组 
+				
+								}
+
+								std::vector<pcpp::BgpUpdateMessageLayer::prefix_and_ip> nlriVec;
+								bgpUpdateLayer.getNetworkLayerReachabilityInfo(nlriVec);
+								pcpp::BgpUpdateMessageLayer::prefix_and_ip nlri;
+								for(int i = 0;i<nlriVec.size();i++)
+								{
+									nlri = nlriVec[0];
+									std::cout<<"IPv4 address mask: "<<nlri.prefix<<" IPv4 address: "<<nlri.ipAddr.toString()<<std::endl;
+								}
+
+								break;
+							}
+								
+							case pcpp::BgpLayer::Notification:
+							{
+								pcpp::BgpNotificationMessageLayer bgpNotificationLayer = pcpp::BgpNotificationMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+								std::cout
+									<<"BGP the size of the BGP message: "<<bgpNotificationLayer.getHeaderLen()<<std::endl
+								<<std::endl;
+								for (int i = 0; i<16;i++)
+								{
+									std::cout<<"BGP 16-actet marker"<<bgpNotificationLayer.getNotificationMsgHeader()->marker[i]<<std::endl;
+								}
+								std::cout
+									<<"BGP notification error code: "<<bgpNotificationLayer.getNotificationMsgHeader()->errorCode<<std::endl
+									<<"BGP notification error sub-code: "<<bgpNotificationLayer.getNotificationMsgHeader()->errorSubCode<<std::endl
+									<<"BGP the size in [bytes] of the notification data is a variable-length field used to diagnose the reason for the BGP NOTIFICATION"<<bgpNotificationLayer.getNotificationDataLen()<<std::endl
+									<<"BGP A hex string which represents the notification data."<<bgpNotificationLayer.getNotificationDataAsHexString()<<std::endl
+								<<std::endl;
+								break;
+							}
+								
+							case pcpp::BgpLayer::Keepalive:
+							{
+								pcpp::BgpKeepaliveMessageLayer bgpKALayer = pcpp::BgpKeepaliveMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+								std::cout
+									<<"BGP the size of the BGP message: "<<bgpKALayer.getHeaderLen()<<std::endl
+								<<std::endl;
+								for (int ind = 0; ind < 16; ind++)
+									{
+										std::cout<<"16-octet marker"<<bgpKALayer.getKeepaliveHeader()->marker[ind]<<std::endl;
+									}
+								break;
+								std::cout
+									<<"BGP Total length of the massage,including the header: "<<be16toh(bgpKALayer.getKeepaliveHeader()->length)<<std::endl
+								<<std::endl;
+							}
+								
+							case pcpp::BgpLayer::RouteRefresh:
+							{
+								pcpp::BgpRouteRefreshMessageLayer bgpRRLayer = pcpp::BgpRouteRefreshMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcpLayer, result);
+								std::cout
+									<<"BGP the size of the BGP message: "<<bgpRRLayer.getHeaderLen()<<std::endl
+									<<"BGP Address Family Identifier:" << be16toh(bgpRRLayer.getRouteRefreshHeader()->afi)<<std::endl
+									<<"BGP Subsquent Address Family Identifier"<<bgpRRLayer.getRouteRefreshHeader()->safi<<std::endl
+									<<"BGP Reserved field"<<bgpRRLayer.getRouteRefreshHeader()->reserved<<std::endl
+								<<std::endl;
+								break;
+							}
+								
+							default:
+								// discard packet
+								break;
+						}
+						
+
+					}
+					else if(nextLayer->getProtocol() == pcpp::GTP)
+					{
+						protoname = "gtp";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						
+
+					}
+					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+					{
+						// print & save
+					}
+					else
+					{
+						// discard packet
+					}
+
 					break;
+				}
 				case pcpp::UDP:
 					// udp handle
 					protoname = "udp";

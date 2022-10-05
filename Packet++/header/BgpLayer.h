@@ -61,7 +61,7 @@ public:
 		uint8_t messageType;
 	};
 	#pragma pack(pop)
-
+ 
 	/**
 	 * @return BGP message type
 	 */
