@@ -13,7 +13,7 @@ namespace pcpp
 {
 
 #define PCPP_GTP_V1_GPDU_MESSAGE_TYPE 0xff
-<<<<<<< HEAD
+
 void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
 {
 
