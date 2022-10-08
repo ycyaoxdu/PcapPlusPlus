@@ -11,11 +11,7 @@
 #include "BgpLayer.h"
 #include "SSHLayer.h"
 #include "DnsLayer.h"
-#include "TelnetLayer.h"
-#include "FtpLayer.h"
-
 #include "GtpLayer.h"
-
 #include "PacketUtils.h"
 #include "Logger.h"
 #include <string.h>
@@ -357,7 +353,6 @@ void TcpLayer::parseNextLayer()
 	uint16_t portDst = getDstPort();
 	uint16_t portSrc = getSrcPort();
 
-
     //need http request
 	if (HttpMessage::isHttpPort(portDst) && HttpRequestFirstLine::parseMethod((char*)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
 		m_NextLayer = new HttpRequestLayer(payload, payloadLen, this, m_Packet);
@@ -372,9 +367,8 @@ void TcpLayer::parseNextLayer()
 		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
     //need gtp
 	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
-		GtpV1Layer::isGTPv1(udpData, udpDataLen))
-		m_NextLayer = new GtpV1Layer(udpData, udpDataLen, this, m_Packet);
-
+		GtpV1Layer::isGTPv1(payload, payloadLen))
+		m_NextLayer = new GtpV1Layer(payload, payloadLen, this, m_Packet);
 
 	else if (SipLayer::isSipPort(portDst))
 	{
@@ -385,16 +379,12 @@ void TcpLayer::parseNextLayer()
 		else
 			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 	}
+	else if (BgpLayer::isBgpPort(portSrc, portDst))
+		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
 	else if (SSHLayer::isSSHPort(portSrc, portDst))
 		m_NextLayer = SSHLayer::createSSHMessage(payload, payloadLen, this, m_Packet);
 	else if (DnsLayer::isDataValid(payload, payloadLen, true) && (DnsLayer::isDnsPort(portDst) || DnsLayer::isDnsPort(portSrc)))
 		m_NextLayer = new DnsOverTcpLayer(payload, payloadLen, this, m_Packet);
-	else if (TelnetLayer::isDataValid(payload, payloadLen) && (TelnetLayer::isTelnetPort(portDst) || TelnetLayer::isTelnetPort(portSrc)))
-		m_NextLayer = new TelnetLayer(payload, payloadLen, this, m_Packet);
-	else if (FtpLayer::isFtpPort(portSrc) && FtpLayer::isDataValid(payload, payloadLen))
-		m_NextLayer = new FtpResponseLayer(payload, payloadLen, this, m_Packet);
-	else if (FtpLayer::isFtpPort(portDst) && FtpLayer::isDataValid(payload, payloadLen))
-		m_NextLayer = new FtpRequestLayer(payload, payloadLen, this, m_Packet);
 	else
 		m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 }
