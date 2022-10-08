@@ -75,8 +75,6 @@ enum IPProtocolTypes
 	PACKETPP_IPPROTO_IPIP = 4,
 	/** Transmission Control Protocol	*/
 	PACKETPP_IPPROTO_TCP = 6,
-	/** SCTP	*/
-	PACKETPP_IPPROTO_SCTP = 132,
 	/** Exterior Gateway Protocol		*/
 	PACKETPP_IPPROTO_EGP = 8,
 	/** PUP protocol				*/

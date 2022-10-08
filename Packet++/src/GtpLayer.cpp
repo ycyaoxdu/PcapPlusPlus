@@ -13,6 +13,7 @@ namespace pcpp
 {
 
 #define PCPP_GTP_V1_GPDU_MESSAGE_TYPE 0xff
+<<<<<<< HEAD
 void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
 {
 
@@ -34,6 +35,9 @@ void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
 	}
 	
 }
+=======
+
+>>>>>>> 35ee88451819714fdd493be1aeed37ecbbbb402c
 /// ==================
 /// GtpExtension class
 /// ==================
@@ -719,13 +723,6 @@ void GtpV1Layer::computeCalculateFields()
 	}
 
 	hdr->messageLength = htobe16(m_DataLen - sizeof(gtpv1_header));
-}
-
-std::string GtpV1Layer::toString() const
-{
-	std::stringstream stream;
-	ToStructuredOutput(stream);
-	return stream.str();
 }
 
 }
