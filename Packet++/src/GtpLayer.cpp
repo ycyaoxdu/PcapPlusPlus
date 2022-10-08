@@ -14,29 +14,6 @@ namespace pcpp
 
 #define PCPP_GTP_V1_GPDU_MESSAGE_TYPE 0xff
 
-void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
-{
-
-	os << "Gtp Header:" << '\n';
-	if (isGTPv1)
-	{
-	os << "\t"
-	   << "Version: \t" << "1" << '\n';		
-	os << "\t"
-	   << "Teid: \t" << htobe32(teid) << '\n'
-	os << "\t"
-	   << "MessageType: \t" << getMessageType() << '\n';
-	os << 
-	   << "TotalLength: \t" << getTotalLength() << '\n';
-	os << "\t"
-	   << "SequenceNumber: \t" << getSequenceNumber() << '\n';
-	os << "\t"
-	   << "NpduNumber: \t" << getNpduNumber() << '\n';
-	os << "\t"
-	   << "NpduNumber: \t" << getNpduNumber() << '\n';
-	}
-	
-}
 /// ==================
 /// GtpExtension class
 /// ==================
@@ -457,7 +434,7 @@ GtpV1MessageType GtpV1Layer::getMessageType() const
 	gtpv1_header* header = getHeader();
 
 	if (header == NULL)
-	{version
+	{
 		return GtpV1_MessageTypeUnknown;
 	}
 
@@ -700,13 +677,6 @@ void GtpV1Layer::computeCalculateFields()
 	}
 
 	hdr->messageLength = htobe16(m_DataLen - sizeof(gtpv1_header));
-}
-
-std::string GtpV1Layer::toString() const
-{
-	std::stringstream stream;
-	ToStructuredOutput(stream);
-	return stream.str();
 }
 
 }

@@ -33,8 +33,6 @@ EXAMPLE_GRE_REASM	:= Examples/GreReassembly
 EXAMPLE_RIP_REASM	:= Examples/RipReassembly
 EXAMPLE_OSPF_REASM	:= Examples/OspfReassembly
 EXAMPLE_L2TP_REASM	:= Examples/L2tpReassembly
-EXAMPLE_GTP_REASM    := Examples/GtpReassembly
-EXAMPLE_SCTP_REASM    := Examples/SctpReassembly
 
 
 UNAME := $(shell uname)
