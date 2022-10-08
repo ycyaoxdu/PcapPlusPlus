@@ -431,6 +431,11 @@ namespace pcpp
 		 */
 		static bool isGTPv1Port(uint16_t port) { return port == 2152 /* GTP-U */ || port == 2123 /* GTP-C */; }
 
+        void ToStructuredOutput(std::ostream &os) const;
+
+        size_t getTotalLength() const;
+
+		//uint32_t GtpV1Layer::SetTeid() const;
 
 		// implement abstract methods
 

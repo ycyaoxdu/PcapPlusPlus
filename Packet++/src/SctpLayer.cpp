@@ -19,7 +19,17 @@
 
 namespace pcpp
 {
+void SctpLayer::ToStructuredOutput(std::ostream &os) const
+{
 
+	os << "Sctp Header:" << '\n';
+	os << "\t"
+	   << "Source port: \t" << getSrcPort() << '\n';		
+	os << "\t"
+	   << "Destination port: \t" << getDstPort() << '\n';
+	os << "\t"
+	   << "Checksum: \t" << calculateChecksum(true) << '\n';
+}
 SctpLayer::SctpLayer(uint16_t portSrc, uint16_t portDst)
 {
 	const size_t headerLen = sizeof(sctphdr);
@@ -42,7 +52,7 @@ uint16_t SctpLayer::getDstPort() const
 	return be16toh(getSctpHeader()->portDst);
 }
 
-uint16_t SctpLayer::calculateChecksum(bool writeResultToPacket)
+uint16_t SctpLayer::calculateChecksum(bool writeResultToPacket) const
 {
 	sctphdr* sctpHdr = (sctphdr*)m_Data;
 	uint16_t checksumRes = 0;
@@ -108,9 +118,9 @@ void SctpLayer::parseNextLayer()
 	uint8_t* sctpData = m_Data + sizeof(sctphdr);
 	size_t sctpDataLen = m_DataLen - sizeof(sctphdr);
 
-	if (HttpMessage::isHttpPort(portDst) && HttpRequestFirstLine::parseMethod((char*)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
+	if (HttpMessage::isHttpPort(portDst) && HttpRequestFirstLine::parseMethod((char*)sctpData, sctpDataLen) != HttpRequestLayer::HttpMethodUnknown)
 		m_NextLayer = new HttpRequestLayer(sctpData, sctpDataLen, this, m_Packet);
-	else if (HttpMessage::isHttpPort(portSrc) && HttpResponseFirstLine::parseStatusCode((char*)payload, payloadLen) != HttpResponseLayer::HttpStatusCodeUnknown)
+	else if (HttpMessage::isHttpPort(portSrc) && HttpResponseFirstLine::parseStatusCode((char*)sctpData, sctpDataLen) != HttpResponseLayer::HttpStatusCodeUnknown)
 		m_NextLayer = new HttpResponseLayer(sctpData, sctpDataLen, this, m_Packet);
 	if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
 		GtpV1Layer::isGTPv1(sctpData, sctpDataLen))
@@ -125,12 +135,12 @@ void SctpLayer::parseNextLayer()
 
 void SctpLayer::computeCalculateFields()
 {
-	sctphdr* sctpHdr = (sctphdr*)m_Data;
+	sctphdr* sctpHdr = getSctpHeader();
 	len = htobe16(m_DataLen);
 	calculateChecksum(true);
 }
 
-std::string SctpLayer::toString() const
+/* std::string SctpLayer::toString() const
 {
 	std::ostringstream srcPortStream;
 	srcPortStream << getSrcPort();
@@ -138,7 +148,7 @@ std::string SctpLayer::toString() const
 	dstPortStream << getDstPort();
 
 	return "SCTP Layer, Src port: " + srcPortStream.str() + ", Dst port: " + dstPortStream.str();
-}
+} */
 
 std::string SctpLayer::toString() const
 {
@@ -147,18 +157,6 @@ std::string SctpLayer::toString() const
 	return stream.str();
 }
 
-void SctpLayer::ToStructuredOutput(std::ostream &os) const
-{
 
-	os << "Sctp Header:" << '\n';
-	os << "\t"
-	   << "Source port: \t" << getSrcPort() << '\n';		
-	os << "\t"
-	   << "Destination port: \t" << getDstPort() << '\n'
-	os << "\t"
-	   << "Checksum: \t" << calculateChecksum() << '\n';
-	os << "\t"
-	
-}
 
 } // namespace pcpp

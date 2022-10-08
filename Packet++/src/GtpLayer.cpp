@@ -13,27 +13,24 @@ namespace pcpp
 {
 
 #define PCPP_GTP_V1_GPDU_MESSAGE_TYPE 0xff
-
 void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
 {
 
 	os << "Gtp Header:" << '\n';
-	if (isGTPv1)
 	{
 	os << "\t"
 	   << "Version: \t" << "1" << '\n';		
 	os << "\t"
-	   << "Teid: \t" << htobe32(teid) << '\n'
+	   << "Teid: \t" << be32toh(getHeader()->teid)<< '\n';
 	os << "\t"
 	   << "MessageType: \t" << getMessageType() << '\n';
-	os << 
+	os << "\t"
 	   << "TotalLength: \t" << getTotalLength() << '\n';
 	os << "\t"
-	   << "SequenceNumber: \t" << getSequenceNumber() << '\n';
+	   << "SequenceNumber: \t" << be16toh(getHeaderExtra()->sequenceNumber) << '\n';
 	os << "\t"
-	   << "NpduNumber: \t" << getNpduNumber() << '\n';
-	os << "\t"
-	   << "NpduNumber: \t" << getNpduNumber() << '\n';
+	   << "NpduNumber: \t" << be16toh(getHeaderExtra()->npduNumber) << '\n';
+
 	}
 	
 }
@@ -309,6 +306,28 @@ bool GtpV1Layer::getNpduNumber(uint8_t& npduNum) const
 	return false;
 }
 
+size_t GtpV1Layer::getTotalLength() const
+{
+	if (m_Data == NULL)
+	{
+		return 0;
+	}
+
+	size_t len = (size_t)(m_Data[0]*4);
+	if (len <= m_DataLen)
+	{
+		return len;
+	}
+
+	return m_DataLen;
+}
+
+//uint32_t GtpV1Layer::SetTeid() const
+//{
+//	uint32_t teid;
+//	return teid;
+//}
+
 bool GtpV1Layer::setNpduNumber(const uint8_t npduNum)
 {
 	// get GTP header
@@ -457,7 +476,7 @@ GtpV1MessageType GtpV1Layer::getMessageType() const
 	gtpv1_header* header = getHeader();
 
 	if (header == NULL)
-	{version
+	{
 		return GtpV1_MessageTypeUnknown;
 	}
 
@@ -665,7 +684,7 @@ size_t GtpV1Layer::getHeaderLen() const
 	return res;
 }
 
-std::string GtpV1Layer::toString() const
+/* std::string GtpV1Layer::toString() const
 {
 	std::string res = "GTP v1 Layer";
 
@@ -689,7 +708,7 @@ std::string GtpV1Layer::toString() const
 	}
 
 	return res;
-}
+} */
 
 void GtpV1Layer::computeCalculateFields()
 {

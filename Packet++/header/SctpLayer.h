@@ -75,7 +75,7 @@ namespace pcpp
 		 * @param[in] writeResultToPacket If set to true then checksum result will be written to @ref sctphdr#headerChecksum
 		 * @return The checksum result
 		 */
-		uint16_t calculateChecksum(bool writeResultToPacket);
+		uint16_t calculateChecksum(bool writeResultToPacket) const;
 
 		// implement abstract methods
 
@@ -84,6 +84,8 @@ namespace pcpp
 		 * RadiusLayer. Otherwise sets PayloadLayer
 		 */
 		void parseNextLayer();
+
+		void ToStructuredOutput(std::ostream &os) const;
 
 		/**
 		 * @return Size of @ref sctphdr
