@@ -35,9 +35,7 @@ void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
 	}
 	
 }
-=======
 
->>>>>>> 35ee88451819714fdd493be1aeed37ecbbbb402c
 /// ==================
 /// GtpExtension class
 /// ==================
