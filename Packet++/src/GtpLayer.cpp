@@ -722,5 +722,12 @@ void GtpV1Layer::computeCalculateFields()
 
 	hdr->messageLength = htobe16(m_DataLen - sizeof(gtpv1_header));
 }
-
+	
+std::string GtpV1Layer::toString() const
+{
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
+
+}// namespace pcpp
