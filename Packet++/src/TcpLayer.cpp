@@ -13,9 +13,6 @@
 #include "DnsLayer.h"
 #include "TelnetLayer.h"
 #include "FtpLayer.h"
-
-#include "GtpLayer.h"
-
 #include "PacketUtils.h"
 #include "Logger.h"
 #include <string.h>
@@ -357,25 +354,12 @@ void TcpLayer::parseNextLayer()
 	uint16_t portDst = getDstPort();
 	uint16_t portSrc = getSrcPort();
 
-
-    //need http request
 	if (HttpMessage::isHttpPort(portDst) && HttpRequestFirstLine::parseMethod((char*)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
 		m_NextLayer = new HttpRequestLayer(payload, payloadLen, this, m_Packet);
-	//need http response
 	else if (HttpMessage::isHttpPort(portSrc) && HttpResponseFirstLine::parseStatusCode((char*)payload, payloadLen) != HttpResponseLayer::HttpStatusCodeUnknown)
 		m_NextLayer = new HttpResponseLayer(payload, payloadLen, this, m_Packet);
-	//need ssl
 	else if (SSLLayer::IsSSLMessage(portSrc, portDst, payload, payloadLen))
 		m_NextLayer = SSLLayer::createSSLMessage(payload, payloadLen, this, m_Packet);
-	//need bgp
-	else if (BgpLayer::isBgpPort(portSrc, portDst))
-		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
-    //need gtp
-	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
-		GtpV1Layer::isGTPv1(udpData, udpDataLen))
-		m_NextLayer = new GtpV1Layer(udpData, udpDataLen, this, m_Packet);
-
-
 	else if (SipLayer::isSipPort(portDst))
 	{
 		if (SipRequestFirstLine::parseMethod((char*)payload, payloadLen) != SipRequestLayer::SipMethodUnknown)
@@ -385,6 +369,8 @@ void TcpLayer::parseNextLayer()
 		else
 			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 	}
+	else if (BgpLayer::isBgpPort(portSrc, portDst))
+		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
 	else if (SSHLayer::isSSHPort(portSrc, portDst))
 		m_NextLayer = SSHLayer::createSSHMessage(payload, payloadLen, this, m_Packet);
 	else if (DnsLayer::isDataValid(payload, payloadLen, true) && (DnsLayer::isDnsPort(portDst) || DnsLayer::isDnsPort(portSrc)))
