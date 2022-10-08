@@ -110,22 +110,14 @@ void SSLLayer::parseNextLayer()
 std::string SSLHandshakeLayer::toString() const
 {
 	std::stringstream result;
-
-	//result << getRecordVersion().toString(true) << " Layer, Handshake:";
-	result << getRecordVersion().toString(true) << " Handshake: \t";
-
+	result << getRecordVersion().toString(true) << " Layer, Handshake:";
 	for(size_t i = 0; i < m_MessageList.size(); i++)
 	{
 		if (i == 0)
-			//result << " " << m_MessageList.at(i)->toString();
-			result <<  m_MessageList.at(i)->toString();
+			result << " " << m_MessageList.at(i)->toString();
 		else
-			//result << ", " << m_MessageList.at(i)->toString();
-			result << "\t" << m_MessageList.at(i)->toString();
+			result << ", " << m_MessageList.at(i)->toString();
 	}
-
-	result << '\n';
-
 	return result.str();
 }
 
@@ -166,9 +158,7 @@ SSLHandshakeMessage* SSLHandshakeLayer::getHandshakeMessageAt(int index) const
 std::string SSLChangeCipherSpecLayer::toString() const
 {
 	std::stringstream result;
-
-	//result << getRecordVersion().toString(true) << " Layer, Change Cipher Spec";
-    result << getRecordVersion().toString(true) << " Change Cipher Spec " << '\n';
+	result << getRecordVersion().toString(true) << " Layer, Change Cipher Spec";
 	return result.str();
 }
 
@@ -230,18 +220,12 @@ SSLAlertDescription SSLAlertLayer::getAlertDescription()
 std::string SSLAlertLayer::toString() const
 {
 	std::stringstream result;
-
-	//result << getRecordVersion().toString(true) << " Layer, ";
-    result << getRecordVersion().toString(true) << " ";
-
+	result << getRecordVersion().toString(true) << " Layer, ";
 	if (getAlertLevel() == SSL_ALERT_LEVEL_ENCRYPTED)
-		result << "Encrypted Alert ";
+		result << "Encrypted Alert";
 	else
 		//TODO: add alert level and description here
-		result << "Alert ";
-    
-	result << '\n';
-	
+		result << "Alert";
 	return  result.str();
 }
 
@@ -268,7 +252,7 @@ size_t SSLApplicationDataLayer::getEncryptedDataLen() const
 
 std::string SSLApplicationDataLayer::toString() const
 {
-	return getRecordVersion().toString(true) + " Application Data " + '\n';
+	return getRecordVersion().toString(true) + " Layer, Application Data";
 }
 
 } // namespace pcpp

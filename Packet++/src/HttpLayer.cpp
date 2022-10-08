@@ -113,10 +113,7 @@ HttpRequestLayer::~HttpRequestLayer()
 std::string HttpRequestLayer::toString() const
 {
 	static const int maxLengthToPrint = 120;
-
-	//std::string result = "HTTP request, ";
-	std::string result = "HTTP Request: \t";
-
+	std::string result = "HTTP request, ";
 	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
 	if (size <= 0)
 	{
@@ -141,8 +138,6 @@ std::string HttpRequestLayer::toString() const
 		firstLine[maxLengthToPrint] = 0;
 		result += std::string(firstLine);
 	}
-
-	result += '\n';        //Added============
 
 	return result;
 }
@@ -755,10 +750,7 @@ int HttpResponseLayer::getContentLength() const
 std::string HttpResponseLayer::toString() const
 {
 	static const int maxLengthToPrint = 120;
-
-	//std::string result = "HTTP response, ";
-	std::string result = "HTTP Response: \t";
-
+	std::string result = "HTTP response, ";
 	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
 	if (size <= maxLengthToPrint)
 	{
@@ -778,8 +770,6 @@ std::string HttpResponseLayer::toString() const
 		firstLine[maxLengthToPrint] = 0;
 		result += std::string(firstLine);
 	}
-    
-    result += '\n';    //Added====================
 
 	return result;
 }
