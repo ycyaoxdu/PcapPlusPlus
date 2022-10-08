@@ -281,6 +281,11 @@ namespace pcpp
 	 */
 	const ProtocolType FTP = 0x10000000000;
 
+		/**
+   	 * SCTP Protocol
+	 */
+	const ProtocolType SCTP=0x84;
+
 	/**
 	 * An enum representing OSI model layers
 	 */
