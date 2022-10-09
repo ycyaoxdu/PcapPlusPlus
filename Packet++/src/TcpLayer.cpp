@@ -360,6 +360,15 @@ void TcpLayer::parseNextLayer()
 		m_NextLayer = new HttpResponseLayer(payload, payloadLen, this, m_Packet);
 	else if (SSLLayer::IsSSLMessage(portSrc, portDst, payload, payloadLen))
 		m_NextLayer = SSLLayer::createSSLMessage(payload, payloadLen, this, m_Packet);
+	//need bgp
+	else if (BgpLayer::isBgpPort(portSrc, portDst))
+		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
+    //need gtp
+	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
+		GtpV1Layer::isGTPv1(payload, payloadLen))
+		m_NextLayer = new GtpV1Layer(payload, payloadLen, this, m_Packet);
+
+
 	else if (SipLayer::isSipPort(portDst))
 	{
 		if (SipRequestFirstLine::parseMethod((char*)payload, payloadLen) != SipRequestLayer::SipMethodUnknown)
