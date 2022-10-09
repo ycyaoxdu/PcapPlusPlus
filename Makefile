@@ -28,16 +28,11 @@ EXAMPLE_IP_DEFRAG    := Examples/IPDefragUtil
 EXAMPLE_TLS_FP       := Examples/TLSFingerprinting
 EXAMPLE_DPDK2        := Examples/DpdkBridge
 EXAMPLE_KNI_PONG     := Examples/KniPong
-
-EXAMPLE_UDP_REASM	 := Examples/UdpReassembly
-EXAMPLE_GRE_REASM	 := Examples/GreReassembly
-EXAMPLE_RIP_REASM	 := Examples/RipReassembly
-EXAMPLE_OSPF_REASM	 := Examples/OspfReassembly
-EXAMPLE_L2TP_REASM	 := Examples/L2tpReassembly
-EXAMPLE_ESP_REASM    := Examples/EspReassembly
-EXAMPLE_BGP_REASM    := Examples/BgpReassembly
-EXAMPLE_GTP_REASM    := Examples/GtpReassembly
-EXAMPLE_SCTP_REASM    := Examples/SctpReassembly
+EXAMPLE_UDP_REASM	:= Examples/UdpReassembly
+EXAMPLE_GRE_REASM	:= Examples/GreReassembly
+EXAMPLE_RIP_REASM	:= Examples/RipReassembly
+EXAMPLE_OSPF_REASM	:= Examples/OspfReassembly
+EXAMPLE_L2TP_REASM	:= Examples/L2tpReassembly
 
 
 UNAME := $(shell uname)
@@ -66,13 +61,8 @@ all: libs
 	@cd $(EXAMPLE_UDP_REASM)         && $(MAKE) UdpReassembly
 	@cd $(EXAMPLE_GRE_REASM)         && $(MAKE) GreReassembly
 	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) RipReassembly
-	@cd $(EXAMPLE_OSPF_REASM)        && $(MAKE) OspfReassembly
-	@cd $(EXAMPLE_L2TP_REASM)        && $(MAKE) L2tpReassembly
-	@cd $(EXAMPLE_ESP_REASM)         && $(MAKE) EspReassembly
-	@cd $(EXAMPLE_BGP_REASM)         && $(MAKE) BgpReassembly
-	@cd $(EXAMPLE_GTP_REASM)         && $(MAKE) GtpReassembly
-	@cd $(EXAMPLE_SCTP_REASM)         && $(MAKE) SctpReassembly
-  
+	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) OspfReassembly
+	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) L2tpReassembly
 
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) DpdkTrafficFilter
@@ -103,11 +93,6 @@ endif
 	$(CP) $(EXAMPLE_RIP_REASM)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_OSPF_REASM)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_L2TP_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_ESP_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_BGP_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_GTP_REASM)/Bin/* ./Dist/examples
-  $(CP) $(EXAMPLE_SCTP_REASM)/Bin/* ./Dist/examples
-
 
 ifdef USE_DPDK
 	$(CP) $(EXAMPLE_DPDK1)/Bin/* ./Dist/examples
@@ -170,10 +155,6 @@ clean:
 	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) clean
 	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) clean
 	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_ESP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_BGP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_GTP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_SCTP_REASM)         && $(MAKE) clean
 
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) clean

@@ -105,8 +105,6 @@ public:
 	 * is another BGP message. This method checks for remaining data and parses it as another BGP layer
 	 */
 	void parseNextLayer();
-    
-    void ToStructuredOutput(std::ostream &os) const;    //Added==============
 
 	std::string toString() const;
 
