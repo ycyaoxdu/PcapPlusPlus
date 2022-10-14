@@ -616,6 +616,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					// 	// drop packet
 					// 	break;
 					case pcpp::SCTP:
+					{
 					     //SCTP handle
 						 protoname = "sctp";
 						 pcpp::SctpLayer sctp(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
@@ -661,6 +662,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					   }
 
 						 break;
+					}
 				}
 			}
 
