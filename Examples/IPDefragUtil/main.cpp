@@ -6,12 +6,16 @@
 #include "L2tpLayer.h"
 #include "LRUList.h"
 #include "Packet.h"
+#include "HttpLyer.h"
 #include "PcapFileDevice.h"
 #include "PcapPlusPlusVersion.h"
 #include "ProtocolType.h"
 #include "Reassembly.h"
 #include "SystemUtils.h"
 #include "UdpLayer.h"
+#include "RipLayer.h"
+#include "SctpLayer.h"
+#include "GtpLayer.h"
 #include "getopt.h"
 #include <iostream>
 #include <map>
@@ -543,6 +547,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					// tcp handle
 					break;
 				case pcpp::UDP:
+				{
 					// udp handle
 					protoname = "udp";
 
@@ -580,14 +585,19 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					else if (nextLayer->getProtocol() == pcpp::RIP)
 					{
 						protoname = "rip";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::RipLayer rip(nextLayer->getData(), nextLayer->getDataLen(), &udp, result);
+						ReassembleMessage(&rip, TupleName, UserCookie, OnMessageReadyCallback);
 					}
 					else if (nextLayer->getProtocol() == pcpp::GTP)
 					{
 						protoname = "gtp";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 					}
 					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					{
-						// print & save
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						ReassembleMessage(&udp, TupleName, UserCookie, OnMessageReadyCallback);
 					}
 					else
 					{
@@ -595,6 +605,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					}
 
 					break;
+				}
 					// TODO: add SCTP in Packet++/header/ProtocolType.h, then uncomment the below 3 lines.
 					// case pcpp::SCTP :
 					// // sctp handle
@@ -604,6 +615,52 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					// default:
 					// 	// drop packet
 					// 	break;
+					case pcpp::SCTP:
+					     //SCTP handle
+						 protoname = "sctp";
+						 pcpp::SctpLayer sctp(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
+                         uint16_t PortSrc = sctp.getSrcPort();
+					     uint16_t PortDst = sctp.getDstPort();
+					     // next layer
+					    sctp.parseNextLayer();
+					    nextLayer = sctp.getNextLayer();
+					    if (nextLayer->getProtocol() == pcpp::GTPv1)
+						{
+							protoname = "gtp";
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							pcpp::GtpV1Layer gtp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						    ReassembleMessage(&gtp, TupleName, UserCookie, OnMessageReadyCallback);
+						}
+						else if (nextLayer->getProtocol() == pcpp::BGP)
+						{
+                            protoname = "bgp";
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							pcpp::BgpLayer bgp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						    ReassembleMessage(&bgp, TupleName, UserCookie, OnMessageReadyCallback);
+						}
+						else if (nextLayer->getProtocol() == pcpp::HTTPRequest)
+						{
+							protoname = "http";
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							pcpp::HttpRequestLayer http(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						    ReassembleMessage(&http, TupleName, UserCookie, OnMessageReadyCallback);
+                            
+						}
+						else if (nextLayer->getProtocol() == pcpp::SSL)
+						{
+							protoname = "ssl";
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							pcpp::SSLLayer ssl(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						    ReassembleMessage(&ssl, TupleName, UserCookie, OnMessageReadyCallback);
+                            
+						}
+					    else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+					   {
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						ReassembleMessage(&sctp, TupleName, UserCookie, OnMessageReadyCallback);
+					   }
+
+						 break;
 				}
 			}
 
