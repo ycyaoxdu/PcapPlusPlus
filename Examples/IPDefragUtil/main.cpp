@@ -625,19 +625,34 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					     // next layer
 					    sctp.parseNextLayer();
 					    nextLayer = sctp.getNextLayer();
-					   if (nextLayer->getProtocol() == pcpp::GTPv1)
+					    if (nextLayer->getProtocol() == pcpp::GTPv1)
 						{
 							protoname = "gtp";
 							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 							pcpp::GtpV1Layer gtp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							gtp.parseNextLayer();
+						    nextLayer = gtp.getNextLayer();
+                            if(nextLayer->getProtocol() == pcpp::IPv4)
+							{
+							   pcpp::IPv4Layer *ipv4Layer = result->getLayerOfType<pcpp::IPv4Layer>();
+                               IpSrc = ipv4Layer->getSrcIPAddress();
+					           IpDst = ipv4Layer->getDstIPAddress();
+							}
+							else if(nextLayer->getProtocol() == pcpp::IPv6)
+							{
+                               pcpp::IPv6Layer *ipv6Layer = result->getLayerOfType<pcpp::IPv6Layer>();
+                               IpSrc = ipv6Layer->getSrcIPAddress();
+					           IpDst = ipv6Layer->getDstIPAddress();
+							}
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						    ReassembleMessage(&gtp, TupleName, UserCookie, OnMessageReadyCallback);
 						}
 						else if (nextLayer->getProtocol() == pcpp::BGP)
 						{
-                                                        protoname = "bgp";
+                            protoname = "bgp";
 							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						        pcpp::BgpOpenMessageLayer bgp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
-						        ReassembleMessage(&bgp, TupleName, UserCookie, OnMessageReadyCallback);
+						    pcpp::BgpLayer *bgp = pcpp::BgpLayer::parseBgpLayer(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						    ReassembleMessage(&(*bgp), TupleName, UserCookie, OnMessageReadyCallback);
 						}
 						else if (nextLayer->getProtocol() == pcpp::HTTPRequest)
 						{
@@ -647,11 +662,19 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						    ReassembleMessage(&http, TupleName, UserCookie, OnMessageReadyCallback);
                             
 						}
+						else if(nextLayer->getProtocol() == pcpp::HTTPResponse)
+					    {
+						protoname = "http";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::HttpResponseLayer httpResponse(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						ReassembleMessage(&httpResponse, TupleName, UserCookie, OnMessageReadyCallback);
+						}
 						else if (nextLayer->getProtocol() == pcpp::SSL)
 						{
 							protoname = "ssl";
 							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-                                                        ReassembleMessage(&sctp, TupleName, UserCookie, OnMessageReadyCallback);
+							pcpp::SSLLayer* ssl = pcpp::SSLLayer::createSSLMessage(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							ReassembleMessage(&(*ssl), TupleName, UserCookie, OnMessageReadyCallback);
 						}
 					    else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					   {
