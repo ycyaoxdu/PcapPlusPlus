@@ -620,12 +620,12 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					     //SCTP handle
 						 protoname = "sctp";
 						 pcpp::SctpLayer sctp(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
-                         uint16_t PortSrc = sctp.getSrcPort();
+                                             uint16_t PortSrc = sctp.getSrcPort();
 					     uint16_t PortDst = sctp.getDstPort();
 					     // next layer
 					    sctp.parseNextLayer();
 					    nextLayer = sctp.getNextLayer();
-					    if (nextLayer->getProtocol() == pcpp::GTPv1)
+					   if (nextLayer->getProtocol() == pcpp::GTPv1)
 						{
 							protoname = "gtp";
 							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
@@ -634,10 +634,10 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						}
 						else if (nextLayer->getProtocol() == pcpp::BGP)
 						{
-                            protoname = "bgp";
+                                                        protoname = "bgp";
 							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-							pcpp::BgpLayer bgp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
-						    ReassembleMessage(&bgp, TupleName, UserCookie, OnMessageReadyCallback);
+						        pcpp::BgpOpenMessageLayer bgp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						        ReassembleMessage(&bgp, TupleName, UserCookie, OnMessageReadyCallback);
 						}
 						else if (nextLayer->getProtocol() == pcpp::HTTPRequest)
 						{
@@ -651,9 +651,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						{
 							protoname = "ssl";
 							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-							pcpp::SSLLayer ssl(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
-						    ReassembleMessage(&ssl, TupleName, UserCookie, OnMessageReadyCallback);
-                            
+                                                        ReassembleMessage(&sctp, TupleName, UserCookie, OnMessageReadyCallback);
 						}
 					    else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					   {
