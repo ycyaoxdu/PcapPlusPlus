@@ -103,6 +103,8 @@ enum IPProtocolTypes
 	PACKETPP_IPPROTO_DSTOPTS = 60,
 	/** OSPF */
 	PACKETPP_IPPROTO_OSPF = 89,
+	/** SCTP */
+	PACKETPP_IPPROTO_SCTP = 132,
 	/** Raw IP packets			*/
 	PACKETPP_IPPROTO_RAW = 255,
 	/** Maximum value */

@@ -2,8 +2,8 @@
 #define PACKETPP_RIP_LAYER
 
 #include <memory>
-#include <vector>
 #include <sstream>
+#include <vector>
 
 #include "Layer.h"
 
