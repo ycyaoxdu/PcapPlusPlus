@@ -161,7 +161,7 @@ class RipLayer : public Layer
 
 	OsiModelLayer getOsiModelLayer() const
 	{
-		return OsiModelApplicationLayer;
+		return OsiModelNetworkLayer;
 	}
 
   private:

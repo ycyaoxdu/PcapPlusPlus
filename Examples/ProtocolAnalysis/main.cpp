@@ -507,8 +507,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 				std::string TupleName = "";
 				// the protocol name of "current" layer
 				std::string protoname = "ip";
-				// ip
+				// define ip and port
 				pcpp::IPAddress IpSrc, IpDst;
+				uint16_t PortSrc, PortDst;
 
 				pcpp::Layer *ipLayer;
 
@@ -528,10 +529,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 				}
 
 				// parse next layer
+				// any unknow protocol is payload
 				ipLayer->parseNextLayer();
 				auto nextLayer = ipLayer->getNextLayer();
-				// TODO(ycyaoxdu)
-				// maybe interface here: handle, needs to be implement to handle packets for every submodules.
 				// code logic:
 				// if next layer is payload layer, just print all messages.
 				// else parseNextLayer and call next module
@@ -541,6 +541,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 				{
 				case pcpp::OSPF: {
 					// ospf handle
+					// ospf have no payload
 					protoname = "ospf";
 					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
 
@@ -549,11 +550,37 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 
 					break;
 				}
-				case pcpp::GRE: {
+				case pcpp::GRE:
+				case pcpp::GREv0:
+				case pcpp::GREv1: {
 					// gre handle
+					// ipv4 ipv6 ppp payload
 					protoname = "gre";
-					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-					// TODO(ycyaoxdu):add handle
+
+					auto gre = nextLayer;
+					gre->parseNextLayer();
+					nextLayer = gre->getNextLayer();
+
+					if (nextLayer->getProtocol() == pcpp::IPv4)
+					{
+						TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+						// TODO(ycyaoxdu): v4 handle
+					}
+					else if (nextLayer->getProtocol() == pcpp::IPv6)
+					{
+						TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+						// TODO(ycyaoxdu): v6 handle
+					}
+					else if (nextLayer->getProtocol() == pcpp::PPP_PPTP)
+					{
+						// TODO(ycyaoxdu): ppp handle
+					}
+					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+					{
+						TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+						ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+					}
+
 					break;
 				}
 				case pcpp::ESP: {
@@ -565,9 +592,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 
 					// ESP层的负载是被加密的，因此next layer都为generic payload
 					esp.parseNextLayer();
-					nextLayer = esp.getNextLayer();
-					// print & save
-					// TODO(ycyaoxdu): add print
+					auto payload = esp.getNextLayer();
+
+					ReassembleMessage(payload, TupleName, UserCookie, OnMessageReadyCallback);
 
 					break;
 				}
@@ -586,6 +613,8 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 
 					if (nextLayer->getProtocol() == pcpp::HTTPRequest)
 					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "http";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::HttpRequestLayer httpRequest(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
@@ -593,6 +622,8 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					}
 					else if (nextLayer->getProtocol() == pcpp::HTTPResponse)
 					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "http";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::HttpResponseLayer httpResponse(nextLayer->getData(), nextLayer->getDataLen(), &tcp,
@@ -601,6 +632,8 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					}
 					else if (nextLayer->getProtocol() == pcpp::SSL)
 					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "ssl";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::SSLLayer *ssl = pcpp::SSLLayer::createSSLMessage(nextLayer->getData(),
@@ -634,46 +667,52 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					}
 					else if (nextLayer->getProtocol() == pcpp::BGP)
 					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "bgp";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::BgpLayer *bgp =
 							pcpp::BgpLayer::parseBgpLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
 						ReassembleMessage(&(*bgp), TupleName, UserCookie, OnMessageReadyCallback);
-						/* 或者需要分类进行ReassembleMessage处理？
+
 						switch (bgp->getBgpMessageType())
 						{
-							case pcpp::BgpLayer::Open:
-							{
-								pcpp::BgpOpenMessageLayer bgpOpen = pcpp::BgpOpenMessageLayer(nextLayer->getData(),
-						nextLayer->getDataLen(), &tcp, result); ReassembleMessage(&bgpOpen, TupleName, UserCookie,
-						OnMessageReadyCallback);
-							}
-							case pcpp::BgpLayer::Update:
-							{
-								pcpp::BgpUpdateMessageLayer bgpUpdate=pcpp::BgpUpdateMessageLayer(nextLayer->getData(),
-						nextLayer->getDataLen(), &tcp, result); ReassembleMessage(&bgpUpdate, TupleName, UserCookie,
-						OnMessageReadyCallback);
-							}
-							case pcpp::BgpLayer::Notification:
-							{
-								pcpp::BgpNotificationMessageLayer bgpNotification =
-						pcpp::BgpNotificationMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
-								ReassembleMessage(&bgpNotification, TupleName, UserCookie, OnMessageReadyCallback);
-							}
-							case pcpp::BgpLayer::Keepalive:
-							{
-								pcpp::BgpKeepaliveMessageLayer bgpKA =
-						pcpp::BgpKeepaliveMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
-								ReassembleMessage(&bgpKA, TupleName, UserCookie, OnMessageReadyCallback);
-							}
-							case pcpp::BgpLayer::RouteRefresh:
-							{
-								pcpp::BgpRouteRefreshMessageLayer bgpRR =
-						pcpp::BgpRouteRefreshMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
-								ReassembleMessage(&bgpRR, TupleName, UserCookie, OnMessageReadyCallback);
-							}
+						case pcpp::BgpLayer::Open: {
+							pcpp::BgpOpenMessageLayer bgpOpen =
+								pcpp::BgpOpenMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
+							ReassembleMessage(&bgpOpen, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
 						}
-						*/
+						case pcpp::BgpLayer::Update: {
+							pcpp::BgpUpdateMessageLayer bgpUpdate = pcpp::BgpUpdateMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
+							ReassembleMessage(&bgpUpdate, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::Notification: {
+							pcpp::BgpNotificationMessageLayer bgpNotification = pcpp::BgpNotificationMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
+							ReassembleMessage(&bgpNotification, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::Keepalive: {
+							pcpp::BgpKeepaliveMessageLayer bgpKA = pcpp::BgpKeepaliveMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
+							ReassembleMessage(&bgpKA, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::RouteRefresh: {
+							pcpp::BgpRouteRefreshMessageLayer bgpRR = pcpp::BgpRouteRefreshMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
+							ReassembleMessage(&bgpRR, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						}
 
 						//与SSL类似，单个包中可能包含多条BGP消息，所以需要检查这个BGP包。
 						//如果存在，就创建一个新的BGP消息作为下一层，然后继续检查
@@ -705,35 +744,28 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						protoname = "gtp";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::GtpV1Layer gtp(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
-						// ReassembleMessage(&gtp, TupleName, UserCookie, OnMessageReadyCallback);
 
 						gtp.parseNextLayer();
 						nextLayer = gtp.getNextLayer();
 
 						if (nextLayer->getProtocol() == pcpp::IPv4)
 						{
-							// ipv4 handle
+							// TODO(ycyaoxdu): v4 handle
 						}
 						else if (nextLayer->getProtocol() == pcpp::IPv6)
 						{
-							// ipv6 handle
+							// TODO(ycyaoxdu): v6 handle
 						}
 						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 						{
-							// save & print
-						}
-						else
-						{
-							// discard packet
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
 						}
 					}
 					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					{
-						// print & save
-					}
-					else
-					{
-						// discard packet
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
 					}
 
 					break;
@@ -743,38 +775,47 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					protoname = "udp";
 
 					pcpp::UdpLayer udp(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
-					// pcpp::UdpLayer *udp = reinterpret_cast<pcpp::UdpLayer *>(nextLayer);
 
-					uint16_t PortSrc = udp.getSrcPort();
-					uint16_t PortDst = udp.getDstPort();
+					PortSrc = udp.getSrcPort();
+					PortDst = udp.getDstPort();
 
 					// next layer
 					udp.parseNextLayer();
 					nextLayer = udp.getNextLayer();
+
 					if (nextLayer->getProtocol() == pcpp::L2TP)
 					{
 						protoname = "l2tp";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 						pcpp::L2tpLayer l2tp(nextLayer->getData(), nextLayer->getDataLen(), &udp, result);
-						// pcpp::L2tpLayer *l2tp = reinterpret_cast<pcpp::L2tpLayer *>(nextLayer);
 
 						l2tp.parseNextLayer();
 						nextLayer = l2tp.getNextLayer();
-						if (nextLayer->getProtocol() == pcpp::PPP_PPTP)
-						{
-							pcpp::PPP_PPTPLayer ppp(nextLayer->getData(), nextLayer->getDataLen(), &l2tp, result);
-							// pcpp::PPP_PPTPLayer *ppp = reinterpret_cast<pcpp::PPP_PPTPLayer *>(nextLayer);
 
-							ReassembleMessage(&ppp, TupleName, UserCookie, OnMessageReadyCallback);
-						}
-						else
+						pcpp::PPP_PPTPLayer ppp(nextLayer->getData(), nextLayer->getDataLen(), &l2tp, result);
+
+						ppp.parseNextLayer();
+						nextLayer = ppp.getNextLayer();
+
+						// TODO(ycyaoxdu): handle here
+						if (nextLayer->getProtocol() == pcpp::IPv4)
 						{
-							// should have ppp protocol message, if not, discard
+							// handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::IPv6)
+						{
+							// handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+						{
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
 						}
 					}
 					else if (nextLayer->getProtocol() == pcpp::RIP)
 					{
+						// RIP have no next layer.
 						protoname = "rip";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::RipLayer rip(nextLayer->getData(), nextLayer->getDataLen(), &udp, result);
@@ -784,15 +825,29 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					{
 						protoname = "gtp";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::GtpV1Layer gtp(nextLayer->getData(), nextLayer->getDataLen(), &udp, result);
+
+						gtp.parseNextLayer();
+						nextLayer = gtp.getNextLayer();
+
+						if (nextLayer->getProtocol() == pcpp::IPv4)
+						{
+							// TODO(ycyaoxdu): v4 handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::IPv6)
+						{
+							// TODO(ycyaoxdu): v6 handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+						{
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+						}
 					}
 					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					{
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						ReassembleMessage(&udp, TupleName, UserCookie, OnMessageReadyCallback);
-					}
-					else
-					{
-						// discard packet
+						ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
 					}
 
 					break;
@@ -803,48 +858,25 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					pcpp::SctpLayer sctp(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
 					uint16_t PortSrc = sctp.getSrcPort();
 					uint16_t PortDst = sctp.getDstPort();
+
 					// next layer
 					sctp.parseNextLayer();
 					nextLayer = sctp.getNextLayer();
-					if (nextLayer->getProtocol() == pcpp::GTPv1)
+
+					if (nextLayer->getProtocol() == pcpp::HTTPRequest)
 					{
-						protoname = "gtp";
-						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						pcpp::GtpV1Layer gtp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
-						gtp.parseNextLayer();
-						nextLayer = gtp.getNextLayer();
-						if (nextLayer->getProtocol() == pcpp::IPv4)
-						{
-							pcpp::IPv4Layer *ipv4Layer = result->getLayerOfType<pcpp::IPv4Layer>();
-							IpSrc = ipv4Layer->getSrcIPAddress();
-							IpDst = ipv4Layer->getDstIPAddress();
-						}
-						else if (nextLayer->getProtocol() == pcpp::IPv6)
-						{
-							pcpp::IPv6Layer *ipv6Layer = result->getLayerOfType<pcpp::IPv6Layer>();
-							IpSrc = ipv6Layer->getSrcIPAddress();
-							IpDst = ipv6Layer->getDstIPAddress();
-						}
-						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						ReassembleMessage(&gtp, TupleName, UserCookie, OnMessageReadyCallback);
-					}
-					else if (nextLayer->getProtocol() == pcpp::BGP)
-					{
-						protoname = "bgp";
-						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						pcpp::BgpLayer *bgp =
-							pcpp::BgpLayer::parseBgpLayer(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
-						ReassembleMessage(&(*bgp), TupleName, UserCookie, OnMessageReadyCallback);
-					}
-					else if (nextLayer->getProtocol() == pcpp::HTTPRequest)
-					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "http";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						pcpp::HttpRequestLayer http(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
-						ReassembleMessage(&http, TupleName, UserCookie, OnMessageReadyCallback);
+						pcpp::HttpRequestLayer httpRequest(nextLayer->getData(), nextLayer->getDataLen(), &sctp,
+														   result);
+						ReassembleMessage(&httpRequest, TupleName, UserCookie, OnMessageReadyCallback);
 					}
 					else if (nextLayer->getProtocol() == pcpp::HTTPResponse)
 					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "http";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::HttpResponseLayer httpResponse(nextLayer->getData(), nextLayer->getDataLen(), &sctp,
@@ -853,25 +885,153 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					}
 					else if (nextLayer->getProtocol() == pcpp::SSL)
 					{
+						// TODO(ycyaoxdu): check toString()
+
 						protoname = "ssl";
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 						pcpp::SSLLayer *ssl = pcpp::SSLLayer::createSSLMessage(nextLayer->getData(),
 																			   nextLayer->getDataLen(), &sctp, result);
 						ReassembleMessage(&(*ssl), TupleName, UserCookie, OnMessageReadyCallback);
+
+						//单个包中可能包含多条SSL记录，所以需要检查这个SSL包。
+						//如果存在，就创建一个新的SSL记录，然后继续检查
+						//否则就退出
+
+						while (1)
+						{
+							size_t ssl_header_len = ssl->getHeaderLen();
+							size_t ssl_data_len = ssl->getDataLen();
+							uint8_t *ssl_data = ssl->getData();
+
+							ssl->parseNextLayer();
+							nextLayer = ssl->getNextLayer();
+
+							if (nextLayer == NULL) //该数据包中不再有SSL记录
+							{
+								break;
+							}
+							else //存在SSL记录
+							{
+								ssl = pcpp::SSLLayer::createSSLMessage(ssl_data + ssl_header_len,
+																	   ssl_data_len - ssl_header_len, &sctp, result);
+								ReassembleMessage(&(*ssl), TupleName, UserCookie, OnMessageReadyCallback);
+							}
+						}
+					}
+					else if (nextLayer->getProtocol() == pcpp::BGP)
+					{
+						// TODO(ycyaoxdu): check toString()
+
+						protoname = "bgp";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::BgpLayer *bgp =
+							pcpp::BgpLayer::parseBgpLayer(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+						ReassembleMessage(&(*bgp), TupleName, UserCookie, OnMessageReadyCallback);
+
+						switch (bgp->getBgpMessageType())
+						{
+						case pcpp::BgpLayer::Open: {
+							pcpp::BgpOpenMessageLayer bgpOpen =
+								pcpp::BgpOpenMessageLayer(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							ReassembleMessage(&bgpOpen, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::Update: {
+							pcpp::BgpUpdateMessageLayer bgpUpdate = pcpp::BgpUpdateMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							ReassembleMessage(&bgpUpdate, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::Notification: {
+							pcpp::BgpNotificationMessageLayer bgpNotification = pcpp::BgpNotificationMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							ReassembleMessage(&bgpNotification, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::Keepalive: {
+							pcpp::BgpKeepaliveMessageLayer bgpKA = pcpp::BgpKeepaliveMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							ReassembleMessage(&bgpKA, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						case pcpp::BgpLayer::RouteRefresh: {
+							pcpp::BgpRouteRefreshMessageLayer bgpRR = pcpp::BgpRouteRefreshMessageLayer(
+								nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+							ReassembleMessage(&bgpRR, TupleName, UserCookie, OnMessageReadyCallback);
+
+							break;
+						}
+						}
+
+						//与SSL类似，单个包中可能包含多条BGP消息，所以需要检查这个BGP包。
+						//如果存在，就创建一个新的BGP消息作为下一层，然后继续检查
+						//否则就退出
+
+						while (1)
+						{
+							size_t bgp_header_len = bgp->getHeaderLen();
+							size_t bgp_data_len = bgp->getDataLen();
+							uint8_t *bgp_data = bgp->getData();
+
+							bgp->parseNextLayer();
+							nextLayer = bgp->getNextLayer();
+
+							if (nextLayer == NULL) //该数据包中不再有BGP消息
+							{
+								break;
+							}
+							else //存在BGP消息
+							{
+								bgp = pcpp::BgpLayer::parseBgpLayer(bgp_data + bgp_header_len,
+																	bgp_data_len - bgp_header_len, &sctp, result);
+								ReassembleMessage(&(*bgp), TupleName, UserCookie, OnMessageReadyCallback);
+							}
+						}
+					}
+					else if (nextLayer->getProtocol() == pcpp::GTP)
+					{
+						protoname = "gtp";
+						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+						pcpp::GtpV1Layer gtp(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
+
+						gtp.parseNextLayer();
+						nextLayer = gtp.getNextLayer();
+
+						if (nextLayer->getProtocol() == pcpp::IPv4)
+						{
+							// TODO(ycyaoxdu): v4 handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::IPv6)
+						{
+							// TODO(ycyaoxdu): v6 handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+						{
+							TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+							ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+						}
 					}
 					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					{
 						TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-						ReassembleMessage(&sctp, TupleName, UserCookie, OnMessageReadyCallback);
+						ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
 					}
 
 					break;
 				}
 				case pcpp::GenericPayload: {
-					// TODO(ycyaoxdu):add handle here
+					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+					ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+
 					break;
 				}
-				default: { // drop packet
+				default: {
+					// do nothing, actually every unknow packet is recognized as payload. No packet will go into this
+					// branch.
 					break;
 				}
 				}

@@ -686,32 +686,6 @@ size_t GtpV1Layer::getHeaderLen() const
 	return res;
 }
 
-/* std::string GtpV1Layer::toString() const
-{
-	std::string res = "GTP v1 Layer";
-
-	gtpv1_header* header = getHeader();
-	if (header != NULL)
-	{
-		std::stringstream teidStream;
-		teidStream << be32toh(header->teid);
-
-		std::string gtpu_gtpc;
-		if (header->messageType == PCPP_GTP_V1_GPDU_MESSAGE_TYPE)
-		{
-			gtpu_gtpc = "GTP-U message";
-		}
-		else
-		{
-			gtpu_gtpc = "GTP-C message: " + getMessageTypeAsString();
-		}
-
-		res += ", " + gtpu_gtpc + ", TEID: " + teidStream.str();
-	}
-
-	return res;
-} */
-
 void GtpV1Layer::computeCalculateFields()
 {
 	gtpv1_header* hdr = getHeader();

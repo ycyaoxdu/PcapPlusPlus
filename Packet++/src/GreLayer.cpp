@@ -215,28 +215,8 @@ void GreLayer::parseNextLayer()
 						  ? static_cast<Layer *>(new IPv6Layer(payload, payloadLen, this, m_Packet))
 						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
 		break;
-	case PCPP_ETHERTYPE_VLAN:
-		m_NextLayer = new VlanLayer(payload, payloadLen, this, m_Packet);
-		break;
-	case PCPP_ETHERTYPE_MPLS:
-		m_NextLayer = new MplsLayer(payload, payloadLen, this, m_Packet);
-		break;
 	case PCPP_ETHERTYPE_PPP:
 		m_NextLayer = new PPP_PPTPLayer(payload, payloadLen, this, m_Packet);
-		break;
-	case PCPP_ETHERTYPE_ETHBRIDGE:
-		if (EthLayer::isDataValid(payload, payloadLen))
-		{
-			m_NextLayer = new EthLayer(payload, payloadLen, this, m_Packet);
-		}
-		else if (EthDot3Layer::isDataValid(payload, payloadLen))
-		{
-			m_NextLayer = new EthDot3Layer(payload, payloadLen, this, m_Packet);
-		}
-		else
-		{
-			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
-		}
 		break;
 	default:
 		m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);

@@ -122,12 +122,10 @@ void RipLayer::computeCalculateFields()
 
 std::string RipLayer::toString() const
 {
-	std::ostringstream commandStream;
-	commandStream << getCommand();
-	std::ostringstream versionStream;
-	versionStream << getVersion();
-
-	return "RIP Layer, command: " + commandStream.str() + ", version: " + versionStream.str();
+	
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 } // namespace pcpp
