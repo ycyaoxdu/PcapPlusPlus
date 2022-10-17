@@ -154,7 +154,7 @@ class Logger
 		PcapLogModuleDpdkDevice, ///< DpdkDevice module (Pcap++)
 		PcapLogModuleKniDevice, ///< KniDevice module (Pcap++)
 		NetworkUtils, ///< NetworkUtils module (Pcap++)
-		NumOfLogModules
+		NumOfLogModules,
 		Error, ///< Error log level
 		Info,  ///< Info log level
 		Debug  ///< Debug log level
