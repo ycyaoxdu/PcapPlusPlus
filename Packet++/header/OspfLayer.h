@@ -168,7 +168,7 @@ class RouterLsaContent
 	uint8_t tos_num;
 	// 和指定TOS值相关联的度量。
 	uint16_t tos0_metric;
-	std::vector<std::vector<uint16_t> > toses;
+	std::vector<std::vector<uint16_t>> toses;
 };
 
 class RouterLsa : public Lsa
@@ -187,7 +187,7 @@ class RouterLsa : public Lsa
 	uint16_t options;
 	// LSA中所描述的链路信息的数量，包括路由器上处于某区域中的所有链路和接口。
 	uint16_t link_num;
-	std::vector<std::shared_ptr<RouterLsaContent> > contents;
+	std::vector<std::shared_ptr<RouterLsaContent>> contents;
 };
 
 //----------------------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ class LsuContent : public OspfContent
   private:
 	// LSA的数量。
 	uint32_t lsa_num;
-	std::vector<std::shared_ptr<Lsa> > lsas;
+	std::vector<std::shared_ptr<Lsa>> lsas;
 };
 
 //----------------------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ class OspfLayer : public Layer
 	}
 
   private:
-	ospfhdr* m_header;
+	ospfhdr *m_header;
 	uint8_t m_type;
 	uint16_t m_len;
 	uint32_t m_src_router;
