@@ -21,7 +21,7 @@ CUR_TARGET := $(notdir $(shell pwd))
 
 .SILENT:
 
-all: dependents TLSFingerprinting
+all: dependents ProtocolAnalysis
 
 start:
 	@echo ==== Building target: $(CUR_TARGET) ====
@@ -33,8 +33,8 @@ create-directories:
 dependents:
 	@cd $(PCAPPLUSPLUS_HOME) && $(MAKE) libs
 
-TLSFingerprinting: start create-directories $(OBJS_FILENAMES)
-	@$(CXX) $(PCAPPP_BUILD_FLAGS) $(PCAPPP_LIBS_DIR) -o "./Bin/TLSFingerprinting$(BIN_EXT)" $(OBJS_FILENAMES) $(PCAPPP_LIBS)
+ProtocolAnalysis: start create-directories $(OBJS_FILENAMES)
+	@$(CXX) $(PCAPPP_BUILD_FLAGS) $(PCAPPP_LIBS_DIR) -o "./Bin/ProtocolAnalysis$(BIN_EXT)" $(OBJS_FILENAMES) $(PCAPPP_LIBS)
 	@$(PCAPPP_POST_BUILD)
 	@echo Finished successfully building: $(CUR_TARGET)
 	@echo ' '

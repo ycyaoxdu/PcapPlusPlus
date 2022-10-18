@@ -10,60 +10,27 @@ PCAPPP_HOME          := Pcap++
 PACKETPP_TEST        := Tests/Packet++Test
 PCAPPP_TEST          := Tests/Pcap++Test
 FUZZERS_HOME         := Tests/Fuzzers
-EXAMPLE_ARPSPOOF     := Examples/ArpSpoofing
-EXAMPLE_ARPING       := Examples/Arping
 EXAMPLE_DPDK1        := Examples/DpdkExample-FilterTraffic
-EXAMPLE_DNSSPOOF     := Examples/DnsSpoofing
-EXAMPLE_DNSRESOLVER  := Examples/DNSResolver
-EXAMPLE_HTTPANALYZE  := Examples/HttpAnalyzer
 EXAMPLE_PF_RING1     := Examples/PfRingExample-FilterTraffic
-EXAMPLE_PCAP_PRINT   := Examples/PcapPrinter
-EXAMPLE_SSLANALYZER  := Examples/SSLAnalyzer
-EXAMPLE_PCAPSPLITTER := Examples/PcapSplitter
-EXAMPLE_PCAPSEARCH   := Examples/PcapSearch
-EXAMPLE_ICMP_FT      := Examples/IcmpFileTransfer
-EXAMPLE_TCP_REASM    := Examples/TcpReassembly
-EXAMPLE_IP_FRAG      := Examples/IPFragUtil
-EXAMPLE_IP_DEFRAG    := Examples/IPDefragUtil
-EXAMPLE_TLS_FP       := Examples/TLSFingerprinting
+EXAMPLE_PROTOCOL_ANALYSIS    := Examples/ProtocolAnalysis
 EXAMPLE_DPDK2        := Examples/DpdkBridge
 EXAMPLE_KNI_PONG     := Examples/KniPong
-EXAMPLE_UDP_REASM	:= Examples/UdpReassembly
-EXAMPLE_GRE_REASM	:= Examples/GreReassembly
-EXAMPLE_RIP_REASM	:= Examples/RipReassembly
-EXAMPLE_OSPF_REASM	:= Examples/OspfReassembly
-EXAMPLE_L2TP_REASM	:= Examples/L2tpReassembly
+EXAMPLE_PCAP_PRINT   := Examples/PcapPrinter
+EXAMPLE_PCAPSPLITTER := Examples/PcapSplitter
+EXAMPLE_PCAPSEARCH   := Examples/PcapSearch
 
 
 UNAME := $(shell uname)
-
 
 .SILENT:
 
 all: libs
 	@cd $(PACKETPP_TEST)             && $(MAKE) Packet++Test
 	@cd $(PCAPPP_TEST)               && $(MAKE) Pcap++Test
-	@cd $(EXAMPLE_ARPSPOOF)          && $(MAKE) ArpSpoofing
-	@cd $(EXAMPLE_ARPING)            && $(MAKE) Arping
-	@cd $(EXAMPLE_DNSSPOOF)          && $(MAKE) DnsSpoofing
-	@cd $(EXAMPLE_DNSRESOLVER)       && $(MAKE) DNSResolver
-	@cd $(EXAMPLE_HTTPANALYZE)       && $(MAKE) HttpAnalyzer
+	@cd $(EXAMPLE_PROTOCOL_ANALYSIS)         && $(MAKE) ProtocolAnalysis
 	@cd $(EXAMPLE_PCAP_PRINT)        && $(MAKE) PcapPrinter
-	@cd $(EXAMPLE_SSLANALYZER)       && $(MAKE) SSLAnalyzer
 	@cd $(EXAMPLE_PCAPSPLITTER)      && $(MAKE) PcapSplitter
 	@cd $(EXAMPLE_PCAPSEARCH)        && $(MAKE) PcapSearch
-	@cd $(EXAMPLE_ICMP_FT)           && $(MAKE) IcmpFileTransfer-pitcher && $(MAKE) IcmpFileTransfer-catcher
-	@cd $(EXAMPLE_TCP_REASM)         && $(MAKE) TcpReassembly
-	@cd $(EXAMPLE_IP_FRAG)           && $(MAKE) IPFragUtil
-	@cd $(EXAMPLE_IP_DEFRAG)         && $(MAKE) IPDefragUtil
-	@cd $(EXAMPLE_TLS_FP)            && $(MAKE) TLSFingerprinting
-
-	@cd $(EXAMPLE_UDP_REASM)         && $(MAKE) UdpReassembly
-	@cd $(EXAMPLE_GRE_REASM)         && $(MAKE) GreReassembly
-	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) RipReassembly
-	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) OspfReassembly
-	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) L2tpReassembly
-
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) DpdkTrafficFilter
 	@cd $(EXAMPLE_DPDK2)             && $(MAKE) DpdkBridge
@@ -72,28 +39,12 @@ endif
 ifdef PF_RING_HOME
 	@cd $(EXAMPLE_PF_RING1)          && $(MAKE) PfRingTrafficFilter
 endif
+
 	@$(MKDIR) -p Dist/examples
-	$(CP) $(EXAMPLE_ARPSPOOF)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_ARPING)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_DNSSPOOF)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_DNSRESOLVER)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_HTTPANALYZE)/Bin/* ./Dist/examples
+	$(CP) $(EXAMPLE_PROTOCOL_ANALYSIS)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_PCAP_PRINT)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_SSLANALYZER)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_PCAPSPLITTER)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_PCAPSEARCH)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_ICMP_FT)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_TCP_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_IP_FRAG)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_IP_DEFRAG)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_TLS_FP)/Bin/* ./Dist/examples
-
-	$(CP) $(EXAMPLE_UDP_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_GRE_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_RIP_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_OSPF_REASM)/Bin/* ./Dist/examples
-	$(CP) $(EXAMPLE_L2TP_REASM)/Bin/* ./Dist/examples
-
 ifdef USE_DPDK
 	$(CP) $(EXAMPLE_DPDK1)/Bin/* ./Dist/examples
 	$(CP) $(EXAMPLE_DPDK2)/Bin/* ./Dist/examples
@@ -134,28 +85,11 @@ clean:
 	@cd $(PCAPPP_HOME)               && $(MAKE) clean
 	@cd $(PACKETPP_TEST)             && $(MAKE) clean
 	@cd $(PCAPPP_TEST)               && $(MAKE) clean
-	@cd $(EXAMPLE_ARPSPOOF)          && $(MAKE) clean
-	@cd $(EXAMPLE_ARPING)            && $(MAKE) clean
-	@cd $(EXAMPLE_DNSSPOOF)          && $(MAKE) clean
-	@cd $(EXAMPLE_DNSRESOLVER)       && $(MAKE) clean
-	@cd $(EXAMPLE_HTTPANALYZE)       && $(MAKE) clean
+	@cd $(EXAMPLE_PROTOCOL_ANALYSIS)         && $(MAKE) clean
+	@cd $(FUZZERS_HOME)              && $(MAKE) clean
 	@cd $(EXAMPLE_PCAP_PRINT)        && $(MAKE) clean
-	@cd $(EXAMPLE_SSLANALYZER)       && $(MAKE) clean
 	@cd $(EXAMPLE_PCAPSPLITTER)      && $(MAKE) clean
 	@cd $(EXAMPLE_PCAPSEARCH)        && $(MAKE) clean
-	@cd $(EXAMPLE_ICMP_FT)           && $(MAKE) clean
-	@cd $(EXAMPLE_TCP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_IP_FRAG)           && $(MAKE) clean
-	@cd $(EXAMPLE_IP_DEFRAG)         && $(MAKE) clean
-	@cd $(EXAMPLE_TLS_FP)            && $(MAKE) clean
-	@cd $(FUZZERS_HOME)              && $(MAKE) clean
-
-	@cd $(EXAMPLE_UDP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_GRE_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_RIP_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_OSPF_REASM)         && $(MAKE) clean
-	@cd $(EXAMPLE_L2TP_REASM)         && $(MAKE) clean
-
 ifdef USE_DPDK
 	@cd $(EXAMPLE_DPDK1)             && $(MAKE) clean
 	@cd $(EXAMPLE_DPDK2)             && $(MAKE) clean

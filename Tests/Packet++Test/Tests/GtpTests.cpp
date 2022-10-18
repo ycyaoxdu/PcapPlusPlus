@@ -1,15 +1,13 @@
 #include "../TestDefinition.h"
 #include "../Utils/TestUtils.h"
 #include "EndianPortable.h"
-#include "Packet.h"
 #include "EthLayer.h"
+#include "GtpLayer.h"
 #include "IPv4Layer.h"
 #include "IPv6Layer.h"
-#include "GtpLayer.h"
-#include "UdpLayer.h"
-#include "IcmpLayer.h"
+#include "Packet.h"
 #include "SystemUtils.h"
-
+#include "UdpLayer.h"
 
 PTF_TEST_CASE(GtpLayerParsingTest)
 {
@@ -26,11 +24,10 @@ PTF_TEST_CASE(GtpLayerParsingTest)
 	pcpp::Packet gtpPacket3(&rawPacket3);
 	pcpp::Packet gtpPacket4(&rawPacket4);
 
-
 	// GTP-U packet 1
 	PTF_ASSERT_TRUE(gtpPacket1.isPacketOfType(pcpp::GTPv1));
 	PTF_ASSERT_TRUE(gtpPacket1.isPacketOfType(pcpp::GTP));
-	pcpp::GtpV1Layer* gtpLayer = gtpPacket1.getLayerOfType<pcpp::GtpV1Layer>();
+	pcpp::GtpV1Layer *gtpLayer = gtpPacket1.getLayerOfType<pcpp::GtpV1Layer>();
 	PTF_ASSERT_NOT_NULL(gtpLayer);
 
 	PTF_ASSERT_NOT_NULL(gtpLayer->getHeader());
@@ -57,15 +54,12 @@ PTF_TEST_CASE(GtpLayerParsingTest)
 
 	PTF_ASSERT_NOT_NULL(gtpLayer->getNextLayer());
 	PTF_ASSERT_EQUAL(gtpLayer->getNextLayer()->getProtocol(), pcpp::IPv4, enum);
-	pcpp::IPv4Layer* ip4Layer = dynamic_cast<pcpp::IPv4Layer*>(gtpLayer->getNextLayer());
+	pcpp::IPv4Layer *ip4Layer = dynamic_cast<pcpp::IPv4Layer *>(gtpLayer->getNextLayer());
 	PTF_ASSERT_EQUAL(ip4Layer->getSrcIPAddress().toString(), "202.11.40.158");
 	PTF_ASSERT_NOT_NULL(ip4Layer->getNextLayer());
-	PTF_ASSERT_EQUAL(ip4Layer->getNextLayer()->getProtocol(), pcpp::ICMP, enum);
 
 	PTF_ASSERT_FALSE(gtpLayer->isGTPCMessage());
 	PTF_ASSERT_TRUE(gtpLayer->isGTPUMessage());
-
-
 
 	// GTP-U packet 2 (with GTP header extension)
 	gtpLayer = gtpPacket2.getLayerOfType<pcpp::GtpV1Layer>();
@@ -100,15 +94,13 @@ PTF_TEST_CASE(GtpLayerParsingTest)
 
 	PTF_ASSERT_NOT_NULL(gtpLayer->getNextLayer());
 	PTF_ASSERT_EQUAL(gtpLayer->getNextLayer()->getProtocol(), pcpp::IPv4, enum);
-	ip4Layer = dynamic_cast<pcpp::IPv4Layer*>(gtpLayer->getNextLayer());
+	ip4Layer = dynamic_cast<pcpp::IPv4Layer *>(gtpLayer->getNextLayer());
 	PTF_ASSERT_EQUAL(ip4Layer->getDstIPAddress().toString(), "10.155.186.57");
 	PTF_ASSERT_NOT_NULL(ip4Layer->getNextLayer());
 	PTF_ASSERT_EQUAL(ip4Layer->getNextLayer()->getProtocol(), pcpp::TCP, enum);
 
 	PTF_ASSERT_FALSE(gtpLayer->isGTPCMessage());
 	PTF_ASSERT_TRUE(gtpLayer->isGTPUMessage());
-
-
 
 	// GTP-U IPv6 packet
 	gtpLayer = gtpPacket4.getLayerOfType<pcpp::GtpV1Layer>();
@@ -129,15 +121,13 @@ PTF_TEST_CASE(GtpLayerParsingTest)
 
 	PTF_ASSERT_NOT_NULL(gtpLayer->getNextLayer());
 	PTF_ASSERT_EQUAL(gtpLayer->getNextLayer()->getProtocol(), pcpp::IPv6, enum);
-	pcpp::IPv6Layer* ip6Layer = dynamic_cast<pcpp::IPv6Layer*>(gtpLayer->getNextLayer());
+	pcpp::IPv6Layer *ip6Layer = dynamic_cast<pcpp::IPv6Layer *>(gtpLayer->getNextLayer());
 	PTF_ASSERT_EQUAL(ip6Layer->getSrcIPAddress(), pcpp::IPv6Address("2001:507:0:1:200:8600:0:2"));
 	PTF_ASSERT_NOT_NULL(ip6Layer->getNextLayer());
 	PTF_ASSERT_EQUAL(ip6Layer->getNextLayer()->getProtocol(), pcpp::UDP, enum);
 
 	PTF_ASSERT_FALSE(gtpLayer->isGTPCMessage());
 	PTF_ASSERT_TRUE(gtpLayer->isGTPUMessage());
-
-
 
 	// GTP-C packet
 	PTF_ASSERT_TRUE(gtpPacket3.isPacketOfType(pcpp::GTP));
@@ -169,8 +159,6 @@ PTF_TEST_CASE(GtpLayerParsingTest)
 	PTF_ASSERT_FALSE(gtpLayer->isGTPUMessage());
 } // GtpLayerParsingTest
 
-
-
 PTF_TEST_CASE(GtpLayerCreationTest)
 {
 	timeval time;
@@ -195,39 +183,39 @@ PTF_TEST_CASE(GtpLayerCreationTest)
 	pcpp::GtpV1Layer gtpLayer(pcpp::GtpV1_GPDU, 1, true, 10461, false, 0);
 	PTF_ASSERT_TRUE(newGtpPacket.addLayer(&gtpLayer));
 
-	pcpp::IPv4Layer ip4Layer2(*gtpPacket1.getNextLayerOfType<pcpp::IPv4Layer>(gtpPacket1.getLayerOfType<pcpp::UdpLayer>()));
+	pcpp::IPv4Layer ip4Layer2(
+		*gtpPacket1.getNextLayerOfType<pcpp::IPv4Layer>(gtpPacket1.getLayerOfType<pcpp::UdpLayer>()));
 	PTF_ASSERT_TRUE(newGtpPacket.addLayer(&ip4Layer2));
-
-	pcpp::IcmpLayer icmpLayer(*gtpPacket1.getLayerOfType<pcpp::IcmpLayer>());
-	PTF_ASSERT_TRUE(newGtpPacket.addLayer(&icmpLayer));
 
 	newGtpPacket.computeCalculateFields();
 
 	PTF_ASSERT_EQUAL(bufferLength1, newGtpPacket.getRawPacket()->getRawDataLen());
-	PTF_ASSERT_BUF_COMPARE(newGtpPacket.getRawPacket()->getRawData(), buffer1, newGtpPacket.getRawPacket()->getRawDataLen());
+	PTF_ASSERT_BUF_COMPARE(newGtpPacket.getRawPacket()->getRawData(), buffer1,
+						   newGtpPacket.getRawPacket()->getRawDataLen());
 
-	pcpp::GtpV1Layer* newGtpLayer = newGtpPacket.getLayerOfType<pcpp::GtpV1Layer>();
+	pcpp::GtpV1Layer *newGtpLayer = newGtpPacket.getLayerOfType<pcpp::GtpV1Layer>();
 
 	pcpp::GtpV1Layer::GtpExtension newExt1 = newGtpLayer->addExtension(0xc0, 2308);
 	PTF_ASSERT_FALSE(newExt1.isNull());
 	PTF_ASSERT_EQUAL(newExt1.getExtensionType(), 0xc0);
-	PTF_ASSERT_EQUAL(newExt1.getTotalLength(), 4*sizeof(uint8_t));
-	PTF_ASSERT_EQUAL(newExt1.getContentLength(), 2*sizeof(uint8_t));
-	uint16_t* content = (uint16_t*)newExt1.getContent();
+	PTF_ASSERT_EQUAL(newExt1.getTotalLength(), 4 * sizeof(uint8_t));
+	PTF_ASSERT_EQUAL(newExt1.getContentLength(), 2 * sizeof(uint8_t));
+	uint16_t *content = (uint16_t *)newExt1.getContent();
 	PTF_ASSERT_EQUAL(be16toh(content[0]), 2308);
 	PTF_ASSERT_TRUE(newExt1.getNextExtension().isNull());
 
 	newGtpPacket.computeCalculateFields();
 
 	PTF_ASSERT_EQUAL(bufferLength2, newGtpPacket.getRawPacket()->getRawDataLen());
-	PTF_ASSERT_BUF_COMPARE(newGtpPacket.getRawPacket()->getRawData(), buffer2, newGtpPacket.getRawPacket()->getRawDataLen());
+	PTF_ASSERT_BUF_COMPARE(newGtpPacket.getRawPacket()->getRawData(), buffer2,
+						   newGtpPacket.getRawPacket()->getRawDataLen());
 
 	pcpp::GtpV1Layer::GtpExtension newExt2 = newGtpLayer->addExtension(0x40, 1308);
 	PTF_ASSERT_FALSE(newExt2.isNull());
 	PTF_ASSERT_EQUAL(newExt2.getExtensionType(), 0x40);
-	PTF_ASSERT_EQUAL(newExt2.getTotalLength(), 4*sizeof(uint8_t));
-	PTF_ASSERT_EQUAL(newExt2.getContentLength(), 2*sizeof(uint8_t));
-	content = (uint16_t*)newExt2.getContent();
+	PTF_ASSERT_EQUAL(newExt2.getTotalLength(), 4 * sizeof(uint8_t));
+	PTF_ASSERT_EQUAL(newExt2.getContentLength(), 2 * sizeof(uint8_t));
+	content = (uint16_t *)newExt2.getContent();
 	PTF_ASSERT_EQUAL(be16toh(content[0]), 1308);
 	PTF_ASSERT_TRUE(newExt2.getNextExtension().isNull());
 
@@ -238,10 +226,9 @@ PTF_TEST_CASE(GtpLayerCreationTest)
 	PTF_ASSERT_EQUAL(newGtpLayer->getNextExtension().getNextExtensionHeaderType(), 0x40);
 
 	PTF_ASSERT_EQUAL(bufferLength3, newGtpPacket.getRawPacket()->getRawDataLen());
-	PTF_ASSERT_BUF_COMPARE(newGtpPacket.getRawPacket()->getRawData(), buffer3, newGtpPacket.getRawPacket()->getRawDataLen());
+	PTF_ASSERT_BUF_COMPARE(newGtpPacket.getRawPacket()->getRawData(), buffer3,
+						   newGtpPacket.getRawPacket()->getRawDataLen());
 } // GtpLayerCreationTest
-
-
 
 PTF_TEST_CASE(GtpLayerEditTest)
 {
@@ -255,10 +242,10 @@ PTF_TEST_CASE(GtpLayerEditTest)
 
 	PTF_ASSERT_TRUE(gtpPacket1.isPacketOfType(pcpp::GTP));
 	PTF_ASSERT_TRUE(gtpPacket1.isPacketOfType(pcpp::GTPv1));
-	pcpp::GtpV1Layer* gtpLayer = gtpPacket1.getLayerOfType<pcpp::GtpV1Layer>();
+	pcpp::GtpV1Layer *gtpLayer = gtpPacket1.getLayerOfType<pcpp::GtpV1Layer>();
 	PTF_ASSERT_NOT_NULL(gtpLayer);
 
-	pcpp::gtpv1_header* gtpHeader = gtpLayer->getHeader();
+	pcpp::gtpv1_header *gtpHeader = gtpLayer->getHeader();
 	PTF_ASSERT_NOT_NULL(gtpHeader);
 
 	gtpHeader->teid = htobe32(10000);
@@ -281,7 +268,7 @@ PTF_TEST_CASE(GtpLayerEditTest)
 
 	pcpp::GtpV1Layer::GtpExtension gtpExtension = gtpLayer->getNextExtension();
 	PTF_ASSERT_FALSE(gtpExtension.isNull());
-	uint16_t* extContent = (uint16_t*)gtpExtension.getContent();
+	uint16_t *extContent = (uint16_t *)gtpExtension.getContent();
 	PTF_ASSERT_EQUAL(be16toh(extContent[0]), 1000);
 
 	gtpHeader = gtpLayer->getHeader();
@@ -290,7 +277,8 @@ PTF_TEST_CASE(GtpLayerEditTest)
 	gtpPacket1.computeCalculateFields();
 
 	PTF_ASSERT_EQUAL(bufferLength2, gtpPacket1.getRawPacket()->getRawDataLen());
-	PTF_ASSERT_BUF_COMPARE(gtpPacket1.getRawPacket()->getRawData(), buffer2, gtpPacket1.getRawPacket()->getRawDataLen());
+	PTF_ASSERT_BUF_COMPARE(gtpPacket1.getRawPacket()->getRawData(), buffer2,
+						   gtpPacket1.getRawPacket()->getRawDataLen());
 
-	delete [] buffer2;
+	delete[] buffer2;
 } // GtpLayerEditTest

@@ -229,7 +229,7 @@ class IPv6Layer : public Layer, public IPLayer
 	 * - ip6_hdr#payloadLength = size of payload (all data minus header size)
 	 * - ip6_hdr#ipVersion = 6
 	 * - ip6_hdr#nextHeader = calculated if next layer is known: ::PACKETPP_IPPROTO_TCP for TCP, ::PACKETPP_IPPROTO_UDP
-	 * for UDP, ::PACKETPP_IPPROTO_ICMP for ICMP
+	 *
 	 */
 	void computeCalculateFields();
 

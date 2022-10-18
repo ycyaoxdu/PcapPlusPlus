@@ -92,11 +92,6 @@ const ProtocolType SCTP = 0x84;
 const ProtocolType VLAN = 0x100;
 
 /**
- * ICMP protocol
- */
-const ProtocolType ICMP = 0x200;
-
-/**
  * RIP protocol
  */
 const ProtocolType RIP = 0x208; // 0x208 = 520(the port RIP use)
@@ -165,26 +160,6 @@ const ProtocolType DHCP = 0x80000;
  * Null/Loopback protocol
  */
 const ProtocolType NULL_LOOPBACK = 0x100000;
-
-/**
- * IGMP protocol
- */
-const ProtocolType IGMP = 0xE00000;
-
-/**
- * IGMPv1 protocol
- */
-const ProtocolType IGMPv1 = 0x200000;
-
-/**
- * IGMPv2 protocol
- */
-const ProtocolType IGMPv2 = 0x400000;
-
-/**
- * IGMPv3 protocol
- */
-const ProtocolType IGMPv3 = 0x800000;
 
 /**
  * Generic payload (no specific protocol)

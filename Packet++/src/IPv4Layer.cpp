@@ -5,18 +5,16 @@
 #include "GreLayer.h"
 #include "IPSecLayer.h"
 #include "IPv6Layer.h"
-#include "IcmpLayer.h"
-#include "IgmpLayer.h"
 #include "Logger.h"
 #include "OspfLayer.h"
 #include "PacketUtils.h"
 #include "PayloadLayer.h"
+#include "SctpLayer.h"
 #include "TcpLayer.h"
 #include "UdpLayer.h"
-#include "SctpLayer.h"
+#include <bitset>
 #include <sstream>
 #include <string.h>
-#include <bitset>
 
 namespace pcpp
 {
@@ -253,8 +251,6 @@ void IPv4Layer::parseNextLayer()
 	iphdr *ipHdr = getIPv4Header();
 
 	ProtocolType greVer = UnknownProtocol;
-	ProtocolType igmpVer = UnknownProtocol;
-	bool igmpQuery = false;
 
 	uint8_t ipVersion = 0;
 
@@ -280,11 +276,6 @@ void IPv4Layer::parseNextLayer()
 						  ? static_cast<Layer *>(new TcpLayer(payload, payloadLen, this, m_Packet))
 						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
 		break;
-	case PACKETPP_IPPROTO_ICMP:
-		m_NextLayer = IcmpLayer::isDataValid(payload, payloadLen)
-						  ? static_cast<Layer *>(new IcmpLayer(payload, payloadLen, this, m_Packet))
-						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
-		break;
 	case PACKETPP_IPPROTO_IPIP:
 		ipVersion = *payload >> 4;
 		if (ipVersion == 4 && IPv4Layer::isDataValid(payload, payloadLen))
@@ -303,22 +294,6 @@ void IPv4Layer::parseNextLayer()
 		else
 			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 		break;
-	case PACKETPP_IPPROTO_IGMP:
-		igmpVer = IgmpLayer::getIGMPVerFromData(payload, be16toh(getIPv4Header()->totalLength) - hdrLen, igmpQuery);
-		if (igmpVer == IGMPv1)
-			m_NextLayer = new IgmpV1Layer(payload, payloadLen, this, m_Packet);
-		else if (igmpVer == IGMPv2)
-			m_NextLayer = new IgmpV2Layer(payload, payloadLen, this, m_Packet);
-		else if (igmpVer == IGMPv3)
-		{
-			if (igmpQuery)
-				m_NextLayer = new IgmpV3QueryLayer(payload, payloadLen, this, m_Packet);
-			else
-				m_NextLayer = new IgmpV3ReportLayer(payload, payloadLen, this, m_Packet);
-		}
-		else
-			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
-		break;
 	case PACKETPP_IPPROTO_AH:
 		m_NextLayer = AuthenticationHeaderLayer::isDataValid(payload, payloadLen)
 						  ? static_cast<Layer *>(new AuthenticationHeaderLayer(payload, payloadLen, this, m_Packet))
@@ -334,11 +309,11 @@ void IPv4Layer::parseNextLayer()
 						  ? static_cast<Layer *>(new IPv6Layer(payload, payloadLen, this, m_Packet))
 						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
 		break;
-	case PACKETPP_IPPROTO_SCTP: 
+	case PACKETPP_IPPROTO_SCTP:
 		m_NextLayer = SctpLayer::isDataValid(payload, payloadLen)
-			? static_cast<Layer*>(new SctpLayer(payload, payloadLen, this, m_Packet))
-			: static_cast<Layer*>(new PayloadLayer(payload, payloadLen, this, m_Packet)); 
-		break;	
+						  ? static_cast<Layer *>(new SctpLayer(payload, payloadLen, this, m_Packet))
+						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
+		break;
 	case PACKETPP_IPPROTO_OSPF:
 		m_NextLayer = OspfLayer::isDataValid(payload, payloadLen)
 						  ? static_cast<Layer *>(new OspfLayer(payload, payloadLen, this, m_Packet))
@@ -366,17 +341,9 @@ void IPv4Layer::computeCalculateFields()
 		case UDP:
 			ipHdr->protocol = PACKETPP_IPPROTO_UDP;
 			break;
-		case ICMP:
-			ipHdr->protocol = PACKETPP_IPPROTO_ICMP;
-			break;
 		case GREv0:
 		case GREv1:
 			ipHdr->protocol = PACKETPP_IPPROTO_GRE;
-			break;
-		case IGMPv1:
-		case IGMPv2:
-		case IGMPv3:
-			ipHdr->protocol = PACKETPP_IPPROTO_IGMP;
 			break;
 		case SCTP:
 			ipHdr->protocol = PACKETPP_IPPROTO_SCTP;

@@ -81,11 +81,6 @@ PTF_TEST_CASE(DnsLayerRemoveResourceTest);
 PTF_TEST_CASE(DnsOverTcpParsingTest);
 PTF_TEST_CASE(DnsOverTcpCreationTest);
 
-// Implemented in IcmpTests.cpp
-PTF_TEST_CASE(IcmpParsingTest);
-PTF_TEST_CASE(IcmpCreationTest);
-PTF_TEST_CASE(IcmpEditTest);
-
 // Implemented in SllNullLoopbackTests.cpp
 PTF_TEST_CASE(SllPacketParsingTest);
 PTF_TEST_CASE(SllPacketCreationTest);
@@ -117,13 +112,6 @@ PTF_TEST_CASE(TLS1_3ParsingTest);
 PTF_TEST_CASE(TLSCipherSuiteTest);
 PTF_TEST_CASE(ClientHelloTLSFingerprintTest);
 PTF_TEST_CASE(ServerHelloTLSFingerprintTest);
-
-// Implemented in IgmpTests.cpp
-PTF_TEST_CASE(IgmpParsingTest);
-PTF_TEST_CASE(IgmpCreateAndEditTest);
-PTF_TEST_CASE(Igmpv3ParsingTest);
-PTF_TEST_CASE(Igmpv3QueryCreateAndEditTest);
-PTF_TEST_CASE(Igmpv3ReportCreateAndEditTest);
 
 // Implemented in SipSdpTests.cpp
 PTF_TEST_CASE(SipRequestLayerParsingTest);

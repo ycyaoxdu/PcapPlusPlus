@@ -12,7 +12,6 @@ class TestPcapSearch(ExampleTest):
         "search_criteria,expected_packet_count",
         [
             pytest.param("tcp port 80", 3541, id="tcp_port_80"),
-            pytest.param("icmp", 92, id="icmp"),
             pytest.param("ip6", 4502, id="ipv6"),
         ],
     )

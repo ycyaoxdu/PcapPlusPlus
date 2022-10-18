@@ -67,10 +67,6 @@ enum IPProtocolTypes
 	PACKETPP_IPPROTO_IP = 0,
 	/** IPv6 Hop-by-Hop options		*/
 	PACKETPP_IPPROTO_HOPOPTS = 0,
-	/** Internet Control Message Protocol	*/
-	PACKETPP_IPPROTO_ICMP = 1,
-	/** Internet Gateway Management Protocol */
-	PACKETPP_IPPROTO_IGMP = 2,
 	/** IPIP tunnels (older KA9Q tunnels use 94) */
 	PACKETPP_IPPROTO_IPIP = 4,
 	/** Transmission Control Protocol	*/
@@ -95,8 +91,6 @@ enum IPProtocolTypes
 	PACKETPP_IPPROTO_ESP = 50,
 	/** authentication header		*/
 	PACKETPP_IPPROTO_AH = 51,
-	/** ICMPv6				*/
-	PACKETPP_IPPROTO_ICMPV6 = 58,
 	/** IPv6 no next header			*/
 	PACKETPP_IPPROTO_NONE = 59,
 	/** IPv6 Destination options		*/
@@ -634,11 +628,9 @@ class IPv4Layer : public Layer, public IPLayer
 	 * Currently identifies the following next layers:
 	 * - UdpLayer
 	 * - TcpLayer
-	 * - IcmpLayer
 	 * - IPv4Layer (IP-in-IP)
 	 * - IPv6Layer (IP-in-IP)
 	 * - GreLayer
-	 * - IgmpLayer
 	 * - AuthenticationHeaderLayer (IPSec)
 	 * - ESPLayer (IPSec)
 	 *
@@ -660,7 +652,7 @@ class IPv4Layer : public Layer, public IPLayer
 	 * - iphdr#totalLength = total packet length
 	 * - iphdr#headerChecksum = calculated
 	 * - iphdr#protocol = calculated if next layer is known: ::PACKETPP_IPPROTO_TCP for TCP, ::PACKETPP_IPPROTO_UDP for
-	 * UDP, ::PACKETPP_IPPROTO_ICMP for ICMP
+	 * UDP
 	 */
 	void computeCalculateFields();
 
