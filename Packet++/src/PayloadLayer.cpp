@@ -49,10 +49,10 @@ void PayloadLayer::setPayload(const uint8_t *newPayload, size_t newPayloadLength
 
 std::string PayloadLayer::toString() const
 {
-	std::ostringstream dataStream;
-	dataStream << getPayloadLen();
+	std::stringstream dataStream;
+	dataStream << "Payload Length: " << getPayloadLen() << "\nPayload: " << (unsigned int*)getPayload() ;
 
-	return "Payload Layer Length: " + dataStream.str() + "\n";
+	return dataStream.str() + "\n";
 }
 
 } // namespace pcpp

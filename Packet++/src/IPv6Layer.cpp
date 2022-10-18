@@ -303,10 +303,10 @@ void IPv6Layer::computeCalculateFields()
 std::string IPv6Layer::toString() const
 {
 	std::string result =
-		"IPv6 Layer, Src: " + getSrcIPv6Address().toString() + ", Dst: " + getDstIPv6Address().toString();
+		"IPv6 Layer:\n\tSrc: " + getSrcIPv6Address().toString() + "\n\tDst: " + getDstIPv6Address().toString();
 	if (m_ExtensionsLen > 0)
 	{
-		result += ", Options=[";
+		result += "\n\tOptions=[";
 		IPv6Extension *curExt = m_FirstExtension;
 		while (curExt != NULL)
 		{
@@ -339,7 +339,7 @@ std::string IPv6Layer::toString() const
 		result[result.size() - 1] = ']';
 	}
 
-	return result;
+	return result + "\n";
 }
 
 } // namespace pcpp
