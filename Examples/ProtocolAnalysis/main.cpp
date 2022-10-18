@@ -9,6 +9,7 @@
 #include "IpAddress.h"
 #include "L2tpLayer.h"
 #include "LRUList.h"
+#include "OspfLayer.h"
 #include "Packet.h"
 #include "PcapFileDevice.h"
 #include "PcapPlusPlusVersion.h"
@@ -538,21 +539,35 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 				// switch statement
 				switch (nextLayer->getProtocol())
 				{
-				case pcpp::OSPF:
+				case pcpp::OSPF: {
 					// ospf handle
+					protoname = "ospf";
+					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+
+					pcpp::OspfLayer ospf(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
+					ReassembleMessage(&ospf, TupleName, UserCookie, OnMessageReadyCallback);
+
 					break;
-				case pcpp::GRE:
+				}
+				case pcpp::GRE: {
 					// gre handle
+					protoname = "gre";
+					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+					// TODO(ycyaoxdu):add handle
 					break;
+				}
 				case pcpp::ESP: {
 					// esp handle
 					protoname = "esp";
+					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+
 					pcpp::ESPLayer esp(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
 
 					// ESP层的负载是被加密的，因此next layer都为generic payload
 					esp.parseNextLayer();
 					nextLayer = esp.getNextLayer();
 					// print & save
+					// TODO(ycyaoxdu): add print
 
 					break;
 				}
@@ -852,11 +867,13 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 
 					break;
 				}
-				case pcpp::GenericPayload:
+				case pcpp::GenericPayload: {
+					// TODO(ycyaoxdu):add handle here
 					break;
-				default:
-					// drop packet
+				}
+				default: { // drop packet
 					break;
+				}
 				}
 			}
 

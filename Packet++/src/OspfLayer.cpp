@@ -446,12 +446,9 @@ void OspfLayer::computeCalculateFields()
 
 std::string OspfLayer::toString() const
 {
-	std::ostringstream versionStream;
-	versionStream << getVersion();
-	std::ostringstream typeStream;
-	typeStream << getType();	
-
-	return "OSPF Layer, version: " + versionStream.str() + ", type: " + typeStream.str();
+	std::ostringstream stream;
+    ToStructuredOutput(stream);
+	return stream.str();
 }
 
 } // namespace pcpp
