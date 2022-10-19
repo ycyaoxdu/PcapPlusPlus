@@ -24,7 +24,7 @@ void L2tpLayer::ToStructuredOutput(std::ostream &os) const
 {
 	bool control = isControlMessage();
 
-	os << "l2tp Header:" << '\n';
+	os << "L2TP Header:" << '\n';
 	os << "\t"
 	   << "control bytes: \t" << (std::bitset<8>)(uint16_t)*m_Data << '\n';
 	os << "\t"

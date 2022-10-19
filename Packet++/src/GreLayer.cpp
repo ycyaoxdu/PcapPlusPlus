@@ -599,9 +599,6 @@ void PPP_PPTPLayer::ToStructuredOutput(std::ostream &os) const
 	   << "Control bytes: \t\t" << (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
 	os << "\t"
 	   << "next layer protocol: \t" << std::hex << getPPP_PPTPHeader()->protocol << std::oct << '\n';
-	os << "payload: " << getLayerPayload() << "\n\n";
-
-	os << std::endl;
 }
 
 std::string PPP_PPTPLayer::toString() const
