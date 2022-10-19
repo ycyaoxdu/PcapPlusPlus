@@ -5,7 +5,7 @@
 #include "IPv6Extensions.h"
 #include "IpAddress.h"
 #include "Layer.h"
-#include "Reassembly.h"
+#include "ParsedResult.h"
 
 /// @file
 

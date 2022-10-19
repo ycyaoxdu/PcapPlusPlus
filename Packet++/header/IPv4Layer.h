@@ -4,7 +4,7 @@
 #include "IPLayer.h"
 #include "IpAddress.h"
 #include "Layer.h"
-#include "Reassembly.h"
+#include "ParsedResult.h"
 #include "TLVData.h"
 #include <string.h>
 #include <vector>

@@ -2,7 +2,7 @@
 #define PACKETPP_PAYLOAD_LAYER
 
 #include "Layer.h"
-#include "Reassembly.h"
+#include "ParsedResult.h"
 
 /// @file
 

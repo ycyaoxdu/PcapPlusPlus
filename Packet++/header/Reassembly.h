@@ -56,49 +56,6 @@ ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie
 std::string getTupleName(pcpp::IPAddress src, pcpp::IPAddress dst, uint16_t srcPort, uint16_t dstPort,
 						 std::string protocol_name);
 
-// ParsedResult is used to store results
-class ParsedResult
-{
-	std::string m_result;
-
-	bool m_tuplenameSet = false;
-	std::string m_tuplename;
-
-  public:
-	ParsedResult()
-	{
-	}
-
-	ParsedResult(std::string s) : m_result(s)
-	{
-	}
-
-	void Append(std::string s)
-	{
-		m_result += s;
-	}
-
-	std::string GetResult()
-	{
-		return m_result;
-	}
-
-	bool IsTuplenameSet()
-	{
-		return m_tuplenameSet;
-	}
-	bool SetTuplename(std::string s)
-	{
-		if (m_tuplenameSet)
-		{
-			return false;
-		}
-		m_tuplename = s;
-		m_tuplenameSet = true;
-		return true;
-	}
-};
-
 } // namespace pcpp
 
 #endif // PACKETPP_UDP_REASSEMBLY
