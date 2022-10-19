@@ -110,8 +110,65 @@ HttpRequestLayer::~HttpRequestLayer()
 	delete m_FirstLine;
 }
 
+void HttpRequestLayer::ToStructuredOutput(std::ostream &os) const
+{
+    os << "Http Request:" << '\n';
+
+	std::string first_line;
+	static const int maxLengthToPrint = 120;
+	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
+	if (size <= 0)
+	{
+		os << "\t"
+	       << "Corrupt Data" << '\n';
+	}
+	else
+	{
+        if (size <= maxLengthToPrint)
+	    {
+		    char* firstLine = new char[size+1];
+		    strncpy(firstLine, (char*)m_Data, size);
+		    firstLine[size] = 0;
+		    first_line = std::string(firstLine);
+		    delete[] firstLine;
+	    }
+		else
+		{
+			char firstLine[maxLengthToPrint+1];
+		    strncpy(firstLine, (char*)m_Data, maxLengthToPrint-3);
+		    firstLine[maxLengthToPrint-3] = '.';
+		    firstLine[maxLengthToPrint-2] = '.';
+		    firstLine[maxLengthToPrint-1] = '.';
+		    firstLine[maxLengthToPrint] = 0;
+		    first_line = std::string(firstLine);
+		}
+
+		os << "\t"
+	       << "First Line: \t" << first_line << '\n';
+		os << "\t"
+	       << "Host: \t" << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "User-Agent: \t" << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Accept: \t" << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Accept-Encoding: \t" << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Accept-Language: \t" << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Cookie: \t" << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Referer: \t" << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Content-Type: \t" << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
+		os << "\t"
+	       << "Content-Length: \t" << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+	}
+}
+
 std::string HttpRequestLayer::toString() const
 {
+	/*
 	static const int maxLengthToPrint = 120;
 	std::string result = "HTTP request, ";
 	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
@@ -140,6 +197,10 @@ std::string HttpRequestLayer::toString() const
 	}
 
 	return result;
+	*/
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 
@@ -747,8 +808,45 @@ int HttpResponseLayer::getContentLength() const
 	return 0;
 }
 
-std::string HttpResponseLayer::toString() const
+void HttpResponseLayer::ToStructuredOutput(std::ostream &os) const
 {
+	os << "Http Response:" << '\n';
+
+   	std::string first_line;
+	static const int maxLengthToPrint = 120;
+	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
+	if (size <= maxLengthToPrint)
+	{
+		char* firstLine = new char[size+1];
+		strncpy(firstLine, (char*)m_Data, size);
+		firstLine[size] = 0;
+		first_line = std::string(firstLine);
+		delete[] firstLine;
+	}
+	else
+	{
+		char firstLine[maxLengthToPrint+1];
+		strncpy(firstLine, (char*)m_Data, maxLengthToPrint-3);
+		firstLine[maxLengthToPrint-3] = '.';
+		firstLine[maxLengthToPrint-2] = '.';
+		firstLine[maxLengthToPrint-1] = '.';
+		firstLine[maxLengthToPrint] = 0;
+		first_line = std::string(firstLine);
+	}
+
+	os << "\t"
+	   << "First Line: \t" << first_line << '\n';
+	os << "\t"
+	   << "Server: \t" << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue() << '\n';
+	os << "\t"
+	   << "Content-Type: \t" << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
+	os << "\t"
+	   << "Content-Length: \t" << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+}
+
+std::string HttpResponseLayer::toString() const
+{   
+	/*
 	static const int maxLengthToPrint = 120;
 	std::string result = "HTTP response, ";
 	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
@@ -772,6 +870,10 @@ std::string HttpResponseLayer::toString() const
 	}
 
 	return result;
+    */
+   	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 
