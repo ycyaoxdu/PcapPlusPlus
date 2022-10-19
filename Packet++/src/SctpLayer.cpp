@@ -28,6 +28,8 @@ void SctpLayer::ToStructuredOutput(std::ostream &os) const
 	os << "\t"
 	   << "Destination port: \t" << getDstPort() << '\n';
 	os << "\t"
+	   << "Verification Tag: \t" << getTag() << '\n';
+	os << "\t"
 	   << "Checksum: \t" << calculateChecksum(true) << '\n';
 }
 SctpLayer::SctpLayer(uint16_t portSrc, uint16_t portDst)
@@ -52,6 +54,11 @@ uint16_t SctpLayer::getDstPort() const
 	return be16toh(getSctpHeader()->portDst);
 }
 
+uint32_t SctpLayer::getTag() const
+{
+	return getSctpHeader()->tag;
+}
+	
 uint16_t SctpLayer::calculateChecksum(bool writeResultToPacket) const
 {
 	sctphdr* sctpHdr = (sctphdr*)m_Data;
@@ -135,8 +142,6 @@ void SctpLayer::parseNextLayer()
 
 void SctpLayer::computeCalculateFields()
 {
-	sctphdr* sctpHdr = getSctpHeader();
-	len = htobe16(m_DataLen);
 	calculateChecksum(true);
 }
 
