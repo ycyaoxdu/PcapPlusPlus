@@ -72,6 +72,11 @@ class SctpLayer : public Layer
 	 */
 	uint16_t getSrcPort() const;
 
+        /** 
+	 *@return tag 
+	 */
+	uint32_t getTag() const;
+	
 	/**
 	 * @return SCTP destination port
 	 */
