@@ -1,4 +1,5 @@
 #include "BgpLayer.h"
+#include "ConcurrentQueue.h"
 #include "GreLayer.h"
 #include "GtpLayer.h"
 #include "HttpLayer.h"
@@ -24,10 +25,13 @@
 #include "getopt.h"
 #include <iostream>
 #include <map>
+#include <queue>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <thread>
+#include <unistd.h>
 
 #define EXIT_WITH_ERROR(reason)                                                                                        \
 	do                                                                                                                 \
@@ -394,6 +398,56 @@ void printAppVersion()
 	exit(0);
 }
 
+// struct parsedPacket
+// {
+//   public:
+// 	parsedPacket()
+// 	{
+// 	}
+// 	parsedPacket(pcpp::RawPacket r) : rawPacket(r)
+// 	{
+// 	}
+// 	// parsedPacket(pcpp::RawPacket r, std::string s) : rawPacket(r), m_result(s)
+// 	// {
+// 	// }
+
+// 	// void AppendResult(std::string a)
+// 	// {
+// 	// 	m_result += a;
+// 	// }
+
+// 	pcpp::RawPacket* getRawPacket()
+// 	{
+// 		return &rawPacket;
+// 	}
+
+// 	pcpp::RawPacket rawPacket;
+// 	// std::string m_result;
+// };
+
+// concurrent queue to cache ip packets
+moodycamel::ConcurrentQueue<pcpp::RawPacket> q;
+moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer = &q;
+
+// thread function to read ip packets
+void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp::RawPacket> *q)
+{
+	pcpp::RawPacket rawPacket;
+	while (reader->getNextPacket(rawPacket))
+	{
+		bool success = q->try_enqueue(std::move(rawPacket));
+		if (!success)
+		{
+			// log error here
+			std::cout << "enqueue failed" << std::endl;
+			continue;
+		}
+	}
+	// TODO(ycyaoxdu): log here
+	std::cout << "stopped parsing packet from device." << std::endl;
+	return;
+}
+
 /**
  * This method reads packets from the input file, decided which fragments pass the filters set by the user, de-fragment
  * the fragments who pass them, and writes the result packets to the output file
@@ -406,12 +460,22 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 
 	// create an instance of IPReassembly
 	pcpp::IPReassembly ipReassembly;
-
 	pcpp::IPReassembly::ReassemblyStatus status;
 
+	// start a new thraed to enqueue packets
+	std::thread readdpdk(readDPDK, reader, quePointer);
+	readdpdk.detach();
+	//
+
+	// wait thread to setup
+	std::cout << "wait thread to setup..." << std::endl;
+	sleep(1);
+
+	//// main thread
 	// read all packet from input file
-	while (reader->getNextPacket(rawPacket))
+	while (quePointer->try_dequeue(rawPacket))
 	{
+
 		bool defragPacket = true;
 
 		stats.totalPacketsRead++;
@@ -490,6 +554,8 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 		// if fragment is marked for de-fragmentation
 		if (defragPacket)
 		{
+			// TODO(ycyaoxdu): we need to set a timer to expire
+
 			// process the packet in the IP reassembly mechanism
 			pcpp::Packet *result = ipReassembly.processPacket(&parsedPacket, status);
 
@@ -561,19 +627,29 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 					gre->parseNextLayer();
 					nextLayer = gre->getNextLayer();
 
-					if (nextLayer->getProtocol() == pcpp::IPv4)
+					if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 					{
 						TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-						// TODO(ycyaoxdu): v4 handle
-					}
-					else if (nextLayer->getProtocol() == pcpp::IPv6)
-					{
-						TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-						// TODO(ycyaoxdu): v6 handle
+						// quePointer->try_enqueue(s);
+						// TODO(ycyaoxdu): handle
 					}
 					else if (nextLayer->getProtocol() == pcpp::PPP_PPTP)
 					{
-						// TODO(ycyaoxdu): ppp handle
+						pcpp::PPP_PPTPLayer ppp(nextLayer->getData(), nextLayer->getDataLen(), gre, result);
+
+						ppp.parseNextLayer();
+						nextLayer = ppp.getNextLayer();
+
+						// TODO(ycyaoxdu): handle here
+						if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
+						{
+							// handle
+						}
+						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
+						{
+							TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+							ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+						}
 					}
 					else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 					{
@@ -748,13 +824,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						gtp.parseNextLayer();
 						nextLayer = gtp.getNextLayer();
 
-						if (nextLayer->getProtocol() == pcpp::IPv4)
+						if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 						{
-							// TODO(ycyaoxdu): v4 handle
-						}
-						else if (nextLayer->getProtocol() == pcpp::IPv6)
-						{
-							// TODO(ycyaoxdu): v6 handle
+							// TODO(ycyaoxdu): handle
 						}
 						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 						{
@@ -798,14 +870,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						ppp.parseNextLayer();
 						nextLayer = ppp.getNextLayer();
 
-						// TODO(ycyaoxdu): handle here
-						if (nextLayer->getProtocol() == pcpp::IPv4)
+						if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 						{
-							// handle
-						}
-						else if (nextLayer->getProtocol() == pcpp::IPv6)
-						{
-							// handle
+							// TODO(ycyaoxdu): handle here
 						}
 						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 						{
@@ -830,13 +897,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						gtp.parseNextLayer();
 						nextLayer = gtp.getNextLayer();
 
-						if (nextLayer->getProtocol() == pcpp::IPv4)
+						if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 						{
-							// TODO(ycyaoxdu): v4 handle
-						}
-						else if (nextLayer->getProtocol() == pcpp::IPv6)
-						{
-							// TODO(ycyaoxdu): v6 handle
+							// TODO(ycyaoxdu): handle
 						}
 						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 						{
@@ -1001,13 +1064,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 						gtp.parseNextLayer();
 						nextLayer = gtp.getNextLayer();
 
-						if (nextLayer->getProtocol() == pcpp::IPv4)
+						if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 						{
-							// TODO(ycyaoxdu): v4 handle
-						}
-						else if (nextLayer->getProtocol() == pcpp::IPv6)
-						{
-							// TODO(ycyaoxdu): v6 handle
+							// TODO(ycyaoxdu): handle
 						}
 						else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 						{

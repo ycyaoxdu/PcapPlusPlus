@@ -2,6 +2,7 @@
 #define PACKETPP_PAYLOAD_LAYER
 
 #include "Layer.h"
+#include "Reassembly.h"
 
 /// @file
 
@@ -16,7 +17,7 @@ namespace pcpp
  * @class PayloadLayer
  * Represents a generic or unknown layer or a packet payload
  */
-class PayloadLayer : public Layer
+class PayloadLayer : public Layer, public ParsedResult
 {
   public:
 	/** A constructor that creates the layer from an existing packet raw data

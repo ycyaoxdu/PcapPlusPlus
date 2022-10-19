@@ -5,6 +5,7 @@
 #include "IPv6Extensions.h"
 #include "IpAddress.h"
 #include "Layer.h"
+#include "Reassembly.h"
 
 /// @file
 
@@ -52,7 +53,7 @@ struct ip6_hdr
  * @class IPv6Layer
  * Represents an IPv6 protocol layer
  */
-class IPv6Layer : public Layer, public IPLayer
+class IPv6Layer : public Layer, public IPLayer, public ParsedResult
 {
   public:
 	/**
