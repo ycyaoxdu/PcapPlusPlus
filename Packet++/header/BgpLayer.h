@@ -108,6 +108,8 @@ class BgpLayer : public Layer
 	 */
 	void parseNextLayer();
 
+	void ToStructuredOutput(std::ostream &os) const;
+
 	std::string toString() const;
 
 	OsiModelLayer getOsiModelLayer() const

@@ -223,6 +223,9 @@ class HttpRequestLayer : public HttpMessage
 	std::string getUrl() const;
 
 	// implement Layer's abstract methods
+    
+	void ToStructuredOutput(std::ostream &os) const;
+	
 	std::string toString() const;
 
   private:
@@ -489,6 +492,8 @@ class HttpResponseLayer : public HttpMessage
 	int getContentLength() const;
 
 	// implement Layer's abstract methods
+
+	void ToStructuredOutput(std::ostream &os) const;
 
 	std::string toString() const;
 

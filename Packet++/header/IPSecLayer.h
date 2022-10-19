@@ -178,7 +178,9 @@ namespace pcpp
 		 * Does nothing for this layer
 		 */
 		void computeCalculateFields() {}
-
+        
+		void ToStructuredOutput(std::ostream &os) const;
+		
 		std::string toString() const;
 
 		OsiModelLayer getOsiModelLayer() const { return OsiModelTransportLayer; }

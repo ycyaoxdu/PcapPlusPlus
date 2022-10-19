@@ -351,6 +351,8 @@ namespace pcpp
 
 		// implement abstract methods
 
+		void ToStructuredOutput(std::ostream &os) const;
+
 		std::string toString() const;
 
 		/**
@@ -385,6 +387,8 @@ namespace pcpp
 		~SSLChangeCipherSpecLayer() {}
 
 		// implement abstract methods
+
+		void ToStructuredOutput(std::ostream &os) const;
 
 		std::string toString() const;
 
@@ -424,9 +428,11 @@ namespace pcpp
 		/**
 		 * @return SSL/TLS alert description. Will return ::SSL_ALERT_ENCRYPTED if alert is encrypted
 		 */
-		SSLAlertDescription getAlertDescription();
+		SSLAlertDescription getAlertDescription() const;
 
 		// implement abstract methods
+
+		void ToStructuredOutput(std::ostream &os) const;
 
 		std::string toString() const;
 
@@ -470,6 +476,8 @@ namespace pcpp
 		size_t getEncryptedDataLen() const;
 
 		// implement abstract methods
+
+		void ToStructuredOutput(std::ostream &os) const;
 
 		std::string toString() const;
 
