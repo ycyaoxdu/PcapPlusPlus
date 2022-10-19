@@ -3,6 +3,7 @@
 
 #include "IPReassembly.h"
 #include "Layer.h"
+#include "PayloadLayer.h"
 #include "ProtocolType.h"
 
 /**
@@ -48,6 +49,9 @@ typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void 
 
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *status, DefragStats *stats,
 							Packet *packet, void *userCookie, OnMessageHandled OnMessageHandledCallback);
+
+ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple, void *cookie,
+								   OnMessageHandled OnMessageHandledCallback);
 
 // this function should handle whether the next layer is payload or ip
 ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie,

@@ -152,13 +152,16 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-					ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
+										 result);
+					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-				ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
+				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
@@ -334,13 +337,16 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
+										 result);
+					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-				ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
+				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
@@ -380,7 +386,9 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
+										 result);
+					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::RIP)
@@ -407,13 +415,16 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
+										 result);
+					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-				ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
+				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
@@ -572,21 +583,24 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
+										 result);
+					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-				ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
+				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
+				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
 		}
 		case pcpp::GenericPayload: {
 			TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-			ReassembleMessage(nextLayer, TupleName, UserCookie, OnMessageReadyCallback);
-
+			PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
+			ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
 			break;
 		}
 		default: {
@@ -610,6 +624,52 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 	*statusPtr = status;
 	return Handled;
+}
+
+// TODO: error handling
+ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple, void *cookie,
+								   OnMessageHandled OnMessageHandledCallback)
+{
+
+	ReassemblyStatus response = Handled;
+	std::string result = payloadlayer->GetResult();
+
+	Layer *layer = payloadlayer;
+	// use stack to store messages;
+	// print from back to front
+	// then pop and <<
+	std::stack<std::string> stk;
+	std::string temp = "";
+
+	// parse to datalink layer
+	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
+							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
+	{
+		// TODO(ycyaoxdu): this line is use to debug, need to remove
+		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
+				  << std::endl;
+
+		temp = layer->toString();
+		stk.push(temp);
+		layer = layer->getPrevLayer();
+	}
+	std::cout << std::endl;
+
+	while (!stk.empty())
+	{
+		temp = stk.top();
+		stk.pop();
+
+		result += temp;
+	}
+
+	if (response == Handled)
+	{
+		// call the callback to write result
+		OnMessageHandledCallback(&result, tuple, cookie);
+	}
+
+	return response;
 }
 
 // TODO: error handling
