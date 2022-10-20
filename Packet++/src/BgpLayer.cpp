@@ -87,9 +87,23 @@ void BgpLayer::parseNextLayer()
 	m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
 }
 
+void BgpLayer::ToStructuredOutput(std::ostream &os) const
+{
+    os << "BGP Header:" << '\n';
+	os << "\t"
+	   << "Marker: \t" << getBasicHeader()->marker << '\n';
+	os << "\t"
+	   << "Length: \t" << getHeaderLen() << '\n';
+	os << "\t"
+	   << "Message Type: \t" << getMessageTypeAsString() << '\n';
+}
+
 std::string BgpLayer::toString() const
 {
-	return "BGP Layer, " + getMessageTypeAsString() + " message";
+	//return "BGP Layer, " + getMessageTypeAsString() + " message";
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 void BgpLayer::computeCalculateFields()

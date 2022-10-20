@@ -354,21 +354,27 @@ void TcpLayer::parseNextLayer()
 	size_t payloadLen = m_DataLen - headerLen;
 	uint16_t portDst = getDstPort();
 	uint16_t portSrc = getSrcPort();
-
+    
+	// need http request
 	if (HttpMessage::isHttpPort(portDst) &&
-		HttpRequestFirstLine::parseMethod((char *)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
+		             HttpRequestFirstLine::parseMethod((char *)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
 		m_NextLayer = new HttpRequestLayer(payload, payloadLen, this, m_Packet);
+	
+    // need http response
 	else if (HttpMessage::isHttpPort(portSrc) && HttpResponseFirstLine::parseStatusCode((char *)payload, payloadLen) !=
-													 HttpResponseLayer::HttpStatusCodeUnknown)
+						  HttpResponseLayer::HttpStatusCodeUnknown)
 		m_NextLayer = new HttpResponseLayer(payload, payloadLen, this, m_Packet);
+	// need ssl
 	else if (SSLLayer::IsSSLMessage(portSrc, portDst, payload, payloadLen))
 		m_NextLayer = SSLLayer::createSSLMessage(payload, payloadLen, this, m_Packet);
+
 	// need bgp
 	else if (BgpLayer::isBgpPort(portSrc, portDst))
 		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
+
 	// need gtp
 	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
-			 GtpV1Layer::isGTPv1(payload, payloadLen))
+			  GtpV1Layer::isGTPv1(payload, payloadLen))
 		m_NextLayer = new GtpV1Layer(payload, payloadLen, this, m_Packet);
 
 	else if (SipLayer::isSipPort(portDst))
@@ -381,8 +387,6 @@ void TcpLayer::parseNextLayer()
 		else
 			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 	}
-	else if (BgpLayer::isBgpPort(portSrc, portDst))
-		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
 	else if (SSHLayer::isSSHPort(portSrc, portDst))
 		m_NextLayer = SSHLayer::createSSHMessage(payload, payloadLen, this, m_Packet);
 	else if (DnsLayer::isDataValid(payload, payloadLen, true) &&
@@ -407,8 +411,45 @@ void TcpLayer::computeCalculateFields()
 	calculateChecksum(true);
 }
 
+void TcpLayer::ToStructuredOutput(std::ostream &os) const
+{
+	os << "TCP Header:" << '\n';
+    tcphdr *hdr = getTcpHeader();
+	std::string flag;
+	if (hdr->synFlag)
+	{
+		if (hdr->ackFlag)
+			flag = "[SYN, ACK]";
+		else
+			flag = "[SYN]";
+	}
+	else if (hdr->finFlag)
+	{
+		if (hdr->ackFlag)
+			flag = "[FIN, ACK]";
+		else
+			flag = "[FIN]";
+	}
+	else if (hdr->ackFlag)
+		flag = "[ACK]";
+    
+	os << "\t"
+	   << "Flag: \t" << flag << '\n';
+	os << "\t"
+	   << "Source Port: \t" << getSrcPort() << '\n';
+	os << "\t"
+	   << "Dest. Port: \t" << getDstPort() << '\n';
+	os << "\t"
+	   << "Sequence Number: \t" << be32toh(getTcpHeader()->sequenceNumber) << '\n';
+	os << "\t"
+	   << "Ack Number: \t" << be32toh(getTcpHeader()->ackNumber) << '\n';
+	os << "\t"
+	   << "Header Length: \t\t" << getHeaderLen() << '\n';
+}
+
 std::string TcpLayer::toString() const
 {
+	/*
 	tcphdr *hdr = getTcpHeader();
 	std::string result = "TCP Layer, ";
 	if (hdr->synFlag)
@@ -435,6 +476,10 @@ std::string TcpLayer::toString() const
 	result += "Src port: " + srcPortStream.str() + ", Dst port: " + dstPortStream.str();
 
 	return result;
+	*/
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 } // namespace pcpp

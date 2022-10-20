@@ -107,8 +107,25 @@ void SSLLayer::parseNextLayer()
 // SSLHandshakeLayer methods
 // -------------------------
 
-std::string SSLHandshakeLayer::toString() const
+void SSLHandshakeLayer::ToStructuredOutput(std::ostream &os) const
 {
+	os << "SSL Layer:" << '\n';
+	os << "\t"
+	   << "Type: \t" << "Handshake" << '\n';
+	os << "\t"
+	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	os << "\t"
+	   << "Length: \t" << getHeaderLen() << '\n';
+	for(size_t i = 0; i < m_MessageList.size(); i++)
+	{
+	    os << "\t"
+		   << "Handshake Message: \t" << m_MessageList.at(i)->toString() << '\n'; 	    
+	}   
+}
+
+std::string SSLHandshakeLayer::toString() const
+{   
+	/*
 	std::stringstream result;
 	result << getRecordVersion().toString(true) << " Layer, Handshake:";
 	for(size_t i = 0; i < m_MessageList.size(); i++)
@@ -119,6 +136,10 @@ std::string SSLHandshakeLayer::toString() const
 			result << ", " << m_MessageList.at(i)->toString();
 	}
 	return result.str();
+	*/
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 SSLHandshakeLayer::SSLHandshakeLayer(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
@@ -155,11 +176,27 @@ SSLHandshakeMessage* SSLHandshakeLayer::getHandshakeMessageAt(int index) const
 // SSLChangeCipherSpecLayer methods
 // --------------------------------
 
+void SSLChangeCipherSpecLayer::ToStructuredOutput(std::ostream &os) const
+{
+	os << "SSL Layer:" << '\n';
+	os << "\t"
+	   << "Type: \t" << "Change Cipher Spec" << '\n';
+	os << "\t"
+	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	os << "\t"
+	   << "Length: \t" << getHeaderLen() << '\n';  
+}
+
 std::string SSLChangeCipherSpecLayer::toString() const
 {
+	/*
 	std::stringstream result;
 	result << getRecordVersion().toString(true) << " Layer, Change Cipher Spec";
 	return result.str();
+	*/
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 // ---------------------
@@ -176,7 +213,7 @@ SSLAlertLevel SSLAlertLayer::getAlertLevel() const
 		return SSL_ALERT_LEVEL_ENCRYPTED;
 }
 
-SSLAlertDescription SSLAlertLayer::getAlertDescription()
+SSLAlertDescription SSLAlertLayer::getAlertDescription() const
 {
 	if (getAlertLevel() == SSL_ALERT_LEVEL_ENCRYPTED)
 		return SSL_ALERT_ENCRYPTED;
@@ -217,8 +254,97 @@ SSLAlertDescription SSLAlertLayer::getAlertDescription()
 	}
 }
 
-std::string SSLAlertLayer::toString() const
+void SSLAlertLayer::ToStructuredOutput(std::ostream &os) const
 {
+	os << "SSL Layer:" << '\n';
+	os << "\t"
+	   << "Type: \t" << "Alert" << '\n';
+	os << "\t"
+	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	os << "\t"
+	   << "Length: \t" << getHeaderLen() << '\n';
+
+    if (getAlertLevel() == SSL_ALERT_LEVEL_ENCRYPTED)
+	{
+	    os << "\t"
+	       << "Alert Level: \t" << "Encrypted" << '\n';
+	}
+	else
+	{
+		std::string level;
+		std::string description;
+		switch (getAlertLevel())
+		{
+			case SSL_ALERT_LEVEL_WARNING:
+			    level = "Warning";
+			case SSL_ALERT_LEVEL_FATAL:
+			    level = "Fatal";
+			default:
+			    level = "Unknown";
+		}
+		switch (getAlertDescription())
+		{
+		    case SSL_ALERT_CLOSE_NOTIFY:
+			    description = "Close Notify";
+	        case SSL_ALERT_UNEXPECTED_MESSAGE:
+			    description = "Unexpected Message";
+	        case SSL_ALERT_BAD_RECORD_MAC:
+			    description = "Bad Record Mac";
+	        case SSL_ALERT_DECRYPTION_FAILED:
+			    description = "Decryption Failed";
+	        case SSL_ALERT_RECORD_OVERFLOW:
+			    description = "Record OverFlow";
+	        case SSL_ALERT_DECOMPRESSION_FAILURE:
+			    description = "Decompression Failure";
+	        case SSL_ALERT_HANDSHAKE_FAILURE:
+			    description = "HandShake Failure";
+	        case SSL_ALERT_NO_CERTIFICATE:
+			    description = "No Certificate";
+	        case SSL_ALERT_BAD_CERTIFICATE:
+			    description = "Bad Certificate";
+	        case SSL_ALERT_UNSUPPORTED_CERTIFICATE:
+			    description = "Unsupported Cretificate";
+	        case SSL_ALERT_CERTIFICATE_REVOKED:
+			    description = "Certificate Revoked";
+	        case SSL_ALERT_CERTIFICATE_EXPIRED:
+			    description = "Certificate Expired";
+	        case SSL_ALERT_CERTIFICATE_UNKNOWN:
+			    description = "Certiificate Unknown";
+	        case SSL_ALERT_ILLEGAL_PARAMETER:
+			    description = "Illegal Parameter";
+	        case SSL_ALERT_UNKNOWN_CA:
+			    description = "Unknown CA";
+	        case SSL_ALERT_ACCESS_DENIED:
+			    description = "Access Denied";
+	        case SSL_ALERT_DECODE_ERROR:
+			    description = "Decode Error";
+	        case SSL_ALERT_DECRYPT_ERROR:
+			    description = "Decrypt Error";
+	        case SSL_ALERT_EXPORT_RESTRICTION:
+			    description = "Export Restriction";
+	        case SSL_ALERT_PROTOCOL_VERSION:
+			    description = "Protocol Version";
+	        case SSL_ALERT_INSUFFICIENT_SECURITY:
+			    description = "Insufficient Security";
+	        case SSL_ALERT_INTERNAL_ERROR:
+			    description = "Internal Error";
+	        case SSL_ALERT_USER_CANCELLED:
+			    description = "User Cancelled";
+	        case SSL_ALERT_NO_RENEGOTIATION:
+			    description = "No Renegotiation";
+			default:
+			    description = "Encrypted";
+		}
+		os << "\t"
+	       << "Alert Level: \t" << level << '\n';
+		os << "\t"
+	       << "Alert Description: \t" << description << '\n';
+	}
+}
+
+std::string SSLAlertLayer::toString() const
+{   
+	/*
 	std::stringstream result;
 	result << getRecordVersion().toString(true) << " Layer, ";
 	if (getAlertLevel() == SSL_ALERT_LEVEL_ENCRYPTED)
@@ -227,6 +353,10 @@ std::string SSLAlertLayer::toString() const
 		//TODO: add alert level and description here
 		result << "Alert";
 	return  result.str();
+	*/
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 // -------------------------------
@@ -250,9 +380,29 @@ size_t SSLApplicationDataLayer::getEncryptedDataLen() const
 	return (size_t)result;
 }
 
+void SSLApplicationDataLayer::ToStructuredOutput(std::ostream &os) const
+{
+	os << "SSL Layer:" << '\n';
+	os << "\t"
+	   << "Type: \t" << "Application Data" << '\n';
+	os << "\t"
+	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	os << "\t"
+	   << "Length: \t" << getHeaderLen() << '\n';
+	os << "\t"
+	   << "Encrypted Application Data Length \t" << getEncryptedDataLen() << '\n';
+	os << "\t"
+	   << "Encrypted Application Data \t" << (unsigned int*)getEncryptedData() << '\n';
+}
+
 std::string SSLApplicationDataLayer::toString() const
 {
+	/*
 	return getRecordVersion().toString(true) + " Layer, Application Data";
+	*/
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 } // namespace pcpp

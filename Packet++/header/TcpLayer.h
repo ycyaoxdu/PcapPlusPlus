@@ -489,6 +489,8 @@ class TcpLayer : public Layer
 	 */
 	void computeCalculateFields();
 
+	void ToStructuredOutput(std::ostream &os) const;
+
 	std::string toString() const;
 
 	OsiModelLayer getOsiModelLayer() const
