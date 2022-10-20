@@ -5,6 +5,7 @@
 #include "Layer.h"
 #include "PayloadLayer.h"
 #include "ProtocolType.h"
+#include "ConcurrentQueue.h"
 
 /**
  * @namespace pcpp
@@ -47,8 +48,12 @@ struct DefragStats
 
 typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
-ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *status, DefragStats *stats,
-							Packet *packet, void *userCookie, OnMessageHandled OnMessageHandledCallback);
+ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
+							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
+							void *UserCookie, OnMessageHandled OnMessageReadyCallback);
+
+bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
+					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
 
 ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple, void *cookie,
 								   OnMessageHandled OnMessageHandledCallback);

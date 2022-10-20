@@ -45,7 +45,8 @@ namespace pcpp
 {
 
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							Packet *parsedPacket, void *UserCookie, OnMessageHandled OnMessageReadyCallback)
+							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
+							void *UserCookie, OnMessageHandled OnMessageReadyCallback)
 {
 	// TODO(ycyaoxdu): we need to set a timer to expire
 
@@ -624,6 +625,59 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 	*statusPtr = status;
 	return Handled;
+}
+
+// TODO: error handling
+bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
+					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+{
+	std::string result = "";
+	// use stack to store messages;
+	// print from back to front
+	// then pop and <<
+	std::stack<std::string> stk;
+	std::string temp = "";
+
+	Layer *layer = iplayer->getPrevLayer();
+	// parse to datalink layer
+	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
+							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
+	{
+		// TODO(ycyaoxdu): this line is use to debug, need to remove
+		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
+				  << std::endl;
+
+		ProtocolType layertype = layer->getProtocol();
+		temp = layer->toString();
+		stk.push(temp);
+		layer = layer->getPrevLayer();
+		// remove the parsed layer
+		packet->removeLayer(layertype);
+	}
+
+	while (!stk.empty())
+	{
+		temp = stk.top();
+		stk.pop();
+
+		result += temp;
+	}
+
+	// v4 v6 enqueue
+	IPv4Layer *ipv4 = packet->getLayerOfType<IPv4Layer>();
+	if (ipv4 != NULL)
+	{
+		ipv4->SetTuplename(tuple);
+		ipv4->AppendResult(std::move(result));
+		return quePointer->try_enqueue(*packet->getRawPacket());
+	}
+	else
+	{
+		IPv6Layer *ipv6 = packet->getLayerOfType<IPv6Layer>();
+		ipv6->SetTuplename(tuple);
+		ipv6->AppendResult(std::move(result));
+		return quePointer->try_enqueue(*packet->getRawPacket());
+	}
 }
 
 // TODO: error handling

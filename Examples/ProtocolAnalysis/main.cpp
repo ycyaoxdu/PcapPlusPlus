@@ -485,7 +485,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 			stats.totalPacketsWritten++;
 
 			pcpp::ReassemblyStatus reassemblePacketStatus =
-				Reassemble(&ipReassembly, &status, &stats, &parsedPacket, UserCookie, OnMessageReadyCallback);
+				Reassemble(&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback);
 
 			std::cout << reassemblePacketStatus << std::endl;
 
