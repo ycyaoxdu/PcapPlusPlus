@@ -26,6 +26,7 @@ namespace pcpp
 enum LogModule
 {
 	UndefinedLogModule,
+	ProtocolAnalysis,
 	CommonLogModuleIpUtils,						   ///< IP Utils module (Common++)
 	CommonLogModuleTablePrinter,				   ///< Table printer module (Common++)
 	CommonLogModuleGenericUtils,				   ///< Generic Utils (Common++)
@@ -63,6 +64,9 @@ enum LogModule
 	PacketLogModuleTelnetLayer,					   ///< TelnetLayer module (Packet++)
 	PacketLogModuleSingleCommandTextProtocolLayer, ///< SingleCommandTextProtocol module (Packet++)
 	PacketLogModuleFtpLayer,					   ///< FtpLayer module (Packet++)
+	PacketLogModuleL2tpLayer,					   ///< L2tpLayer module (Packet++)
+	PacketLogModuleReassembly,					   ///< Reassembly module (Packet++)
+	PacketLogModuleParsedResult,				   ///< ParsedResult module (Packet++)
 	PcapLogModuleWinPcapLiveDevice,				   ///< WinPcapLiveDevice module (Pcap++)
 	PcapLogModuleRemoteDevice,					   ///< WinPcapRemoteDevice module (Pcap++)
 	PcapLogModuleLiveDevice,					   ///< PcapLiveDevice module (Pcap++)
@@ -104,6 +108,7 @@ class Logger
 	enum LogLevel
 	{
 		UndefinedLogModule,
+		ProtocolAnalysis,
 		CommonLogModuleIpUtils,						   ///< IP Utils module (Common++)
 		CommonLogModuleTablePrinter,				   ///< Table printer module (Common++)
 		CommonLogModuleGenericUtils,				   ///< Generic Utils (Common++)
@@ -141,6 +146,9 @@ class Logger
 		PacketLogModuleTelnetLayer,					   ///< TelnetLayer module (Packet++)
 		PacketLogModuleSingleCommandTextProtocolLayer, ///< SingleCommandTextProtocol module (Packet++)
 		PacketLogModuleFtpLayer,					   ///< FtpLayer module (Packet++)
+		PacketLogModuleL2tpLayer,					   ///< L2tpLayer module (Packet++)
+		PacketLogModuleReassembly,					   ///< Reassembly module (Packet++)
+		PacketLogModuleParsedResult,				   ///< ParsedResult module (Packet++)
 		PcapLogModuleWinPcapLiveDevice,				   ///< WinPcapLiveDevice module (Pcap++)
 		PcapLogModuleRemoteDevice,					   ///< WinPcapRemoteDevice module (Pcap++)
 		PcapLogModuleLiveDevice,					   ///< PcapLiveDevice module (Pcap++)
