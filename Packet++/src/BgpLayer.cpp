@@ -91,7 +91,7 @@ void BgpLayer::ToStructuredOutput(std::ostream &os) const
 {
     os << "BGP Header:" << '\n';
 	os << "\t"
-	   << "Marker: \t" << getBasicHeader()->marker << '\n';
+	   << "Marker: \t" << (unsigned int*)getBasicHeader()->marker << '\n';
 	os << "\t"
 	   << "Length: \t" << getHeaderLen() << '\n';
 	os << "\t"
