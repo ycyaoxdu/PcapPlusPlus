@@ -1,13 +1,13 @@
 #define LOG_MODULE PacketLogModuleIPSecLayer
 
+#include "IPSecLayer.h"
 #include "EndianPortable.h"
 #include "GeneralUtils.h"
-#include "IPSecLayer.h"
 #include "IPv4Layer.h"
 #include "IPv6Layer.h"
-#include "UdpLayer.h"
-#include "TcpLayer.h"
 #include "PayloadLayer.h"
+#include "TcpLayer.h"
+#include "UdpLayer.h"
 #include <sstream>
 
 namespace pcpp
@@ -31,10 +31,10 @@ size_t AuthenticationHeaderLayer::getICVLength() const
 {
 	// payloadLen = 3 (fixed ipsec_authentication_header size 32-bit words) + ICV - 2
 	// ICV = (payloadLen + 2 - 3) in 32-bit words
-	return (getAHHeader()->payloadLen - 1)*4;
+	return (getAHHeader()->payloadLen - 1) * 4;
 }
 
-uint8_t* AuthenticationHeaderLayer::getICVBytes() const
+uint8_t *AuthenticationHeaderLayer::getICVBytes() const
 {
 	size_t icvLength = getICVLength();
 	if (icvLength > 0)
@@ -44,7 +44,7 @@ uint8_t* AuthenticationHeaderLayer::getICVBytes() const
 
 std::string AuthenticationHeaderLayer::getICVHexStream() const
 {
-	uint8_t* bytes = getICVBytes();
+	uint8_t *bytes = getICVBytes();
 	if (bytes == NULL)
 		return "";
 
@@ -57,7 +57,7 @@ void AuthenticationHeaderLayer::parseNextLayer()
 	if (m_DataLen <= headerLen)
 		return;
 
-	uint8_t* payload = m_Data + headerLen;
+	uint8_t *payload = m_Data + headerLen;
 	size_t payloadLen = m_DataLen - headerLen;
 
 	switch (getAHHeader()->nextHeader)
@@ -68,11 +68,10 @@ void AuthenticationHeaderLayer::parseNextLayer()
 		break;
 	case PACKETPP_IPPROTO_TCP:
 		m_NextLayer = TcpLayer::isDataValid(payload, payloadLen)
-			? static_cast<Layer*>(new TcpLayer(payload, payloadLen, this, m_Packet))
-			: static_cast<Layer*>(new PayloadLayer(payload, payloadLen, this, m_Packet));
+						  ? static_cast<Layer *>(new TcpLayer(payload, payloadLen, this, m_Packet))
+						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
 		break;
-	case PACKETPP_IPPROTO_IPIP:
-	{
+	case PACKETPP_IPPROTO_IPIP: {
 		uint8_t ipVersion = *payload >> 4;
 		if (ipVersion == 4 && IPv4Layer::isDataValid(payload, payloadLen))
 			m_NextLayer = new IPv4Layer(payload, payloadLen, this, m_Packet);
@@ -84,19 +83,33 @@ void AuthenticationHeaderLayer::parseNextLayer()
 	}
 	case PACKETPP_IPPROTO_ESP:
 		m_NextLayer = ESPLayer::isDataValid(payload, payloadLen)
-			? static_cast<Layer*>(new ESPLayer(payload, payloadLen, this, m_Packet))
-			: static_cast<Layer*>(new PayloadLayer(payload, payloadLen, this, m_Packet));
+						  ? static_cast<Layer *>(new ESPLayer(payload, payloadLen, this, m_Packet))
+						  : static_cast<Layer *>(new PayloadLayer(payload, payloadLen, this, m_Packet));
 		break;
 	default:
 		m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 	}
 }
 
-std::string AuthenticationHeaderLayer::toString() const
+void AuthenticationHeaderLayer::ToStructuredOutput(std::ostream &os) const
 {
-	return "Authentication Header Layer";
+	os << "Authentication Header:" << '\n';
+	os << "\t"
+	   << "SPI: \t" << getSPI() << '\n';
+	os << "\t"
+	   << "Sequence Number: \t" << getSequenceNumber() << '\n';
+	os << "\t"
+	   << "ICV Length: \t" << getICVLength() << '\n';
+	os << "\t"
+	   << "ICV Hex Stream: \t" << getICVHexStream() << '\n';
 }
 
+std::string AuthenticationHeaderLayer::toString() const
+{
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
+}
 
 // ----------------
 // ESPLayer methods
@@ -132,7 +145,6 @@ void ESPLayer::ToStructuredOutput(std::ostream &os) const
 
 std::string ESPLayer::toString() const
 {
-	//stream << "ESP Layer, SPI: 0x" << std::hex << getSPI();
 	std::stringstream stream;
 	ToStructuredOutput(stream);
 	return stream.str();

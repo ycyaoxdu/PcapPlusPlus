@@ -10,6 +10,7 @@
 #include "IpAddress.h"
 #include "L2tpLayer.h"
 #include "LRUList.h"
+#include "Logger.h"
 #include "OspfLayer.h"
 #include "Packet.h"
 #include "PcapFileDevice.h"
@@ -32,6 +33,8 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+
+#define LOG_MODULE pcpp::ProtocolAnalysis
 
 #define EXIT_WITH_ERROR(reason)                                                                                        \
 	do                                                                                                                 \
@@ -383,6 +386,8 @@ void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp:
 void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter, bool filterByIpID,
 					std::map<uint32_t, bool> fragIDs, pcpp::DefragStats &stats, void *UserCookie)
 {
+	PCPP_LOG_DEBUG("ip packet process started...");
+
 	pcpp::RawPacket rawPacket;
 	pcpp::BPFStringFilter filter(bpfFilter);
 
@@ -396,13 +401,14 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 	//
 
 	// wait thread to setup
-	std::cout << "wait thread to setup..." << std::endl;
+	std::cout << "wait ip queue to setup..." << std::endl;
 	sleep(1);
 
 	//// main thread
 	// read all packet from input file
 	while (quePointer->try_dequeue(rawPacket))
 	{
+		PCPP_LOG_DEBUG("read a ip packet from queue...");
 
 		bool defragPacket = true;
 
@@ -487,7 +493,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 			pcpp::ReassemblyStatus reassemblePacketStatus =
 				Reassemble(&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback);
 
-			std::cout << reassemblePacketStatus << std::endl;
+			PCPP_LOG_DEBUG("Reassemble packet finished...");
 
 			// update statistics if packet isn't fully reassembled
 			if (status == pcpp::IPReassembly::FIRST_FRAGMENT || status == pcpp::IPReassembly::FRAGMENT ||
@@ -506,6 +512,8 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 			stats.totalPacketsWritten++;
 		}
 	}
+
+	PCPP_LOG_DEBUG("ip packet process done");
 }
 
 /**
