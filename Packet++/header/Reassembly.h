@@ -1,11 +1,11 @@
 #ifndef PACKETPP_REASSEMBLY
 #define PACKETPP_REASSEMBLY
 
+#include "ConcurrentQueue.h"
 #include "IPReassembly.h"
 #include "Layer.h"
 #include "PayloadLayer.h"
 #include "ProtocolType.h"
-#include "ConcurrentQueue.h"
 
 /**
  * @namespace pcpp
@@ -51,6 +51,9 @@ typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void 
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
 							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
 							void *UserCookie, OnMessageHandled OnMessageReadyCallback);
+
+void HandleGenericPayload(Layer *nextlayer, std::string tuplename, pcpp::Packet *packet, void *cookie,
+						  OnMessageHandled OnMessageReadyCallback);
 
 bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);

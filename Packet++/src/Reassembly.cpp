@@ -22,6 +22,7 @@
 #include "RipLayer.h"
 #include "SSLLayer.h"
 #include "SctpLayer.h"
+#include "Logger.h"
 #include "SystemUtils.h"
 #include "TcpLayer.h"
 #include "UdpLayer.h"
@@ -63,7 +64,14 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 	// process the packet in the IP reassembly mechanism
 	IPReassembly::ReassemblyStatus status = *statusPtr;
+
+	// TODO(ycyaoxdu):remove this line
+	std::cout << "start reassemble ip packet..." << std::endl;
+
 	pcpp::Packet *result = ipReassembly->processPacket(parsedPacket, status);
+
+	// TODO(ycyaoxdu):remove this line
+	std::cout << "end reassemble ip packet..." << std::endl;
 
 	// write fragment/packet to file if:
 	// - packet is fully reassembled (status of REASSEMBLED)
@@ -71,6 +79,9 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	if (status == pcpp::IPReassembly::REASSEMBLED ||
 		((status == pcpp::IPReassembly::NON_IP_PACKET || status == pcpp::IPReassembly::NON_FRAGMENT)))
 	{
+		// TODO(ycyaoxdu):remove this line
+		std::cout << "process de-fraged ip packet..." << std::endl;
+
 		// @ycyaoxdu:
 		// we do not write it here, we parse next layer in loop until Payload Layer is parsed.
 
@@ -99,6 +110,8 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			ipLayer = ipv6Layer;
 		}
 
+		std::cout << "this protocol:" << std::hex << ipLayer->getProtocol() << std::oct << std::endl;
+
 		// parse next layer
 		// any unknow protocol is payload
 		ipLayer->parseNextLayer();
@@ -106,6 +119,8 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		// code logic:
 		// if next layer is payload layer, just print all messages.
 		// else parseNextLayer and call next module
+
+		std::cout << "next protocol:" << std::hex << nextLayer->getProtocol() << std::oct << std::endl;
 
 		// switch statement
 		switch (nextLayer->getProtocol())
@@ -124,45 +139,99 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		case pcpp::GRE:
 		case pcpp::GREv0:
 		case pcpp::GREv1: {
+			// TODO(ycyaoxdu): remove this line
+			std::cout << "get gre after ip" << std::endl;
+
 			// gre handle
 			// ipv4 ipv6 ppp payload
 			protoname = "gre";
 
-			auto gre = nextLayer;
+			Layer *gre = nextLayer;
 			gre->parseNextLayer();
+			// TODO(ycyaoxdu): remove this line
+			std::cout << "parsed gre next layer" << std::endl;
+
 			nextLayer = gre->getNextLayer();
+			if (nextLayer == NULL)
+			{
+				std::cout << "incomplete packet received... discard it" << std::endl;
+				break;
+			}
+
+			// TODO(ycyaoxdu): remove this line
+			std::cout << "get gre next layer: " << std::hex << nextLayer->getProtocol() << std::oct << std::endl;
 
 			if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 			{
+				// TODO(ycyaoxdu): remove this
+				std::cout << "get ip after gre..." << std::endl;
+
 				TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-				// quePointer->try_enqueue(s);
+				bool ok = HandleIPPacket(result, nextLayer, TupleName, quePointer);
+				if (!ok)
+				{
+					std::cout << "error" << std::endl;
+				}
 				// TODO(ycyaoxdu): handle
 			}
 			else if (nextLayer->getProtocol() == pcpp::PPP_PPTP)
 			{
+				// TODO(ycyaoxdu): remove this
+				std::cout << "get ppp after gre..." << std::endl;
+
 				pcpp::PPP_PPTPLayer ppp(nextLayer->getData(), nextLayer->getDataLen(), gre, result);
 
 				ppp.parseNextLayer();
 				nextLayer = ppp.getNextLayer();
 
-				// TODO(ycyaoxdu): handle here
 				if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 				{
-					// handle
+					bool ok = HandleIPPacket(result, nextLayer, TupleName, quePointer);
+					if (!ok)
+					{
+						std::cout << "error" << std::endl;
+					}
+					// TODO(ycyaoxdu): handle
 				}
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
-										 result);
-					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+					HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
+				// TODO(ycyaoxdu): remove this
+				std::cout << "get payload after gre..." << std::endl;
+
 				TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
-				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+				HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
+			}
+
+			break;
+		}
+		// esp
+		case pcpp::AuthenticationHeader: {
+			protoname = "authenticationHeader";
+			TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+
+			AuthenticationHeaderLayer ahlayer(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
+			ahlayer.parseNextLayer();
+			nextLayer = ahlayer.getNextLayer();
+
+			// esp handle
+			if (nextLayer->getProtocol() == pcpp::ESP)
+			{
+				protoname = "esp";
+				TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+
+				pcpp::ESPLayer esp(nextLayer->getData(), nextLayer->getDataLen(), &ahlayer, result);
+
+				// ESP层的负载是被加密的，因此next layer都为generic payload
+				esp.parseNextLayer();
+				Layer *payload = esp.getNextLayer();
+
+				ReassembleMessage(payload, TupleName, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
@@ -197,8 +266,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 			if (nextLayer->getProtocol() == pcpp::HTTPRequest)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "http";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::HttpRequestLayer httpRequest(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
@@ -206,8 +273,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			}
 			else if (nextLayer->getProtocol() == pcpp::HTTPResponse)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "http";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::HttpResponseLayer httpResponse(nextLayer->getData(), nextLayer->getDataLen(), &tcp, result);
@@ -215,8 +280,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			}
 			else if (nextLayer->getProtocol() == pcpp::SSL)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "ssl";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::SSLLayer *ssl =
@@ -250,8 +313,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			}
 			else if (nextLayer->getProtocol() == pcpp::BGP)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "bgp";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::BgpLayer *bgp =
@@ -333,21 +394,23 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 				if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 				{
+					bool ok = HandleIPPacket(result, nextLayer, TupleName, quePointer);
+					if (!ok)
+					{
+						std::cout << "error" << std::endl;
+					}
 					// TODO(ycyaoxdu): handle
 				}
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
-										 result);
-					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+					HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
-				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+				HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
@@ -382,14 +445,17 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 				if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 				{
-					// TODO(ycyaoxdu): handle here
+					bool ok = HandleIPPacket(result, nextLayer, TupleName, quePointer);
+					if (!ok)
+					{
+						std::cout << "error" << std::endl;
+					}
+					// TODO(ycyaoxdu): handle
 				}
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
-										 result);
-					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+					HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::RIP)
@@ -411,21 +477,23 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 				if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 				{
+					bool ok = HandleIPPacket(result, nextLayer, TupleName, quePointer);
+					if (!ok)
+					{
+						std::cout << "error" << std::endl;
+					}
 					// TODO(ycyaoxdu): handle
 				}
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
-										 result);
-					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+					HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
-				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+				HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
@@ -443,8 +511,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 			if (nextLayer->getProtocol() == pcpp::HTTPRequest)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "http";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::HttpRequestLayer httpRequest(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
@@ -452,8 +518,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			}
 			else if (nextLayer->getProtocol() == pcpp::HTTPResponse)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "http";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::HttpResponseLayer httpResponse(nextLayer->getData(), nextLayer->getDataLen(), &sctp, result);
@@ -461,8 +525,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			}
 			else if (nextLayer->getProtocol() == pcpp::SSL)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "ssl";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::SSLLayer *ssl =
@@ -496,8 +558,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			}
 			else if (nextLayer->getProtocol() == pcpp::BGP)
 			{
-				// TODO(ycyaoxdu): check toString()
-
 				protoname = "bgp";
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 				pcpp::BgpLayer *bgp =
@@ -579,29 +639,30 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 				if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 				{
+					bool ok = HandleIPPacket(result, nextLayer, TupleName, quePointer);
+					if (!ok)
+					{
+						std::cout << "error" << std::endl;
+					}
 					// TODO(ycyaoxdu): handle
 				}
 				else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 				{
 					TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-					PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(),
-										 result);
-					ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+					HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 				}
 			}
 			else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 			{
 				TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
-				PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
-				ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+				HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 			}
 
 			break;
 		}
 		case pcpp::GenericPayload: {
 			TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-			PayloadLayer payload(nextLayer->getData(), nextLayer->getDataLen(), nextLayer->getPrevLayer(), result);
-			ReassemblePayload(&payload, TupleName, UserCookie, OnMessageReadyCallback);
+			HandleGenericPayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback);
 			break;
 		}
 		default: {
@@ -627,10 +688,26 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	return Handled;
 }
 
+void HandleGenericPayload(Layer *layer, std::string tuplename, pcpp::Packet *packet, void *cookie,
+						  OnMessageHandled OnMessageReadyCallback)
+{
+	if (layer == NULL)
+	{
+		PCPP_LOG_DEBUG("passing nextlayer of nullptr to function HandleGenericPayload");
+		return;
+	}
+	PayloadLayer payload(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	ReassemblePayload(&payload, tuplename, cookie, OnMessageReadyCallback);
+}
+
 // TODO: error handling
 bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
+
+	// TODO(ycyaoxdu): remove this line
+	std::cout << "started handle ip" << std::endl;
+
 	std::string result = "";
 	// use stack to store messages;
 	// print from back to front
@@ -651,8 +728,12 @@ bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 		temp = layer->toString();
 		stk.push(temp);
 		layer = layer->getPrevLayer();
+
 		// remove the parsed layer
 		packet->removeLayer(layertype);
+
+		// TODO(ycyaoxdu): remove this line
+		std::cout << "!removed layer:" << layertype << std::endl;
 	}
 
 	while (!stk.empty())
@@ -669,6 +750,9 @@ bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 	{
 		ipv4->SetTuplename(tuple);
 		ipv4->AppendResult(std::move(result));
+
+		// TODO(ycyaoxdu): remove this line
+		std::cout << "!enqueue ipv4" << std::endl;
 		return quePointer->try_enqueue(*packet->getRawPacket());
 	}
 	else
@@ -676,6 +760,9 @@ bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 		IPv6Layer *ipv6 = packet->getLayerOfType<IPv6Layer>();
 		ipv6->SetTuplename(tuple);
 		ipv6->AppendResult(std::move(result));
+
+		// TODO(ycyaoxdu): remove this line
+		std::cout << "!enqueue ipv6" << std::endl;
 		return quePointer->try_enqueue(*packet->getRawPacket());
 	}
 }
