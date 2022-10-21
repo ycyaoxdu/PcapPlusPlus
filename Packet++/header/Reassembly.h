@@ -52,7 +52,53 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
 							void *UserCookie, OnMessageHandled OnMessageReadyCallback);
 
-void HandleGenericPayload(Layer *nextlayer, std::string tuplename, pcpp::Packet *packet, void *cookie,
+void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					   OnMessageHandled OnMessageReadyCallback);
+
+void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback);
+
+void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback,
+					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback,
+					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback,
+					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
+					   OnMessageHandled OnMessageReadyCallback,
+					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback);
+
+void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback,
+					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					   OnMessageHandled OnMessageReadyCallback,
+					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback);
+
+void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback);
+
+void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					   OnMessageHandled OnMessageReadyCallback);
+
+void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
+					  OnMessageHandled OnMessageReadyCallback,
+					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+
+void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 						  OnMessageHandled OnMessageReadyCallback);
 
 bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
