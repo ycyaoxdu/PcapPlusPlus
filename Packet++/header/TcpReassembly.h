@@ -316,8 +316,9 @@ public:
 	 * @param[in] side The side this data belongs to (MachineA->MachineB or vice versa). The value is 0 or 1 where 0 is the first side seen in the connection and 1 is the second side seen
 	 * @param[in] tcpData The TCP data itself + connection information
 	 * @param[in] userCookie A pointer to the cookie provided by the user in TcpReassembly c'tor (or NULL if no cookie provided)
+	 * @param[in] tcpPacket  A reference to the packet to process(To transmit the packet)
 	 */
-	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData& tcpData, void* userCookie);
+	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData& tcpData, void* userCookie, Packet& tcpPacket);    //tcp_add
 
 	/**
 	 * @typedef OnTcpConnectionStart
@@ -413,6 +414,7 @@ private:
 		uint16_t srcPort;
 		uint32_t sequence;
 		PointerVector<TcpFragment> tcpFragmentList;
+		PointerVector<Packet> tcpPacketList;    //tcp_add  A list to store the out-of-order packets
 		bool gotFinOrRst;
 
 		TcpOneSideData() : srcPort(0), sequence(0), gotFinOrRst(false) {}
