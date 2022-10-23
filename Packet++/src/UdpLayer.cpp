@@ -122,34 +122,35 @@ void UdpLayer::parseNextLayer()
 	uint8_t *udpData = m_Data + sizeof(udphdr);
 	size_t udpDataLen = m_DataLen - sizeof(udphdr);
 
-	// if ((portSrc == 68 && portDst == 67) || (portSrc == 67 && portDst == 68) || (portSrc == 67 && portDst == 67))
-	// 	m_NextLayer = new DhcpLayer(udpData, udpDataLen, this, m_Packet);
-	// else if (VxlanLayer::isVxlanPort(portDst))
-	// 	m_NextLayer = new VxlanLayer(udpData, udpDataLen, this, m_Packet);
-	// else if (DnsLayer::isDataValid(udpData, udpDataLen) && (DnsLayer::isDnsPort(portDst) ||
-	// DnsLayer::isDnsPort(portSrc))) 	m_NextLayer = new DnsLayer(udpData, udpDataLen, this, m_Packet); else
-	// if(SipLayer::isSipPort(portDst) || SipLayer::isSipPort(portSrc))
-	// {
-	// 	if (SipRequestFirstLine::parseMethod((char*)udpData, udpDataLen) != SipRequestLayer::SipMethodUnknown)
-	// 		m_NextLayer = new SipRequestLayer(udpData, udpDataLen, this, m_Packet);
-	// 	else if (SipResponseFirstLine::parseStatusCode((char*)udpData, udpDataLen) !=
-	// SipResponseLayer::SipStatusCodeUnknown
-	// 					&& SipResponseFirstLine::parseVersion((char*)udpData, udpDataLen) != "")
-	// 		m_NextLayer = new SipResponseLayer(udpData, udpDataLen, this, m_Packet);
-	// 	else
-	// 		m_NextLayer = new PayloadLayer(udpData, udpDataLen, this, m_Packet);
-	// }
-	// else if ((RadiusLayer::isRadiusPort(portDst) || RadiusLayer::isRadiusPort(portSrc)) &&
-	// RadiusLayer::isDataValid(udpData, udpDataLen)) 	m_NextLayer = new RadiusLayer(udpData, udpDataLen, this,
-	// m_Packet); else if ((DhcpV6Layer::isDhcpV6Port(portSrc) || DhcpV6Layer::isDhcpV6Port(portDst)) &&
-	// (DhcpV6Layer::isDataValid(udpData, udpDataLen))) 	m_NextLayer = new DhcpV6Layer(udpData, udpDataLen, this,
-	// m_Packet); else if ((NtpLayer::isNTPPort(portSrc) || NtpLayer::isNTPPort(portDst)) &&
-	// NtpLayer::isDataValid(udpData, udpDataLen)) 	m_NextLayer = new NtpLayer(udpData, udpDataLen, this, m_Packet);
-
-	// need gtp
-	/* else */
-	if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
-		GtpV1Layer::isGTPv1(udpData, udpDataLen))
+	if ((portSrc == 68 && portDst == 67) || (portSrc == 67 && portDst == 68) || (portSrc == 67 && portDst == 67))
+		m_NextLayer = new DhcpLayer(udpData, udpDataLen, this, m_Packet);
+	else if (VxlanLayer::isVxlanPort(portDst))
+		m_NextLayer = new VxlanLayer(udpData, udpDataLen, this, m_Packet);
+	else if (DnsLayer::isDataValid(udpData, udpDataLen) &&
+			 (DnsLayer::isDnsPort(portDst) || DnsLayer::isDnsPort(portSrc)))
+		m_NextLayer = new DnsLayer(udpData, udpDataLen, this, m_Packet);
+	else if (SipLayer::isSipPort(portDst) || SipLayer::isSipPort(portSrc))
+	{
+		if (SipRequestFirstLine::parseMethod((char *)udpData, udpDataLen) != SipRequestLayer::SipMethodUnknown)
+			m_NextLayer = new SipRequestLayer(udpData, udpDataLen, this, m_Packet);
+		else if (SipResponseFirstLine::parseStatusCode((char *)udpData, udpDataLen) !=
+					 SipResponseLayer::SipStatusCodeUnknown &&
+				 SipResponseFirstLine::parseVersion((char *)udpData, udpDataLen) != "")
+			m_NextLayer = new SipResponseLayer(udpData, udpDataLen, this, m_Packet);
+		else
+			m_NextLayer = new PayloadLayer(udpData, udpDataLen, this, m_Packet);
+	}
+	else if ((RadiusLayer::isRadiusPort(portDst) || RadiusLayer::isRadiusPort(portSrc)) &&
+			 RadiusLayer::isDataValid(udpData, udpDataLen))
+		m_NextLayer = new RadiusLayer(udpData, udpDataLen, this, m_Packet);
+	else if ((DhcpV6Layer::isDhcpV6Port(portSrc) || DhcpV6Layer::isDhcpV6Port(portDst)) &&
+			 (DhcpV6Layer::isDataValid(udpData, udpDataLen)))
+		m_NextLayer = new DhcpV6Layer(udpData, udpDataLen, this, m_Packet);
+	else if ((NtpLayer::isNTPPort(portSrc) || NtpLayer::isNTPPort(portDst)) &&
+			 NtpLayer::isDataValid(udpData, udpDataLen))
+		m_NextLayer = new NtpLayer(udpData, udpDataLen, this, m_Packet);
+	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
+			 GtpV1Layer::isGTPv1(udpData, udpDataLen))
 		m_NextLayer = new GtpV1Layer(udpData, udpDataLen, this, m_Packet);
 	// need rip
 	else if (RipLayer::isRipPort(portSrc) || RipLayer::isRipPort(portDst))

@@ -19,7 +19,6 @@
 #include "Packet.h"
 #include "PcapPlusPlusVersion.h"
 #include "ProtocolType.h"
-#include "Reassembly.h"
 #include "RipLayer.h"
 #include "SSLLayer.h"
 #include "SctpLayer.h"
@@ -49,29 +48,48 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
 							void *UserCookie, OnMessageHandled OnMessageReadyCallback)
 {
-	// TODO(ycyaoxdu): we need to set a timer to expire
-
 	bool isIPv4Packet = false;
 	bool isIPv6Packet = false;
-	if (parsedPacket->isPacketOfType(pcpp::IPv4))
+
+	// TODO(ycyaoxdu): should modify
+	if (parsedPacket->isFirst())
 	{
+		if (findLayer(parsedPacket)->getProtocol() == IPv4)
+		{
+			isIPv4Packet = true;
+		}
+		else if (findLayer(parsedPacket)->getProtocol() == IPv6)
+		{
+			isIPv6Packet = true;
+		}
+
+		parsedPacket->UnsetFirst();
+	}
+	else if (findLayer(parsedPacket)->getProtocol() == IPv4)
+	{
+
 		isIPv4Packet = true;
 	}
-	else if (parsedPacket->isPacketOfType(pcpp::IPv6))
+	else if (findLayer(parsedPacket)->getProtocol() == IPv4)
 	{
+
 		isIPv6Packet = true;
+	}
+	else
+	{
+		// non-ip packet should not be passed in
 	}
 
 	// process the packet in the IP reassembly mechanism
 	IPReassembly::ReassemblyStatus status = *statusPtr;
 
 	// TODO(ycyaoxdu):remove this line
-	std::cout << "start reassemble ip packet..." << std::endl;
+	std::cout << "\nstart reassemble ip packet...\n" << std::endl;
 
 	Packet *result = ipReassembly->processPacket(parsedPacket, status);
 
 	// TODO(ycyaoxdu):remove this line
-	std::cout << "end reassemble ip packet..." << std::endl;
+	std::cout << "end reassemble ip packet...\n" << std::endl;
 
 	// write fragment/packet to file if:
 	// - packet is fully reassembled (status of REASSEMBLED)
@@ -80,7 +98,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		((status == pcpp::IPReassembly::NON_IP_PACKET || status == pcpp::IPReassembly::NON_FRAGMENT)))
 	{
 		// TODO(ycyaoxdu):remove this line
-		std::cout << "process de-fraged ip packet..." << std::endl;
+		std::cout << "\nprocess de-fraged ip packet..." << std::endl;
 
 		// TupleName is used to identify which file the packet will store in
 		std::string TupleName = "";
@@ -90,16 +108,20 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		pcpp::IPAddress IpSrc, IpDst;
 
 		pcpp::Layer *ipLayer;
+
+		std::cout << "this isIPv4Packet:" << isIPv4Packet << "\tthis isIPv6Packet:" << isIPv6Packet << std::endl;
+
+		// TODO(ycyaoxdu):need to handle this, get the correct layer
 		if (isIPv4Packet)
 		{
-			pcpp::IPv4Layer *ipv4Layer = result->getLayerOfType<pcpp::IPv4Layer>();
+			pcpp::IPv4Layer *ipv4Layer = getv4(result) /* result->getLayerOfType<pcpp::IPv4Layer>() */;
 			IpSrc = ipv4Layer->getSrcIPAddress();
 			IpDst = ipv4Layer->getDstIPAddress();
 			ipLayer = ipv4Layer;
 		}
 		else
 		{
-			pcpp::IPv6Layer *ipv6Layer = result->getLayerOfType<pcpp::IPv6Layer>();
+			pcpp::IPv6Layer *ipv6Layer = getv6(result) /* result->getLayerOfType<pcpp::IPv6Layer>() */;
 			IpSrc = ipv6Layer->getSrcIPAddress();
 			IpDst = ipv6Layer->getDstIPAddress();
 			ipLayer = ipv6Layer;
@@ -113,6 +135,8 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		auto nextLayer = ipLayer->getNextLayer();
 		if (nextLayer == NULL)
 		{
+			std::cout << "IP: passing layer of nullptr to function..." << std::endl;
+
 			PCPP_LOG_DEBUG("IP: passing layer of nullptr to function");
 			return Invalid;
 		}
@@ -344,6 +368,8 @@ void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 	{
 		protoname = "gtp";
 		TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+
+		std::cout << "gtp tuplename:" << TupleName << std::endl;
 
 		HandleGtpPayload(nextLayer, TupleName, packet, cookie, OnMessageReadyCallback, quePointer);
 	}
@@ -727,65 +753,32 @@ bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 {
 
 	// TODO(ycyaoxdu): remove this line
-	std::cout << "started handle ip" << std::endl;
+	std::cout << "handle ip layer" << std::endl;
 
-	std::string result = "";
-	// use stack to store messages;
-	// print from back to front
-	// then pop and <<
-	std::stack<std::string> stk;
-	std::string temp = "";
+	packet->SetTuplename(tuple);
 
-	Layer *layer = iplayer->getPrevLayer();
-	// parse to datalink layer
-	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
-							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
+	if (iplayer->getProtocol() == IPv4 || iplayer->getProtocol() == IPv6)
 	{
-		// TODO(ycyaoxdu): this line is use to debug, need to remove
-		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
-				  << std::endl;
-
-		ProtocolType layertype = layer->getProtocol();
-		temp = layer->toString();
-		stk.push(temp);
-		layer = layer->getPrevLayer();
-
-		// remove the parsed layer
-		packet->removeLayer(layertype);
-
-		// TODO(ycyaoxdu): remove this line
-		std::cout << "!removed layer:" << layertype << std::endl;
+		packet->CountV4();
 	}
 
-	while (!stk.empty())
-	{
-		temp = stk.top();
-		stk.pop();
+	// while (iplayer != NULL)
+	// {
+	// 	if (iplayer->getProtocol() == IPv4)
+	// 	{
+	// 		packet->setNextLayerV4();
+	// 		break;
+	// 	}
+	// 	else if (iplayer->getProtocol() == IPv6)
+	// 	{
+	// 		packet->setNextLayerV6();
+	// 		break;
+	// 	}
+	// 	iplayer->parseNextLayer();
+	// 	iplayer = iplayer->getNextLayer();
+	// }
 
-		result += temp;
-	}
-
-	// v4 v6 enqueue
-	IPv4Layer *ipv4 = packet->getLayerOfType<IPv4Layer>();
-	if (ipv4 != NULL)
-	{
-		ipv4->SetTuplename(tuple);
-		ipv4->AppendResult(std::move(result));
-
-		// TODO(ycyaoxdu): remove this line
-		std::cout << "!enqueue ipv4" << std::endl;
-		return quePointer->try_enqueue(*packet->getRawPacket());
-	}
-	else
-	{
-		IPv6Layer *ipv6 = packet->getLayerOfType<IPv6Layer>();
-		ipv6->SetTuplename(tuple);
-		ipv6->AppendResult(std::move(result));
-
-		// TODO(ycyaoxdu): remove this line
-		std::cout << "!enqueue ipv6" << std::endl;
-		return quePointer->try_enqueue(*packet->getRawPacket());
-	}
+	return quePointer->try_enqueue(*packet->getRawPacket());
 }
 
 // TODO: error handling
@@ -828,7 +821,7 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 	if (response == Handled)
 	{
 		// call the callback to write result
-		OnMessageHandledCallback(&result, tuple, cookie);
+		OnMessageHandledCallback(&result, payloadlayer->packet()->GetTuplename(), cookie);
 	}
 
 	return response;

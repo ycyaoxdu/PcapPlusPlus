@@ -1,6 +1,7 @@
 #ifndef PACKETPP_LAYER
 #define PACKETPP_LAYER
 
+#include "Logger.h"
 #include "ProtocolType.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -169,6 +170,8 @@ class Layer : public IDataContainer
 	{
 		return (uint8_t *)(m_Data + offset);
 	}
+
+	Packet *packet();
 
 	// abstract methods
 

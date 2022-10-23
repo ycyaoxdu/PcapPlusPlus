@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #endif
 #include <stddef.h>
+#include "ParsedResult.h"
 
 /// @file
 
@@ -261,7 +262,7 @@ enum LinkLayerType
  * every instance also holds a timestamp representing the time the packet was received by the NIC.
  * RawPacket instance isn't read only. The user can change the packet data, add or remove data, etc.
  */
-class RawPacket
+class RawPacket : public ParsedResult
 {
   protected:
 	uint8_t *m_RawData;

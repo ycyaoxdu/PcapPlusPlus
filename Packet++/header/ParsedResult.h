@@ -18,10 +18,17 @@ class ParsedResult
 	bool m_tuplenameSet;
 	std::string m_tuplename;
 
+	int IpLayerCount;
+	int v4LayerCount;
+	int v6LayerCount;
+	bool notFirstIPLayer;
+	bool isLastIPLayer;
+	bool isNextV4;
+	bool isNextV6;
+
   public:
-	ParsedResult()
+	ParsedResult() : m_tuplenameSet(false), IpLayerCount(0)
 	{
-		m_tuplenameSet = false;
 	}
 
 	ParsedResult(std::string s) : m_result(s)
@@ -52,6 +59,69 @@ class ParsedResult
 		m_tuplename = s;
 		m_tuplenameSet = true;
 		return;
+	}
+	std::string GetTuplename()
+	{
+		return m_tuplename;
+	}
+
+	void CountV4()
+	{
+		v4LayerCount++;
+		IpLayerCount++;
+	}
+	void CountV6()
+	{
+		v6LayerCount++;
+		IpLayerCount++;
+	}
+	void UnsetFirst()
+	{
+		notFirstIPLayer = true;
+	}
+	void SetLast()
+	{
+		isLastIPLayer = true;
+	}
+
+	int getIPLayerCount()
+	{
+		return IpLayerCount;
+	}
+	int getV4LayerCount()
+	{
+		return v4LayerCount;
+	}
+	int getV6LayerCount()
+	{
+		return v6LayerCount;
+	}
+	bool isFirst()
+	{
+		return !notFirstIPLayer;
+	}
+	bool isLast()
+	{
+		return isLastIPLayer;
+	}
+
+	void setNextLayerV4()
+	{
+		isNextV4 = true;
+		isNextV6 = false;
+	}
+	void setNextLayerV6()
+	{
+		isNextV4 = false;
+		isNextV6 = true;
+	}
+	bool isNextLayerV4()
+	{
+		return isNextV4;
+	}
+	bool isNextLayerV6()
+	{
+		return isNextV6;
 	}
 };
 

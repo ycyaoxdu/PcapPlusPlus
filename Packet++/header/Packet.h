@@ -360,6 +360,84 @@ class Packet
 	 */
 	void toStringList(std::vector<std::string> &result, bool timeAsLocalTime = true) const;
 
+	void AppendResult(std::string s)
+	{
+		m_RawPacket->AppendResult(s);
+	}
+
+	std::string GetResult()
+	{
+		return m_RawPacket->GetResult();
+	}
+
+	bool IsTuplenameSet()
+	{
+		return m_RawPacket->IsTuplenameSet();
+	}
+	void SetTuplename(std::string s)
+	{
+		m_RawPacket->SetTuplename(s);
+	}
+	std::string GetTuplename()
+	{
+		return m_RawPacket->GetTuplename();
+	}
+
+	void CountV4()
+	{
+		m_RawPacket->CountV4();
+	}
+	void CountV6()
+	{
+		m_RawPacket->CountV6();
+	}
+	void UnsetFirst()
+	{
+		m_RawPacket->UnsetFirst();
+	}
+	void SetLast()
+	{
+		m_RawPacket->SetLast();
+	}
+
+	int getIPLayerCount()
+	{
+		return m_RawPacket->getIPLayerCount();
+	}
+	int getV4LayerCount()
+	{
+		return m_RawPacket->getV4LayerCount();
+	}
+	int getV6LayerCount()
+	{
+		return m_RawPacket->getV6LayerCount();
+	}
+	bool isFirst()
+	{
+		return m_RawPacket->isFirst();
+	}
+	bool isLast()
+	{
+		return m_RawPacket->isLast();
+	}
+
+	void setNextLayerV4()
+	{
+		m_RawPacket->setNextLayerV4();
+	}
+	void setNextLayerV6()
+	{
+		m_RawPacket->setNextLayerV6();
+	}
+	bool isNextLayerV4()
+	{
+		return m_RawPacket->isNextLayerV4();
+	}
+	bool isNextLayerV6()
+	{
+		return m_RawPacket->isNextLayerV4();
+	}
+
   private:
 	void copyDataFrom(const Packet &other);
 

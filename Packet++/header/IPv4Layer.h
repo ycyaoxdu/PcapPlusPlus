@@ -4,7 +4,6 @@
 #include "IPLayer.h"
 #include "IpAddress.h"
 #include "Layer.h"
-#include "ParsedResult.h"
 #include "TLVData.h"
 #include <string.h>
 #include <vector>
@@ -416,7 +415,7 @@ class IPv4OptionBuilder : public TLVRecordBuilder
  * @class IPv4Layer
  * Represents an IPv4 protocol layer
  */
-class IPv4Layer : public Layer, public IPLayer, public ParsedResult
+class IPv4Layer : public Layer, public IPLayer
 {
   public:
 	/**

@@ -363,10 +363,14 @@ moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer = &q;
 // thread function to read ip packets
 void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp::RawPacket> *q)
 {
+	std::cout << "started parsing packet from device." << std::endl;
+
 	pcpp::RawPacket rawPacket;
 	while (reader->getNextPacket(rawPacket))
 	{
-		bool success = q->try_enqueue(std::move(rawPacket));
+		std::cout << "try to enque..." << std::endl;
+
+		bool success = q->try_enqueue(rawPacket);
 		if (!success)
 		{
 			// log error here
@@ -408,6 +412,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 	// read all packet from input file
 	while (quePointer->try_dequeue(rawPacket))
 	{
+		std::cout << "read a ip packet from queue..." << std::endl;
 		PCPP_LOG_DEBUG("read a ip packet from queue...");
 
 		bool defragPacket = true;
