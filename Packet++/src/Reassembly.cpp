@@ -44,9 +44,10 @@
 namespace pcpp
 {
 
+// add the object of tcpReassembly
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
-							void *UserCookie, OnMessageHandled OnMessageReadyCallback)
+							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,void *UserCookie, 
+							OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)   
 {
 	bool isIPv4Packet = false;
 	bool isIPv6Packet = false;
@@ -200,7 +201,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		}
 		case pcpp::TCP: {
 			// tcp handle
-			HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
+			tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
 			break;
 		}
 		case pcpp::UDP: {

@@ -11,6 +11,7 @@
 #include "PayloadLayer.h"
 #include "PcapFileDevice.h"
 
+typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
 // ~~~~~~~~~~~~~~~~~~
 // TcpReassemblyStats
@@ -95,7 +96,8 @@ static size_t getPayloadLen(pcpp::RawPacket& rawPacket)
 // tcpReassemblyMsgReadyCallback()
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData& tcpData, void* userCookie)
+static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData& tcpData, void* userCookie, pcpp::Packet* tcpPacket = NULL, 
+                                          pcpp::Layer* nextlayer = NULL, pcpp::IPAddress* IpSrc = NULL, pcpp::IPAddress* IpDst = NULL, void* cookie = NULL)
 {
 	TcpReassemblyMultipleConnStats::Stats &stats = ((TcpReassemblyMultipleConnStats*)userCookie)->stats;
 

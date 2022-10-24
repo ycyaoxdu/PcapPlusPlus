@@ -4,10 +4,10 @@
 #include "Packet.h"
 #include "IpAddress.h"
 #include "PointerVector.h"
+#include "ConcurrentQueue.h"
 #include <map>
 #include <list>
 #include <time.h>
-
 
 /**
  * @file
@@ -71,6 +71,9 @@
  */
 namespace pcpp
 {
+
+// to make sure the type of OnMessageHandled 
+typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
 /**
  * @struct ConnectionData
@@ -316,8 +319,13 @@ public:
 	 * @param[in] side The side this data belongs to (MachineA->MachineB or vice versa). The value is 0 or 1 where 0 is the first side seen in the connection and 1 is the second side seen
 	 * @param[in] tcpData The TCP data itself + connection information
 	 * @param[in] userCookie A pointer to the cookie provided by the user in TcpReassembly c'tor (or NULL if no cookie provided)
+	 * @param[in] tcpPacket  A reference to the packet to process(To transmit the packet)
+	 * @param[in] nextLayer  A pointer to the nextLayer of tcp packet
+	 * @param[in] IpSrc  A pointer to the source ip of tcp packet
+	 * @param[in] IpSrc  A pointer to the destination ip of tcp packet
+	 * @param[in] cookie  A pointer to the cookie provided by IP manager
 	 */
-	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData& tcpData, void* userCookie);
+	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData& tcpData, void* userCookie, Packet* tcpPacket, Layer* nextlayer, IPAddress* IpSrc, IPAddress* IpDst, void* cookie);    
 
 	/**
 	 * @typedef OnTcpConnectionStart
@@ -346,19 +354,22 @@ public:
 	 */
 	TcpReassembly(OnTcpMessageReady onMessageReadyCallback, void* userCookie = NULL, OnTcpConnectionStart onConnectionStartCallback = NULL, OnTcpConnectionEnd onConnectionEndCallback = NULL, const TcpReassemblyConfiguration &config = TcpReassemblyConfiguration());
 
-	/**
+	/** 
 	 * The most important method of this class which gets a packet from the user and processes it. If this packet opens a new connection, ends a connection or contains new data on an
 	 * existing connection, the relevant callback will be called (TcpReassembly#OnTcpMessageReady, TcpReassembly#OnTcpConnectionStart, TcpReassembly#OnTcpConnectionEnd)
 	 * @param[in] tcpData A reference to the packet to process
+	 * @param[in] nextLayer A pointer to the nextLayer which handling needs
+	 * @param[in] IpSrc A pointer to the source ip which handling needs
+	 * @param[in] IpSrc A pointer to the destination ip which handling needs
 	 * @return A enum of `TcpReassembly::ReassemblyStatus`, indicating status of TCP reassembly
 	 */
-	ReassemblyStatus reassemblePacket(Packet& tcpData);
+	ReassemblyStatus reassemblePacket(Packet& tcpData, Layer* nextlayer = NULL, IPAddress* IpSrc = NULL, IPAddress* IpDst = NULL);    
 
 	/**
 	 * The most important method of this class which gets a raw packet from the user and processes it. If this packet opens a new connection, ends a connection or contains new data on an
 	 * existing connection, the relevant callback will be invoked (TcpReassembly#OnTcpMessageReady, TcpReassembly#OnTcpConnectionStart, TcpReassembly#OnTcpConnectionEnd)
 	 * @param[in] tcpRawData A reference to the raw packet to process
-	 * @return A enum of `TcpReassembly::ReassemblyStatus`, indicating status of TCP reassembly
+	 * @return A enum of `TcpReassembly::ReassemblyStatus`, indicating status of TCP reassembly 
 	 */
 	ReassemblyStatus reassemblePacket(RawPacket* tcpRawData);
 
@@ -394,6 +405,11 @@ public:
 	 * @return The number of cleared items
 	 */
 	uint32_t purgeClosedConnections(uint32_t maxNumToClean = 0);
+    
+	/**
+	 * Set the value of *m_cookie, m_OnMessageHandledCallback, m_quePointer
+	 */
+	void SetHandleCookie(void* cookie) { m_cookie = cookie; }
 
 private:
 	struct TcpFragment
@@ -413,6 +429,11 @@ private:
 		uint16_t srcPort;
 		uint32_t sequence;
 		PointerVector<TcpFragment> tcpFragmentList;
+		PointerVector<Packet> tcpPacketList;      
+		PointerVector<IPAddress> tcpIpSrcList;
+		PointerVector<IPAddress> tcpIpDstList;
+		std::vector<Layer*> tcpNextLayerList;
+
 		bool gotFinOrRst;
 
 		TcpOneSideData() : srcPort(0), sequence(0), gotFinOrRst(false) {}
@@ -436,6 +457,7 @@ private:
 	OnTcpConnectionStart m_OnConnStart;
 	OnTcpConnectionEnd m_OnConnEnd;
 	void* m_UserCookie;
+	void* m_cookie;
 	ConnectionList m_ConnectionList;
 	ConnectionInfoList m_ConnectionInfo;
 	CleanupList m_CleanupList;
@@ -445,6 +467,7 @@ private:
 	size_t m_MaxOutOfOrderFragments;
 	time_t m_PurgeTimepoint;
 	bool m_EnableBaseBufferClearCondition;
+	
 
 	void checkOutOfOrderFragments(TcpReassemblyData* tcpReassemblyData, int8_t sideIndex, bool cleanWholeFragList);
 

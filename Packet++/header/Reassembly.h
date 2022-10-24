@@ -6,6 +6,7 @@
 #include "Layer.h"
 #include "PayloadLayer.h"
 #include "ProtocolType.h"
+#include "TcpReassembly.h"
 
 /**
  * @namespace pcpp
@@ -49,8 +50,8 @@ struct DefragStats
 typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
-							void *UserCookie, OnMessageHandled OnMessageReadyCallback);
+							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie, 
+                            OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly);
 
 void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					   OnMessageHandled OnMessageReadyCallback);
