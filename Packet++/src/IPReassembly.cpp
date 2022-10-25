@@ -14,7 +14,7 @@ namespace pcpp
 Layer *findLayer(Packet *packet)
 {
 	int cnt = packet->getIPLayerCount();
-	std::cout << "initial cnt: " << cnt << std::endl;
+	std::cout << "////////////////////////////////////\ninitial cnt: " << cnt << std::endl;
 
 	Layer *layer = packet->getFirstLayer();
 	std::cout << "first Layer: " << std::hex << layer->getProtocol() << std::oct << std::endl;
@@ -28,6 +28,8 @@ Layer *findLayer(Packet *packet)
 		{
 			if (cnt == 0)
 			{
+				std::cout << "layer found!\n////////////////////////////////////" << std::endl;
+
 				return layer;
 			}
 			cnt--;
@@ -36,7 +38,7 @@ Layer *findLayer(Packet *packet)
 		layer = layer->getNextLayer();
 	}
 
-	std::cout << "out..." << cnt << std::endl;
+	std::cout << "layer NOT found!\t" << cnt << "\n////////////////////////////////////" << std::endl;
 	return NULL;
 }
 
@@ -45,15 +47,34 @@ IPv4Layer *getv4(Packet *packet)
 	std::cout << "finding v4..." << std::endl;
 
 	Layer *layer = findLayer(packet);
+	if (layer == NULL)
+	{
+		std::cout << "NOT found v4" << std::endl;
 
-	std::cout << "found v4..." << std::endl;
+		PCPP_LOG_DEBUG("find ipv4 layer failed");
+		return NULL;
+	}
+
+	std::cout << "found v4" << std::endl;
 
 	return new IPv4Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 }
 
 IPv6Layer *getv6(Packet *packet)
 {
+	std::cout << "finding v6..." << std::endl;
+
 	Layer *layer = findLayer(packet);
+	if (layer == NULL)
+	{
+		std::cout << "NOT found v6" << std::endl;
+
+		PCPP_LOG_DEBUG("find ipv6 layer failed");
+		return NULL;
+	}
+
+	std::cout << "found v6" << std::endl;
+
 	return new IPv6Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 }
 

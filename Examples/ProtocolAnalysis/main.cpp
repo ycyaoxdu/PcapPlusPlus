@@ -531,7 +531,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 	// read all packet from input file
 	while (quePointer->try_dequeue(rawPacket))
 	{
-		std::cout << "read a ip packet from queue..." << std::endl;
+		std::cout << "+++++++++++++++++++++++++++++++++++\nread a ip packet from queue..." << std::endl;
 		PCPP_LOG_DEBUG("read a ip packet from queue...");
 
 		bool defragPacket = true;
@@ -636,7 +636,8 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 			stats.totalPacketsWritten++;
 		}
 	}
-
+	
+	std::cout << "---------------------------------\nip packet process done" << std::endl;
 	PCPP_LOG_DEBUG("ip packet process done");
 }
 

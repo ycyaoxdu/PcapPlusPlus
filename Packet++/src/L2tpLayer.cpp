@@ -26,7 +26,8 @@ void L2tpLayer::ToStructuredOutput(std::ostream &os) const
 
 	os << "L2TP Header:" << '\n';
 	os << "\t"
-	   << "control bytes: \t" << (std::bitset<8>)(uint16_t)*m_Data << '\n';
+	   << "control bytes: \t"
+	   << "0b" << (std::bitset<8>)(uint16_t)*m_Data << '\n';
 	os << "\t"
 	   << "tunnel id: \t\t" << getTunnelID() << '\n';
 	os << "\t"

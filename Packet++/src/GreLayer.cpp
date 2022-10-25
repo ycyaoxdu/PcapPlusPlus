@@ -12,6 +12,7 @@
 #include "PacketUtils.h"
 #include "PayloadLayer.h"
 #include "VlanLayer.h"
+#include <bitset>
 #include <sstream>
 
 // ==============
@@ -197,7 +198,10 @@ void GreLayer::parseNextLayer()
 {
 	size_t headerLen = getHeaderLen();
 	if (m_DataLen <= headerLen)
+	{
+		PCPP_LOG_DEBUG("GreLayer: failed to parse next layer, invalid packet length");
 		return;
+	}
 
 	gre_basic_header *header = (gre_basic_header *)m_Data;
 	uint8_t *payload = m_Data + headerLen;
@@ -429,9 +433,32 @@ void GREv0Layer::computeCalculateFields()
 	setChecksum(checksum);
 }
 
+void GREv0Layer::ToStructuredOutput(std::ostream &os) const
+{
+	os << "GRE Header:" << '\n';
+	os << "\t"
+	   << "version: \t" << 0 << '\n';
+	os << "\t"
+	   << "Recursion Control: \t" << "0b"<<(std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
+	os << "\t"
+	   << "C bit: \t" << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
+	os << "\t"
+	   << "R bit: \t" << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
+	os << "\t"
+	   << "K bit: \t" << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
+	os << "\t"
+	   << "S bit: \t" << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
+	os << "\t"
+	   << "s bit: \t" << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
+	os << "\t"
+	   << "protocol: \t" << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
+}
+
 std::string GREv0Layer::toString() const
 {
-	return "GRE Layer, version 0";
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 // ================
@@ -520,9 +547,36 @@ void GREv1Layer::computeCalculateFields()
 	getGreHeader()->payloadLength = htobe16(m_DataLen - getHeaderLen());
 }
 
+void GREv1Layer::ToStructuredOutput(std::ostream &os) const
+{
+	os << "GRE Header:" << '\n';
+	os << "\t"
+	   << "version: \t" << 1 << '\n';
+	os << "\t"
+	   << "Recursion Control: \t" << "0b"<< (std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
+	os << "\t"
+	   << "C bit: \t" << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
+	os << "\t"
+	   << "R bit: \t" << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
+	os << "\t"
+	   << "K bit: \t" << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
+	os << "\t"
+	   << "S bit: \t" << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
+	os << "\t"
+	   << "s bit: \t" << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
+	os << "\t"
+	   << "protocol: \t" << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
+	os << "\t"
+	   << "Payload Length: \t" << this->getGreHeader()->payloadLength << '\n';
+	os << "\t"
+	   << "Call ID: \t" << this->getGreHeader()->callID << '\n';
+}
+
 std::string GREv1Layer::toString() const
 {
-	return "GRE Layer, version 1";
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 // ===================
@@ -594,9 +648,9 @@ void PPP_PPTPLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "PPP Header:" << '\n';
 	os << "\t"
-	   << "Broadcast Address: \t" << (std::bitset<8>)getPPP_PPTPHeader()->address << '\n';
+	   << "Broadcast Address: \t" << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->address << '\n';
 	os << "\t"
-	   << "Control bytes: \t\t" << (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
+	   << "Control bytes: \t\t" << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
 	os << "\t"
 	   << "next layer protocol: \t" << std::hex << getPPP_PPTPHeader()->protocol << std::oct << '\n';
 }

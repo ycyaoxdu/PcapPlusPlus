@@ -297,6 +297,8 @@ class GREv0Layer : public GreLayer
 	 */
 	void computeCalculateFields();
 
+	void ToStructuredOutput(std::ostream &os) const;
+
 	std::string toString() const;
 };
 
@@ -375,6 +377,8 @@ class GREv1Layer : public GreLayer
 	 * - gre_basic_header#protocol
 	 */
 	void computeCalculateFields();
+
+	void ToStructuredOutput(std::ostream &os) const;
 
 	std::string toString() const;
 };

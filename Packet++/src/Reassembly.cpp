@@ -128,7 +128,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			ipLayer = ipv6Layer;
 		}
 
-		std::cout << "this protocol:" << std::hex << ipLayer->getProtocol() << std::oct << std::endl;
+		std::cout << "this protocol: " << std::hex << ipLayer->getProtocol();
 
 		// parse next layer
 		// any unknow protocol is payload
@@ -146,7 +146,9 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		// if next layer is payload layer, just print all messages.
 		// else parseNextLayer and call next module
 
-		std::cout << "next protocol:" << std::hex << nextLayer->getProtocol() << std::oct << std::endl;
+		std::cout << "\tnext protocol: " << nextLayer->getProtocol() << std::oct << std::endl;
+
+		// TODO: why segmentation fault  here?
 
 		// switch statement
 		switch (nextLayer->getProtocol())
@@ -195,6 +197,8 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		case pcpp::GRE: {
 			protoname = "gre";
 			TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
+
+			std::cout << "gre tuplename: " << TupleName << std::endl;
 
 			HandleGrePayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback, quePointer);
 			break;
@@ -280,32 +284,49 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
+	std::cout << "gre 111" << std::endl;
+
 	// gre : ipv4 ipv6 ppp payload
 	if (layer == NULL)
 	{
+		std::cout << "gre layer == NULL" << std::endl;
+
 		PCPP_LOG_DEBUG("HandleGrePayload: passing layer of nullptr to function");
 		return;
 	}
 
+	std::cout << "gre 222" << std::endl;
+
 	Layer *nextLayer;
-	GREv0Layer *grev0 = packet->getLayerOfType<GREv0Layer>();
-	if (grev0 != NULL)
+	if (layer->getProtocol() == GREv0)
 	{
-		grev0->parseNextLayer();
-		nextLayer = grev0->getNextLayer();
+		GREv0Layer grev0(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+		grev0.parseNextLayer();
+		nextLayer = grev0.getNextLayer();
+	}
+	else if (layer->getProtocol() == GREv1)
+	{
+		GREv1Layer grev1(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+		grev1.parseNextLayer();
+		nextLayer = grev1.getNextLayer();
 	}
 	else
 	{
-		GREv1Layer *grev1 = packet->getLayerOfType<GREv1Layer>();
-		grev1->parseNextLayer();
-		nextLayer = grev1->getNextLayer();
+		PCPP_LOG_DEBUG("HandleGrePayload: non-gre packet!");
+		return;
 	}
+
+	std::cout << "gre 333" << std::endl;
 
 	if (nextLayer == NULL)
 	{
+		std::cout << "gre nextlayer == NULL" << std::endl;
+
 		PCPP_LOG_DEBUG("HandleGrePayload: nextlayer of nullptr");
 		return;
 	}
+
+	std::cout << "gre 444" << std::endl;
 
 	if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 	{
@@ -754,30 +775,20 @@ bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 {
 
 	// TODO(ycyaoxdu): remove this line
-	std::cout << "handle ip layer" << std::endl;
+	std::cout << "HandleIPPacket: handle ip layer" << std::endl;
 
 	packet->SetTuplename(tuple);
 
 	if (iplayer->getProtocol() == IPv4 || iplayer->getProtocol() == IPv6)
-	{
+	{	
 		packet->CountV4();
 	}
-
-	// while (iplayer != NULL)
-	// {
-	// 	if (iplayer->getProtocol() == IPv4)
-	// 	{
-	// 		packet->setNextLayerV4();
-	// 		break;
-	// 	}
-	// 	else if (iplayer->getProtocol() == IPv6)
-	// 	{
-	// 		packet->setNextLayerV6();
-	// 		break;
-	// 	}
-	// 	iplayer->parseNextLayer();
-	// 	iplayer = iplayer->getNextLayer();
-	// }
+	else
+	{
+		std::cout << "HandleIPPacket: accepted a non ip packet" << std::endl;
+		PCPP_LOG_DEBUG("HandleIPPacket: accepted a non ip packet");
+		return false;
+	}
 
 	return quePointer->try_enqueue(*packet->getRawPacket());
 }
@@ -789,6 +800,7 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 
 	ReassemblyStatus response = Handled;
 	std::string result = payloadlayer->GetResult();
+	payloadlayer->packet()->SetTuplename(tuple);
 
 	Layer *layer = payloadlayer;
 	// use stack to store messages;

@@ -561,9 +561,9 @@ void IPv4Layer::ToStructuredOutput(std::ostream &os) const
 	iphdr *hdr = getIPv4Header();
 	os << "IP Header:" << '\n';
 	os << "\t"
-	   << "Version: \t\t" << (std::bitset<4>)hdr->ipVersion << '\n';
+	   << "Version: \t\t" << "0b"<< (std::bitset<4>)hdr->ipVersion << '\n';
 	os << "\t"
-	   << "Header Length: \t" << (std::bitset<4>)hdr->internetHeaderLength << '\n';
+	   << "Header Length: \t" << "0b"<< (std::bitset<4>)hdr->internetHeaderLength << '\n';
 	os << "\t"
 	   << "Total Length: \t" << hdr->totalLength << '\n';
 	os << "\t"
