@@ -26,19 +26,18 @@
 #include "TcpReassembly.h"
 #include "UdpLayer.h"
 #include "getopt.h"
-#include <unistd.h>
+#include <algorithm>
 #include <getopt.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <iostream>
 #include <map>
 #include <queue>
 #include <sstream>
-#include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <string>
 #include <thread>
-
+#include <unistd.h>
 
 #define LOG_MODULE pcpp::ProtocolAnalysis
 
@@ -56,6 +55,7 @@
 #define SEPARATOR '/'
 #endif
 
+#define DEFAULT_MAX_PACKETS_TO_STORE 500000
 // unless the user chooses otherwise - default number of concurrent used file descl2tptors is 500
 #define DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES 500
 
@@ -223,14 +223,14 @@ struct ReassemblyData
 	}
 };
 
-/** 
- * A struct to contain all data save on a specific connection. 
+/**
+ * A struct to contain all data save on a specific connection.
  */
 struct TcpReassemblyData
 {
 	// a flag indicating on which side was the latest message on this connection
 	int8_t curSide;
-    
+
 	// stats data: num of data packets on each side, bytes seen on each side and messages seen on each side
 	int numOfDataPackets[2];
 	int numOfMessagesFromSide[2];
@@ -239,7 +239,10 @@ struct TcpReassemblyData
 	/**
 	 * the default c'tor
 	 */
-	TcpReassemblyData() { clear(); }
+	TcpReassemblyData()
+	{
+		clear();
+	}
 
 	/**
 	 * Clear all data (put 0, false or NULL - whatever relevant for each field)
@@ -355,11 +358,12 @@ static void OnMessageReadyCallback(std::string *data, std::string tuplename, voi
 /**
  * The callback being called by the TCP reassembly module whenever new data arrives on a certain connection
  */
-static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData& tcpData, void *userCookie, pcpp::Packet *tcpPacket,
-                                          pcpp::Layer *nextLayer, pcpp::IPAddress *IpSrc, pcpp::IPAddress *IpDst, void *UserCookie)    
+static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData &tcpData, void *userCookie,
+										  pcpp::Packet *tcpPacket, pcpp::Layer *nextLayer, pcpp::IPAddress *IpSrc,
+										  pcpp::IPAddress *IpDst, void *UserCookie)
 {
 	// extract the connection manager from the user cookie
-	TcpReassemblyConnMgr* connMgr = (TcpReassemblyConnMgr*)userCookie;
+	TcpReassemblyConnMgr *connMgr = (TcpReassemblyConnMgr *)userCookie;
 
 	// check if this flow already appears in the connection manager. If not add it
 	TcpReassemblyConnMgrIter iter = connMgr->find(tcpData.getConnectionData().flowKey);
@@ -378,7 +382,7 @@ static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStrea
 		// set side index as the current active side
 		iter->second.curSide = sideIndex;
 	}
-    
+
 	// count number of packets and bytes in each side of the connection
 	iter->second.numOfDataPackets[sideIndex]++;
 	iter->second.bytesFromSide[sideIndex] += (int)tcpData.getDataLength();
@@ -388,12 +392,13 @@ static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStrea
 }
 
 /**
- * The callback being called by the TCP reassembly module whenever a new connection is found. This method adds the connection to the connection manager
+ * The callback being called by the TCP reassembly module whenever a new connection is found. This method adds the
+ * connection to the connection manager
  */
 static void tcpReassemblyConnectionStartCallback(const pcpp::ConnectionData &connectionData, void *userCookie)
 {
 	// get a pointer to the connection manager
-	TcpReassemblyConnMgr* connMgr = (TcpReassemblyConnMgr*)userCookie;
+	TcpReassemblyConnMgr *connMgr = (TcpReassemblyConnMgr *)userCookie;
 
 	// look for the connection in the connection manager
 	TcpReassemblyConnMgrIter iter = connMgr->find(connectionData.flowKey);
@@ -407,13 +412,14 @@ static void tcpReassemblyConnectionStartCallback(const pcpp::ConnectionData &con
 }
 
 /**
- * The callback being called by the TCP reassembly module whenever a connection is ending. This method removes the connection from the connection manager and writes the metadata file if requested
- * by the user
+ * The callback being called by the TCP reassembly module whenever a connection is ending. This method removes the
+ * connection from the connection manager and writes the metadata file if requested by the user
  */
-static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData &connectionData, pcpp::TcpReassembly::ConnectionEndReason reason, void *userCookie)
+static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData &connectionData,
+											   pcpp::TcpReassembly::ConnectionEndReason reason, void *userCookie)
 {
 	// get a pointer to the connection manager
-	TcpReassemblyConnMgr* connMgr = (TcpReassemblyConnMgr*)userCookie;
+	TcpReassemblyConnMgr *connMgr = (TcpReassemblyConnMgr *)userCookie;
 
 	// find the connection in the connection manager by the flow key
 	TcpReassemblyConnMgrIter iter = connMgr->find(connectionData.flowKey);
@@ -430,6 +436,7 @@ static struct option DefragUtilOptions[] = {{"output-file", required_argument, 0
 											{"filter-by-ipid", required_argument, 0, 'd'},
 											{"bpf-filter", required_argument, 0, 'f'},
 											{"copy-all-packets", no_argument, 0, 'a'},
+											{"max-packet-number", required_argument, 0, 'p'},
 											{"help", no_argument, 0, 'h'},
 											{"version", no_argument, 0, 'v'},
 											{0, 0, 0, 0}};
@@ -443,14 +450,15 @@ void printUsage()
 		<< std::endl
 		<< "Usage:" << std::endl
 		<< "------" << std::endl
-		<< pcpp::AppName::get() << " input_file -o output_file [-d frag_ids] [-f bpf_filter] [-a] [-h] [-v]"
-		<< std::endl
+		<< pcpp::AppName::get()
+		<< " input_file -o output_file [-p max-packet-number] [-d frag_ids] [-f bpf_filter] [-a] [-h] [-v]" << std::endl
 		<< std::endl
 		<< "Options:" << std::endl
 		<< std::endl
 		<< "    input_file      : Input pcap/pcapng file" << std::endl
 		<< "    -o output_file  : Output file. Output file type (pcap/pcapng) will match the input file type"
 		<< std::endl
+		<< "    -p max-packet-number : Number of ip packets to store, Default to 500000" << std::endl
 		<< "    -d frag_ids     : De-fragment only fragments that match this comma-separated list of IP IDs (for IPv4) "
 		   "or"
 		<< std::endl
@@ -476,8 +484,6 @@ void printAppVersion()
 			  << "Built from: " << pcpp::getGitInfo() << std::endl;
 	exit(0);
 }
-
-
 
 // thread function to read ip packets
 void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp::RawPacket> *q)
@@ -506,8 +512,10 @@ void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp:
  * This method reads packets from the input file, decided which fragments pass the filters set by the user, de-fragment
  * the fragments who pass them, and writes the result packets to the output file
  */
-void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter, bool filterByIpID,std::map<uint32_t, bool> fragIDs, 
-                    pcpp::DefragStats &stats, void *UserCookie, pcpp::TcpReassembly &tcpReassembly)  
+
+void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter,
+					bool filterByIpID, std::map<uint32_t, bool> fragIDs, pcpp::DefragStats &stats, void *UserCookie,
+					pcpp::TcpReassembly &tcpReassembly)
 {
 	PCPP_LOG_DEBUG("ip packet process started...");
 
@@ -515,7 +523,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 	pcpp::BPFStringFilter filter(bpfFilter);
 
 	// create an instance of IPReassembly
-	pcpp::IPReassembly ipReassembly;
+	pcpp::IPReassembly ipReassembly(NULL, NULL, maxPacketsToStore);
 	pcpp::IPReassembly::ReassemblyStatus status;
 
 	// start a new thraed to enqueue packets
@@ -613,9 +621,9 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 		if (defragPacket)
 		{
 			stats.totalPacketsWritten++;
-            
-			pcpp::ReassemblyStatus reassemblePacketStatus =
-				Reassemble(&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
+
+			pcpp::ReassemblyStatus reassemblePacketStatus = Reassemble(
+				&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
 
 			PCPP_LOG_DEBUG("Reassemble packet finished...");
 
@@ -636,7 +644,7 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 			stats.totalPacketsWritten++;
 		}
 	}
-	
+
 	std::cout << "---------------------------------\nip packet process done" << std::endl;
 	PCPP_LOG_DEBUG("ip packet process done");
 }
@@ -682,6 +690,7 @@ int main(int argc, char *argv[])
 	int optionIndex = 0;
 	int opt = 0;
 
+	size_t maxPacketsToStore = DEFAULT_MAX_PACKETS_TO_STORE;
 	size_t maxOpenFiles = DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES;
 	std::string outputDir = "";
 
@@ -691,7 +700,7 @@ int main(int argc, char *argv[])
 	bool filterByFragID = false;
 	std::map<uint32_t, bool> fragIDMap;
 
-	while ((opt = getopt_long(argc, argv, "o:d:f:hv", DefragUtilOptions, &optionIndex)) != -1)
+	while ((opt = getopt_long(argc, argv, "o:p:d:f:hv", DefragUtilOptions, &optionIndex)) != -1)
 	{
 		switch (opt)
 		{
@@ -700,6 +709,10 @@ int main(int argc, char *argv[])
 		}
 		case 'o': {
 			outputDir = optarg;
+			break;
+		}
+		case 'p': {
+			maxOpenFiles = (size_t)atoi(optarg);
 			break;
 		}
 		case 'd': {
@@ -783,12 +796,13 @@ int main(int argc, char *argv[])
 
 	// create the object which manages info
 	ReassemblyMgr mgr;
-    
+
 	// create the object which manages info on all connections
 	TcpReassemblyConnMgr connMgr;
 
 	// create the TCP reassembly instance
-	pcpp::TcpReassembly tcpReassembly(tcpReassemblyMsgReadyCallback, &connMgr, tcpReassemblyConnectionStartCallback, tcpReassemblyConnectionEndCallback);
+	pcpp::TcpReassembly tcpReassembly(tcpReassemblyMsgReadyCallback, &connMgr, tcpReassemblyConnectionStartCallback,
+									  tcpReassemblyConnectionEndCallback);
 
 	// set the info manager for tcpReassembly
 	tcpReassembly.SetHandleCookie(&mgr);
@@ -804,15 +818,15 @@ int main(int argc, char *argv[])
 	// run the de-fragmentation process
 	pcpp::DefragStats stats;
 
-	// add the object of tcpReassembly
-	processPackets(reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, stats, &mgr, tcpReassembly);  
+	processPackets(maxPacketsToStore, reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, stats, &mgr,
+				   tcpReassembly);
 
 	// close files
 	reader->close();
 
 	// close all tcp connections
-	tcpReassembly.closeAllConnections();    
-	
+	tcpReassembly.closeAllConnections();
+
 	// print summary stats to console
 	printStats(stats, filterByFragID, filterByBpfFilter);
 
