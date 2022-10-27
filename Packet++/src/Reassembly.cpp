@@ -45,9 +45,10 @@
 namespace pcpp
 {
 
+// add the object of tcpReassembly
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
-							void *UserCookie, OnMessageHandled OnMessageReadyCallback)
+							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,void *UserCookie, 
+							OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)   
 {
 	// TODO(ycyaoxdu): we need to set a timer to expire
 
@@ -176,7 +177,10 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		}
 		case pcpp::TCP: {
 			// tcp handle
-			HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
+
+			// HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
+			// do the tcp reassemble , and handle in the TcpOnMessageReadyCallback
+			tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
 			break;
 		}
 		case pcpp::UDP: {
