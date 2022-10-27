@@ -222,8 +222,7 @@ struct ReassemblyData
 	}
 };
 
-
-/**
+/** 
  * A struct to contain all data save on a specific connection. 
  */
 struct TcpReassemblyData
@@ -261,9 +260,15 @@ struct TcpReassemblyData
 typedef std::map<std::string, ReassemblyData> ReassemblyMgr;
 typedef std::map<std::string, ReassemblyData>::iterator ReassemblyMgrIter;
 
+// 
 // typedef representing the connection manager and its iterator
 typedef std::map<uint32_t, TcpReassemblyData> TcpReassemblyConnMgr;
 typedef std::map<uint32_t, TcpReassemblyData>::iterator TcpReassemblyConnMgrIter;
+
+// concurrent queue to cache ip packets
+// change the location to make sure the tcpcallback can use quePointer
+moodycamel::ConcurrentQueue<pcpp::RawPacket> q;
+moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer = &q;
 
 static void OnMessageReadyCallback(std::string *data, std::string tuplename, void *userCookie)
 {
@@ -351,7 +356,8 @@ static void OnMessageReadyCallback(std::string *data, std::string tuplename, voi
 /** 
  * The callback being called by the TCP reassembly module whenever new data arrives on a certain connection
  */
-static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData& tcpData, void* userCookie, pcpp::Packet& tcpPacket)
+static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData& tcpData, void *userCookie, pcpp::Packet *tcpPacket,
+                                          pcpp::Layer *nextLayer, pcpp::IPAddress *IpSrc, pcpp::IPAddress *IpDst, void *UserCookie)    
 {
 	// extract the connection manager from the user cookie
 	TcpReassemblyConnMgr* connMgr = (TcpReassemblyConnMgr*)userCookie;
@@ -378,15 +384,14 @@ static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStrea
 	iter->second.numOfDataPackets[sideIndex]++;
 	iter->second.bytesFromSide[sideIndex] += (int)tcpData.getDataLength();
 
-	// analyse the tcp packet
-	// 这里应该对传过来的tcp包进行分析, 感觉需要根据Reassemble函数为TCP包另外设立一个tcpReassemble
-	// 形如tcpReassemble(&tcpPacket, ...)之类的
+	// handle the tcp packet
+	HandleTcpPayload(nextLayer, *IpSrc, *IpDst, tcpPacket, UserCookie, OnMessageReadyCallback, quePointer);
 }
 
 /**
  * The callback being called by the TCP reassembly module whenever a new connection is found. This method adds the connection to the connection manager
  */
-static void tcpReassemblyConnectionStartCallback(const pcpp::ConnectionData& connectionData, void* userCookie)
+static void tcpReassemblyConnectionStartCallback(const pcpp::ConnectionData &connectionData, void *userCookie)
 {
 	// get a pointer to the connection manager
 	TcpReassemblyConnMgr* connMgr = (TcpReassemblyConnMgr*)userCookie;
@@ -406,7 +411,7 @@ static void tcpReassemblyConnectionStartCallback(const pcpp::ConnectionData& con
  * The callback being called by the TCP reassembly module whenever a connection is ending. This method removes the connection from the connection manager and writes the metadata file if requested
  * by the user
  */
-static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData& connectionData, pcpp::TcpReassembly::ConnectionEndReason reason, void* userCookie)
+static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData &connectionData, pcpp::TcpReassembly::ConnectionEndReason reason, void *userCookie)
 {
 	// get a pointer to the connection manager
 	TcpReassemblyConnMgr* connMgr = (TcpReassemblyConnMgr*)userCookie;
@@ -421,6 +426,7 @@ static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData& conne
 	// remove the connection from the connection manager
 	connMgr->erase(iter);
 }
+//
 
 static struct option DefragUtilOptions[] = {{"output-file", required_argument, 0, 'o'},
 											{"filter-by-ipid", required_argument, 0, 'd'},
@@ -473,9 +479,7 @@ void printAppVersion()
 	exit(0);
 }
 
-// concurrent queue to cache ip packets
-moodycamel::ConcurrentQueue<pcpp::RawPacket> q;
-moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer = &q;
+
 
 // thread function to read ip packets
 void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp::RawPacket> *q)
@@ -500,8 +504,10 @@ void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp:
  * This method reads packets from the input file, decided which fragments pass the filters set by the user, de-fragment
  * the fragments who pass them, and writes the result packets to the output file
  */
-void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter, bool filterByIpID,
-					std::map<uint32_t, bool> fragIDs, pcpp::DefragStats &stats, void *UserCookie, pcpp::TcpReassembly &tcpReassembly)  
+
+// add the object of tcpReassembly
+void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter, bool filterByIpID,std::map<uint32_t, bool> fragIDs, 
+                    pcpp::DefragStats &stats, void *UserCookie, pcpp::TcpReassembly &tcpReassembly)  
 {
 	PCPP_LOG_DEBUG("ip packet process started...");
 
@@ -606,32 +612,24 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 		if (defragPacket)
 		{
 			stats.totalPacketsWritten++;
+            
+			// add the object of tcpReassembly
+			pcpp::ReassemblyStatus reassemblePacketStatus =
+				Reassemble(&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
 
-			// 判断是否为TCP包
-			pcpp::TcpLayer *tcpLayer = parsedPacket.getLayerOfType<pcpp::TcpLayer>(true);
-			if (tcpLayer != NULL)    //是Tcp包则调用重组函数
+			PCPP_LOG_DEBUG("Reassemble packet finished...");
+
+			// update statistics if packet isn't fully reassembled
+			if (status == pcpp::IPReassembly::FIRST_FRAGMENT || status == pcpp::IPReassembly::FRAGMENT ||
+				status == pcpp::IPReassembly::OUT_OF_ORDER_FRAGMENT ||
+				status == pcpp::IPReassembly::MALFORMED_FRAGMENT || status == pcpp::IPReassembly::REASSEMBLED)
 			{
-                tcpReassembly.reassemblePacket(parsedPacket);    
+				if (isIPv4Packet)
+					stats.ipv4FragmentsMatched++;
+				else if (isIPv6Packet)
+					stats.ipv6FragmentsMatched++;
 			}
-			else    
-			{
-			    pcpp::ReassemblyStatus reassemblePacketStatus =
-				    Reassemble(&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback);
-
-			    PCPP_LOG_DEBUG("Reassemble packet finished...");
-
-			    // update statistics if packet isn't fully reassembled
-			    if (status == pcpp::IPReassembly::FIRST_FRAGMENT || status == pcpp::IPReassembly::FRAGMENT ||
-				    status == pcpp::IPReassembly::OUT_OF_ORDER_FRAGMENT ||
-				    status == pcpp::IPReassembly::MALFORMED_FRAGMENT || status == pcpp::IPReassembly::REASSEMBLED)
-			    {
-				    if (isIPv4Packet)
-					    stats.ipv4FragmentsMatched++;
-				    else if (isIPv6Packet)
-					    stats.ipv6FragmentsMatched++;
-			    }
-		    }
-	    }
+		}
 		// if packet isn't marked for de-fragmentation but the user asked to write all packets to output file
 		else
 		{
@@ -791,6 +789,9 @@ int main(int argc, char *argv[])
 	// create the TCP reassembly instance
 	pcpp::TcpReassembly tcpReassembly(tcpReassemblyMsgReadyCallback, &connMgr, tcpReassemblyConnectionStartCallback, tcpReassemblyConnectionEndCallback);
 
+	// set the handle param
+	tcpReassembly.SetHandleCookie(&mgr);
+
 	// create a reader device from input file
 	pcpp::IFileReaderDevice *reader = pcpp::IFileReaderDevice::getReader(inputFile);
 
@@ -801,11 +802,14 @@ int main(int argc, char *argv[])
 
 	// run the de-fragmentation process
 	pcpp::DefragStats stats;
-	processPackets(reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, stats, &mgr, tcpReassembly);    
+
+	// add the object of tcpReassembly
+	processPackets(reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, stats, &mgr, tcpReassembly);  
 
 	// close files
 	reader->close();
-    
+
+	// close all tcp connections
 	tcpReassembly.closeAllConnections();    
 	
 	// print summary stats to console
