@@ -49,7 +49,6 @@ struct DefragStats
 
 typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
-// add the object of tcpReassembly
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
 							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie, 
                             OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly);
