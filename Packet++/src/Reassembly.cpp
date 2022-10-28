@@ -49,48 +49,48 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,void *UserCookie, 
 							OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)   
 {
+	PCPP_LOG_DEBUG("stage reassemble: start packet reassemble and analysis");
+
 	bool isIPv4Packet = false;
 	bool isIPv6Packet = false;
 
-	// TODO(ycyaoxdu): should modify
-	if (parsedPacket->isFirst())
+	// TODO(ycyaoxdu):
+	if (parsedPacket == NULL)
 	{
-		if (findLayer(parsedPacket)->getProtocol() == IPv4)
-		{
-			isIPv4Packet = true;
-		}
-		else if (findLayer(parsedPacket)->getProtocol() == IPv6)
-		{
-			isIPv6Packet = true;
-		}
-
-		parsedPacket->UnsetFirst();
+		PCPP_LOG_DEBUG("stage reassemble: Input empty pointer to Packet");
+		return Invalid;
 	}
-	else if (findLayer(parsedPacket)->getProtocol() == IPv4)
-	{
 
+	Layer *next = findLayer(parsedPacket);
+	if (next == NULL)
+	{
+		PCPP_LOG_DEBUG("stage reassemble: non-ip packet!");
+		return Invalid;
+	}
+
+	if (findLayer(parsedPacket)->getProtocol() == IPv4)
+	{
+		PCPP_LOG_DEBUG("stage reassemble: IPv4 parsed");
 		isIPv4Packet = true;
 	}
-	else if (findLayer(parsedPacket)->getProtocol() == IPv4)
+	else if (findLayer(parsedPacket)->getProtocol() == IPv6)
 	{
-
+		PCPP_LOG_DEBUG("stage reassemble: IPv6 parsed");
 		isIPv6Packet = true;
 	}
 	else
 	{
 		// non-ip packet should not be passed in
+		PCPP_LOG_DEBUG("stage reassemble: not-ip packet!");
+		return Invalid;
 	}
 
 	// process the packet in the IP reassembly mechanism
 	IPReassembly::ReassemblyStatus status = *statusPtr;
 
-	// TODO(ycyaoxdu):remove this line
-	std::cout << "\nstart reassemble ip packet...\n" << std::endl;
-
+	PCPP_LOG_DEBUG("stage ip reassembly:start reassemble ip packet");
 	Packet *result = ipReassembly->processPacket(parsedPacket, status);
-
-	// TODO(ycyaoxdu):remove this line
-	std::cout << "end reassemble ip packet...\n" << std::endl;
+	PCPP_LOG_DEBUG("stage ip reassembly:finish reassemble ip packet");
 
 	// write fragment/packet to file if:
 	// - packet is fully reassembled (status of REASSEMBLED)
@@ -98,8 +98,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	if (status == pcpp::IPReassembly::REASSEMBLED ||
 		((status == pcpp::IPReassembly::NON_IP_PACKET || status == pcpp::IPReassembly::NON_FRAGMENT)))
 	{
-		// TODO(ycyaoxdu):remove this line
-		std::cout << "\nprocess de-fraged ip packet..." << std::endl;
+		PCPP_LOG_DEBUG("stage ip analysis: start to analysis complete ip packet(de-fragmented)");
 
 		// TupleName is used to identify which file the packet will store in
 		std::string TupleName = "";
@@ -110,46 +109,42 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 		pcpp::Layer *ipLayer;
 
+		// TODO(ycyaoxdu):need to remove this
 		std::cout << "this isIPv4Packet:" << isIPv4Packet << "\tthis isIPv6Packet:" << isIPv6Packet << std::endl;
 
-		// TODO(ycyaoxdu):need to handle this, get the correct layer
 		if (isIPv4Packet)
 		{
-			pcpp::IPv4Layer *ipv4Layer = getv4(result) /* result->getLayerOfType<pcpp::IPv4Layer>() */;
+			pcpp::IPv4Layer *ipv4Layer = getv4(result);
 			IpSrc = ipv4Layer->getSrcIPAddress();
 			IpDst = ipv4Layer->getDstIPAddress();
 			ipLayer = ipv4Layer;
 		}
 		else
 		{
-			pcpp::IPv6Layer *ipv6Layer = getv6(result) /* result->getLayerOfType<pcpp::IPv6Layer>() */;
+			pcpp::IPv6Layer *ipv6Layer = getv6(result);
 			IpSrc = ipv6Layer->getSrcIPAddress();
 			IpDst = ipv6Layer->getDstIPAddress();
 			ipLayer = ipv6Layer;
 		}
 
+		// TODO(ycyaoxdu):need to remove this
 		std::cout << "this protocol: " << std::hex << ipLayer->getProtocol();
 
 		// parse next layer
 		// any unknow protocol is payload
 		ipLayer->parseNextLayer();
-		auto nextLayer = ipLayer->getNextLayer();
+		Layer *nextLayer = ipLayer->getNextLayer();
 		if (nextLayer == NULL)
 		{
-			std::cout << "IP: passing layer of nullptr to function..." << std::endl;
-
-			PCPP_LOG_DEBUG("IP: passing layer of nullptr to function");
+			PCPP_LOG_DEBUG("stage ip analysis: get nextlayer of nullptr");
+			// invalid data
 			return Invalid;
 		}
 
-		// code logic:
-		// if next layer is payload layer, just print all messages.
-		// else parseNextLayer and call next module
-
+		// TODO(ycyaoxdu):need to remove this
 		std::cout << "\tnext protocol: " << nextLayer->getProtocol() << std::oct << std::endl;
 
-		// TODO: why segmentation fault  here?
-
+		// TODO(ycyaoxdu): why segmentation fault  here?
 		// switch statement
 		switch (nextLayer->getProtocol())
 		{
@@ -197,9 +192,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		case pcpp::GRE: {
 			protoname = "gre";
 			TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
-
-			std::cout << "gre tuplename: " << TupleName << std::endl;
-
 			HandleGrePayload(nextLayer, TupleName, result, UserCookie, OnMessageReadyCallback, quePointer);
 			break;
 		}
@@ -230,6 +222,8 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			break;
 		}
 		}
+
+		PCPP_LOG_DEBUG("stage ip analysis: finished analysis ip packet");
 	}
 	// update statistics if packet is fully reassembled (status of REASSEMBLED) and
 	if (status == pcpp::IPReassembly::REASSEMBLED)
@@ -244,12 +238,15 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	}
 
 	*statusPtr = status;
+	PCPP_LOG_DEBUG("stage reassemble: finished packet reassemble and analysis");
 	return Handled;
 }
 
 void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					   OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleOspfPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleOspfPayload: passing layer of nullptr to function");
@@ -262,6 +259,8 @@ void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void
 void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleEspPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleEspPayload: passing layer of nullptr to function");
@@ -284,18 +283,14 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
-	std::cout << "gre 111" << std::endl;
+	PCPP_LOG_DEBUG("HandleGrePayload: tuplename: " << tuplename);
 
 	// gre : ipv4 ipv6 ppp payload
 	if (layer == NULL)
 	{
-		std::cout << "gre layer == NULL" << std::endl;
-
 		PCPP_LOG_DEBUG("HandleGrePayload: passing layer of nullptr to function");
 		return;
 	}
-
-	std::cout << "gre 222" << std::endl;
 
 	Layer *nextLayer;
 	if (layer->getProtocol() == GREv0)
@@ -316,17 +311,11 @@ void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	std::cout << "gre 333" << std::endl;
-
 	if (nextLayer == NULL)
 	{
-		std::cout << "gre nextlayer == NULL" << std::endl;
-
 		PCPP_LOG_DEBUG("HandleGrePayload: nextlayer of nullptr");
 		return;
 	}
-
-	std::cout << "gre 444" << std::endl;
 
 	if (nextLayer->getProtocol() == pcpp::IPv4 || nextLayer->getProtocol() == pcpp::IPv6)
 	{
@@ -391,12 +380,11 @@ void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 		protoname = "gtp";
 		TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
-		std::cout << "gtp tuplename:" << TupleName << std::endl;
-
 		HandleGtpPayload(nextLayer, TupleName, packet, cookie, OnMessageReadyCallback, quePointer);
 	}
 	else
 	{
+		PCPP_LOG_DEBUG("HandleUdpPayload: TupleName: " << TupleName);
 		HandleGenericPayload(nextLayer, TupleName, packet, cookie, OnMessageReadyCallback);
 	}
 }
@@ -451,10 +439,12 @@ void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 	{
 		protoname = "gtp";
 		TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+
 		HandleGtpPayload(nextLayer, TupleName, packet, cookie, OnMessageReadyCallback, quePointer);
 	}
 	else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 	{
+		PCPP_LOG_DEBUG("HandleTcpPayload: TupleName: " << TupleName);
 		HandleGenericPayload(nextLayer, TupleName, packet, cookie, OnMessageReadyCallback);
 	}
 }
@@ -515,7 +505,7 @@ void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *p
 	}
 	else if (nextLayer->getProtocol() == pcpp::GenericPayload)
 	{
-		TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
+		PCPP_LOG_DEBUG("HandleSctpPayload: TupleName: " << TupleName);
 		HandleGenericPayload(nextLayer, TupleName, packet, cookie, OnMessageReadyCallback);
 	}
 }
@@ -523,6 +513,8 @@ void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *p
 void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleRipPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleRipPayload: passing layer of nullptr to function");
@@ -539,13 +531,13 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 	}
 	// TODO(): handle this
 	ReassembleMessage(&rip, tuplename, cookie, OnMessageReadyCallback);
-
-	// HandleGenericPayload(nextLayer, tuplename, packet, cookie, OnMessageReadyCallback);
 }
 
 void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
+	PCPP_LOG_DEBUG("HandleGtpPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleGtpPayload: passing layer of nullptr to function");
@@ -575,6 +567,8 @@ void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
+	PCPP_LOG_DEBUG("HandlePppPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandlePppPayload: passing layer of nullptr to function");
@@ -609,6 +603,8 @@ void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 					   OnMessageHandled OnMessageReadyCallback,
 					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
+	PCPP_LOG_DEBUG("HandleL2tpPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleL2tpPayload: passing layer of nullptr to function");
@@ -630,6 +626,8 @@ void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleBgpPayload: tuplename: " << tuplename);
+
 	BgpLayer *bgp = BgpLayer::parseBgpLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 	ReassembleMessage(&(*bgp), tuplename, cookie, OnMessageReadyCallback);
 
@@ -701,6 +699,8 @@ void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleSslPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleSslPayload: passing layer of nullptr to function");
@@ -739,6 +739,8 @@ void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					   OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleHttpPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleHttpPayload: passing layer of nullptr to function");
@@ -760,6 +762,8 @@ void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 						  OnMessageHandled OnMessageReadyCallback)
 {
+	PCPP_LOG_DEBUG("HandleGenericPayload: tuplename: " << tuplename);
+
 	if (layer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleGenericPayload: passing layer of nullptr to function");
@@ -773,19 +777,16 @@ void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, v
 bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
-
-	// TODO(ycyaoxdu): remove this line
-	std::cout << "HandleIPPacket: handle ip layer" << std::endl;
+	PCPP_LOG_DEBUG("HandleIPPacket: tuplename: " << tuple);
 
 	packet->SetTuplename(tuple);
 
 	if (iplayer->getProtocol() == IPv4 || iplayer->getProtocol() == IPv6)
-	{	
-		packet->CountV4();
+	{
+		packet->CountIP();
 	}
 	else
 	{
-		std::cout << "HandleIPPacket: accepted a non ip packet" << std::endl;
 		PCPP_LOG_DEBUG("HandleIPPacket: accepted a non ip packet");
 		return false;
 	}
@@ -799,13 +800,13 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 {
 
 	ReassemblyStatus response = Handled;
-	std::string result = payloadlayer->GetResult();
+	std::string result;
 	payloadlayer->packet()->SetTuplename(tuple);
 
 	Layer *layer = payloadlayer;
 	// use stack to store messages;
 	// print from back to front
-	// then pop and <<
+	// then pop
 	std::stack<std::string> stk;
 	std::string temp = "";
 

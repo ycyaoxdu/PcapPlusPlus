@@ -14,22 +14,24 @@ namespace pcpp
 Layer *findLayer(Packet *packet)
 {
 	int cnt = packet->getIPLayerCount();
-	std::cout << "////////////////////////////////////\ninitial cnt: " << cnt << std::endl;
+	if (cnt == -1)
+	{
+		PCPP_LOG_DEBUG("findLayer: field RawPacket of Packet not set");
+		return NULL;
+	}
 
+	PCPP_LOG_DEBUG("findLayer: initial cnt: " << cnt);
 	Layer *layer = packet->getFirstLayer();
-	std::cout << "first Layer: " << std::hex << layer->getProtocol() << std::oct << std::endl;
 
 	while (layer != NULL && cnt >= 0)
 	{
-		std::cout << "Layer: " << std::hex << layer->getProtocol() << std::oct << std::endl;
-		std::cout << "cnt: " << cnt << std::endl;
+		std::cout << "Layer: " << std::hex << layer->getProtocol() << std::oct << "\tcnt: " << cnt << std::endl;
 
 		if (layer->getProtocol() == IPv4 || layer->getProtocol() == IPv6)
 		{
 			if (cnt == 0)
 			{
-				std::cout << "layer found!\n////////////////////////////////////" << std::endl;
-
+				PCPP_LOG_DEBUG("findLayer: layer found!");
 				return layer;
 			}
 			cnt--;
@@ -37,44 +39,37 @@ Layer *findLayer(Packet *packet)
 		layer->parseNextLayer();
 		layer = layer->getNextLayer();
 	}
-
-	std::cout << "layer NOT found!\t" << cnt << "\n////////////////////////////////////" << std::endl;
+	PCPP_LOG_DEBUG("findLayer: layer NOT found!");
 	return NULL;
 }
 
 IPv4Layer *getv4(Packet *packet)
 {
-	std::cout << "finding v4..." << std::endl;
+	PCPP_LOG_DEBUG("getv4: start to find correct ipv4 layer");
 
 	Layer *layer = findLayer(packet);
 	if (layer == NULL)
 	{
-		std::cout << "NOT found v4" << std::endl;
-
-		PCPP_LOG_DEBUG("find ipv4 layer failed");
+		PCPP_LOG_DEBUG("getv4: ipv4 layer NOT found, return NULL");
 		return NULL;
 	}
 
-	std::cout << "found v4" << std::endl;
-
+	PCPP_LOG_DEBUG("getv4: ipv4 layer found");
 	return new IPv4Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 }
 
 IPv6Layer *getv6(Packet *packet)
 {
-	std::cout << "finding v6..." << std::endl;
+	PCPP_LOG_DEBUG("getv6: start to find correct ipv6 layer");
 
 	Layer *layer = findLayer(packet);
 	if (layer == NULL)
 	{
-		std::cout << "NOT found v6" << std::endl;
-
-		PCPP_LOG_DEBUG("find ipv6 layer failed");
+		PCPP_LOG_DEBUG("getv6: ipv6 layer NOT found, return NULL");
 		return NULL;
 	}
 
-	std::cout << "found v6" << std::endl;
-
+	PCPP_LOG_DEBUG("getv6: ipv6 layer found");
 	return new IPv6Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 }
 
@@ -140,13 +135,19 @@ class IPv4FragmentWrapper : public IPFragmentWrapper
   public:
 	IPv4FragmentWrapper(Packet *fragment)
 	{
-		// TODO(ycyaoxdu): we need to set currect ip layer here.
-		std::cout << "build up IPv4FragmentWrapper..." << std::endl;
+		PCPP_LOG_DEBUG("stage processPacket: build IPv4FragmentWrapper...");
 
 		m_IPLayer =
 			fragment->isPacketOfType(IPv4) ? getv4(fragment) /*  fragment->getLayerOfType<IPv4Layer>() */ : NULL;
 
-		std::cout << "built IPv4FragmentWrapper" << std::endl;
+		if (m_IPLayer == NULL)
+		{
+			PCPP_LOG_DEBUG("stage processPacket: fail to build IPv4FragmentWrapper");
+		}
+		else
+		{
+			PCPP_LOG_DEBUG("stage processPacket: built IPv4FragmentWrapper");
+		}
 	}
 
 	// implement abstract methods
@@ -215,8 +216,7 @@ class IPv6FragmentWrapper : public IPFragmentWrapper
   public:
 	IPv6FragmentWrapper(Packet *fragment)
 	{
-		// TODO(ycyaoxdu): we need to set currect ip layer here.
-		std::cout << "build up IPv6FragmentWrapper..." << std::endl;
+		PCPP_LOG_DEBUG("stage processPacket: build IPv6FragmentWrapper...");
 
 		m_IPLayer = fragment->isPacketOfType(IPv6) ? getv6(fragment) /* fragment->getLayerOfType<IPv6Layer>() */ : NULL;
 		if (m_IPLayer != NULL)
@@ -224,7 +224,14 @@ class IPv6FragmentWrapper : public IPFragmentWrapper
 		else
 			m_FragHeader = NULL;
 
-		std::cout << "built IPv6FragmentWrapper" << std::endl;
+		if (m_IPLayer == NULL)
+		{
+			PCPP_LOG_DEBUG("stage processPacket: fail to build IPv6FragmentWrapper");
+		}
+		else
+		{
+			PCPP_LOG_DEBUG("stage processPacket: built IPv6FragmentWrapper");
+		}
 	}
 
 	// implement abstract methods
@@ -352,6 +359,8 @@ IPReassembly::~IPReassembly()
 Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, ProtocolType parseUntil,
 									OsiModelLayer parseUntilLayer)
 {
+	PCPP_LOG_DEBUG("stage processPacket: start");
+
 	status = NON_IP_PACKET;
 
 	// packet is not an IP packet
@@ -362,10 +371,7 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 		return fragment;
 	}
 
-	// get IPv4 layer
-	// IPv4Layer* ipLayer = fragment->getLayerOfType<IPv4Layer>();
-
-	std::cout << "build up wrapper..." << std::endl;
+	PCPP_LOG_DEBUG("stage processPacket: build up wrapper...");
 
 	// create fragment wrapper
 	IPv4FragmentWrapper ipv4Wrapper(fragment);
@@ -376,9 +382,14 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 	else // fragment->isPacketOfType(IPv6)
 		fragWrapper = &ipv6Wrapper;
 
-	std::cout << "wrapper built" << std::endl;
+	if (fragWrapper == NULL)
+	{
+		PCPP_LOG_DEBUG("stage processPacket: IPFragmentWrapper NULL");
+		return fragment;
+	}
+	PCPP_LOG_DEBUG("stage processPacket: wrapper built");
 
-	// packet is not a fragment
+	//  packet is not a fragment
 	if (!(fragWrapper->isFragment()))
 	{
 		PCPP_LOG_DEBUG("Got a non fragment packet with FragID=0x" << std::hex << fragWrapper->getFragmentId()
@@ -559,6 +570,8 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 		m_FragmentMap.erase(iter);
 		m_PacketLRU.eraseElement(hash);
 		status = REASSEMBLED;
+
+		PCPP_LOG_DEBUG("stage processPacket: finish with status REASSEMBLED");
 		return reassembledPacket;
 	}
 
@@ -567,6 +580,7 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 	if (status != FIRST_FRAGMENT)
 		status = FRAGMENT;
 
+	PCPP_LOG_DEBUG("stage processPacket: finish with status FRAGMENT");
 	return NULL;
 }
 

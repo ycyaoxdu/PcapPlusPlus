@@ -488,23 +488,32 @@ void printAppVersion()
 // thread function to read ip packets
 void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp::RawPacket> *q)
 {
-	std::cout << "started parsing packet from device." << std::endl;
+	PCPP_LOG_DEBUG("started parsing packet from dpdk");
 
 	pcpp::RawPacket rawPacket;
 	while (reader->getNextPacket(rawPacket))
 	{
-		std::cout << "try to enque..." << std::endl;
-
 		bool success = q->try_enqueue(rawPacket);
 		if (!success)
 		{
 			// log error here
-			std::cout << "enqueue failed" << std::endl;
-			continue;
+			// should not just continue here;, re-enqueue
+			PCPP_LOG_DEBUG("enqueue failed, retrying...");
+			int i = 0;
+			while (true)
+			{
+				i++;
+				bool flag = q->try_enqueue(rawPacket);
+				if (flag || i > 10)
+				{
+					PCPP_LOG_DEBUG("retryed: " << i << " times");
+					break;
+				}
+			}
 		}
 	}
-	// TODO(ycyaoxdu): log here
-	std::cout << "stopped parsing packet from device." << std::endl;
+
+	PCPP_LOG_DEBUG("stopped parsing packet from dpdk");
 	return;
 }
 
@@ -517,7 +526,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 					bool filterByIpID, std::map<uint32_t, bool> fragIDs, pcpp::DefragStats &stats, void *UserCookie,
 					pcpp::TcpReassembly &tcpReassembly)
 {
-	PCPP_LOG_DEBUG("ip packet process started...");
+	PCPP_LOG_DEBUG("ip packet process started");
 
 	pcpp::RawPacket rawPacket;
 	pcpp::BPFStringFilter filter(bpfFilter);
@@ -532,15 +541,15 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 	//
 
 	// wait thread to setup
-	std::cout << "wait ip queue to setup..." << std::endl;
+	PCPP_LOG_DEBUG("waiting ip queue to setup...");
 	sleep(1);
 
 	//// main thread
 	// read all packet from input file
 	while (quePointer->try_dequeue(rawPacket))
 	{
-		std::cout << "+++++++++++++++++++++++++++++++++++\nread a ip packet from queue..." << std::endl;
-		PCPP_LOG_DEBUG("read a ip packet from queue...");
+		std::cout << "+++++++++++++++++++++++++++++++++++\n" << std::endl;
+		PCPP_LOG_DEBUG("read a ip packet from queue");
 
 		bool defragPacket = true;
 
@@ -625,7 +634,8 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 			pcpp::ReassemblyStatus reassemblePacketStatus = Reassemble(
 				&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
 
-			PCPP_LOG_DEBUG("Reassemble packet finished...");
+			// TODO(ycyaoxdu): handle status
+			PCPP_LOG_DEBUG("got reassemble status");
 
 			// update statistics if packet isn't fully reassembled
 			if (status == pcpp::IPReassembly::FIRST_FRAGMENT || status == pcpp::IPReassembly::FRAGMENT ||
@@ -645,8 +655,8 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		}
 	}
 
-	std::cout << "---------------------------------\nip packet process done" << std::endl;
-	PCPP_LOG_DEBUG("ip packet process done");
+	PCPP_LOG_DEBUG("finished process ip packet");
+	std::cout << "\n+++++++++++++++++++++++++++++++++++" << std::endl;
 }
 
 /**
@@ -821,8 +831,10 @@ int main(int argc, char *argv[])
 
 	// enable debug if flag is set
 	if (debug)
+	{
 		pcpp::Logger::getInstance().setAllModlesToLogLevel(pcpp::Logger::Debug);
-	PCPP_LOG_DEBUG("Debug mode Enabled...");
+		PCPP_LOG_DEBUG("Debug mode enabled");
+	}
 
 	// run the de-fragmentation process
 	pcpp::DefragStats stats;
