@@ -47,7 +47,7 @@ TcpReassembly::TcpReassembly(OnTcpMessageReady onMessageReadyCallback, void *use
 }
 
 // add the param for tcp handles
-TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet& tcpData, Layer* nextLayer, IPAddress* IpSrc, IPAddress* IpDst)  
+TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData, Layer *nextLayer, IPAddress *IpSrc, IPAddress *IpDst)  
 {
 	// automatic cleanup
 	if (m_RemoveConnInfo == true)
@@ -426,12 +426,12 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet& tcpData,
 		newTcpFrag->sequence = sequence;
 		newTcpFrag->timestamp = timestampOfTheReceivedPacket;
 		memcpy(newTcpFrag->data, tcpLayer->getLayerPayload(), tcpPayloadSize);
+		
 		tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.pushBack(newTcpFrag);
-        
 		tcpReassemblyData->twoSides[sideIndex].tcpPacketList.pushBack(&tcpData);
-		tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.push_back(nextLayer);
 		tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.pushBack(IpSrc);    
-        tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.pushBack(IpDst);  
+        tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.pushBack(IpDst);
+		tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.push_back(nextLayer);  
 
 		PCPP_LOG_DEBUG("Found out-of-order packet and added a new TCP fragment with size "
 					   << tcpPayloadSize << " to the out-of-order list of side " << sideIndex);
@@ -511,7 +511,6 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 			while (index < (int)tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.size())
 			{
 				TcpFragment *curTcpFrag = tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(index);
-
 				Packet *tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(index);    
                 Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(index);
 				IPAddress *IpSrc = tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.at(index);
@@ -542,7 +541,6 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 					// remove fragment from list
 					tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + index);
-                    
 					tcpReassemblyData->twoSides[sideIndex].tcpPacketList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpPacketList.begin() + index);
 					tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.erase(
@@ -599,7 +597,6 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 					// delete fragment from list
 					tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + index);
-					
 					tcpReassemblyData->twoSides[sideIndex].tcpPacketList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpPacketList.begin() + index);
 					tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.erase(
@@ -660,9 +657,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 		if (closestSequenceFragIndex > -1)
 		{
 			// get the fragment with the closest sequence
-			TcpFragment *curTcpFrag =
-				tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(closestSequenceFragIndex);
-
+			TcpFragment *curTcpFrag = tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(closestSequenceFragIndex);
 			Packet *tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(closestSequenceFragIndex);    
 			Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(closestSequenceFragIndex);
 			IPAddress *IpSrc = tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.at(closestSequenceFragIndex);
@@ -708,15 +703,14 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 			// remove fragment from list
 			tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 				tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + closestSequenceFragIndex);
-				
 			tcpReassemblyData->twoSides[sideIndex].tcpPacketList.erase(
-						tcpReassemblyData->twoSides[sideIndex].tcpPacketList.begin() + closestSequenceFragIndex);    
+				tcpReassemblyData->twoSides[sideIndex].tcpPacketList.begin() + closestSequenceFragIndex);    
 			tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.erase(
-						tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.begin() + closestSequenceFragIndex);
+				tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.begin() + closestSequenceFragIndex);
 			tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.erase(
-						tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.begin() + closestSequenceFragIndex);
+				tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.begin() + closestSequenceFragIndex);
 			tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.erase(
-						tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.begin() + closestSequenceFragIndex);
+				tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.begin() + closestSequenceFragIndex);
 
 			PCPP_LOG_DEBUG("Calling checkOutOfOrderFragments again from the start");
 

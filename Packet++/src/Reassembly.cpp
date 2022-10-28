@@ -177,9 +177,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		}
 		case pcpp::TCP: {
 			// tcp handle
-
-			// HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
-			// do the tcp reassemble , and handle in the TcpOnMessageReadyCallback
 			tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
 			break;
 		}
