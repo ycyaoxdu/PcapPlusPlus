@@ -11,7 +11,6 @@
 #include "PayloadLayer.h"
 #include "PcapFileDevice.h"
 
-// to make sure the type of OnMessageHandled 
 typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
 // ~~~~~~~~~~~~~~~~~~
