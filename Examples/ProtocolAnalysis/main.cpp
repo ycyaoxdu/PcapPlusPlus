@@ -26,18 +26,19 @@
 #include "TcpReassembly.h"
 #include "UdpLayer.h"
 #include "getopt.h"
+#include <unistd.h>
+#include <getopt.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <iostream>
 #include <map>
 #include <queue>
 #include <sstream>
 #include <algorithm>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <string>
 #include <thread>
-#include <unistd.h>
-#include <getopt.h>
+
 
 #define LOG_MODULE pcpp::ProtocolAnalysis
 
@@ -260,13 +261,11 @@ struct TcpReassemblyData
 typedef std::map<std::string, ReassemblyData> ReassemblyMgr;
 typedef std::map<std::string, ReassemblyData>::iterator ReassemblyMgrIter;
 
-// 
 // typedef representing the connection manager and its iterator
 typedef std::map<uint32_t, TcpReassemblyData> TcpReassemblyConnMgr;
 typedef std::map<uint32_t, TcpReassemblyData>::iterator TcpReassemblyConnMgrIter;
 
 // concurrent queue to cache ip packets
-// change the location to make sure the tcpcallback can use quePointer
 moodycamel::ConcurrentQueue<pcpp::RawPacket> q;
 moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer = &q;
 
@@ -353,7 +352,7 @@ static void OnMessageReadyCallback(std::string *data, std::string tuplename, voi
 	*iter->second.fileStream << *data << std::endl;
 }
 
-/** 
+/**
  * The callback being called by the TCP reassembly module whenever new data arrives on a certain connection
  */
 static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData& tcpData, void *userCookie, pcpp::Packet *tcpPacket,
@@ -426,7 +425,6 @@ static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData &conne
 	// remove the connection from the connection manager
 	connMgr->erase(iter);
 }
-//
 
 static struct option DefragUtilOptions[] = {{"output-file", required_argument, 0, 'o'},
 											{"filter-by-ipid", required_argument, 0, 'd'},
@@ -504,8 +502,6 @@ void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp:
  * This method reads packets from the input file, decided which fragments pass the filters set by the user, de-fragment
  * the fragments who pass them, and writes the result packets to the output file
  */
-
-// add the object of tcpReassembly
 void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter, bool filterByIpID,std::map<uint32_t, bool> fragIDs, 
                     pcpp::DefragStats &stats, void *UserCookie, pcpp::TcpReassembly &tcpReassembly)  
 {
@@ -613,7 +609,6 @@ void processPackets(pcpp::IFileReaderDevice *reader, bool filterByBpf, std::stri
 		{
 			stats.totalPacketsWritten++;
             
-			// add the object of tcpReassembly
 			pcpp::ReassemblyStatus reassemblePacketStatus =
 				Reassemble(&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
 
@@ -789,7 +784,7 @@ int main(int argc, char *argv[])
 	// create the TCP reassembly instance
 	pcpp::TcpReassembly tcpReassembly(tcpReassemblyMsgReadyCallback, &connMgr, tcpReassemblyConnectionStartCallback, tcpReassemblyConnectionEndCallback);
 
-	// set the handle param
+	// set the info manager for tcpReassembly
 	tcpReassembly.SetHandleCookie(&mgr);
 
 	// create a reader device from input file
