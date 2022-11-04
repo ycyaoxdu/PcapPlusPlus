@@ -46,15 +46,14 @@ namespace pcpp
 
 // add the object of tcpReassembly
 ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,void *UserCookie, 
-							OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)   
+							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
+							void *UserCookie, OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)
 {
 	PCPP_LOG_DEBUG("stage reassemble: start packet reassemble and analysis");
 
 	bool isIPv4Packet = false;
 	bool isIPv6Packet = false;
 
-	// TODO(ycyaoxdu):
 	if (parsedPacket == NULL)
 	{
 		PCPP_LOG_DEBUG("stage reassemble: Input empty pointer to Packet");
@@ -109,9 +108,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 		pcpp::Layer *ipLayer;
 
-		// TODO(ycyaoxdu):need to remove this
-		std::cout << "this isIPv4Packet:" << isIPv4Packet << "\tthis isIPv6Packet:" << isIPv6Packet << std::endl;
-
 		if (isIPv4Packet)
 		{
 			pcpp::IPv4Layer *ipv4Layer = getv4(result);
@@ -127,9 +123,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			ipLayer = ipv6Layer;
 		}
 
-		// TODO(ycyaoxdu):need to remove this
-		std::cout << "this protocol: " << std::hex << ipLayer->getProtocol();
-
 		// parse next layer
 		// any unknow protocol is payload
 		ipLayer->parseNextLayer();
@@ -141,10 +134,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			return Invalid;
 		}
 
-		// TODO(ycyaoxdu):need to remove this
-		std::cout << "\tnext protocol: " << nextLayer->getProtocol() << std::oct << std::endl;
-
-		// TODO(ycyaoxdu): why segmentation fault  here?
 		// switch statement
 		switch (nextLayer->getProtocol())
 		{
@@ -247,7 +236,7 @@ void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void
 {
 	PCPP_LOG_DEBUG("HandleOspfPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleOspfPayload: passing layer of nullptr to function");
 		return;
@@ -261,7 +250,7 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 {
 	PCPP_LOG_DEBUG("HandleEspPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleEspPayload: passing layer of nullptr to function");
 		return;
@@ -286,7 +275,7 @@ void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void 
 	PCPP_LOG_DEBUG("HandleGrePayload: tuplename: " << tuplename);
 
 	// gre : ipv4 ipv6 ppp payload
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleGrePayload: passing layer of nullptr to function");
 		return;
@@ -338,7 +327,7 @@ void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void 
 void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleUdpPayload: passing layer of nullptr to function");
 		return;
@@ -392,7 +381,7 @@ void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleTcpPayload: passing layer of nullptr to function");
 		return;
@@ -453,7 +442,7 @@ void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *p
 					   OnMessageHandled OnMessageReadyCallback,
 					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
 {
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleSctpPayload: passing layer of nullptr to function");
 		return;
@@ -515,7 +504,7 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 {
 	PCPP_LOG_DEBUG("HandleRipPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleRipPayload: passing layer of nullptr to function");
 		return;
@@ -538,7 +527,7 @@ void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 {
 	PCPP_LOG_DEBUG("HandleGtpPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleGtpPayload: passing layer of nullptr to function");
 		return;
@@ -569,7 +558,7 @@ void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 {
 	PCPP_LOG_DEBUG("HandlePppPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandlePppPayload: passing layer of nullptr to function");
 		return;
@@ -605,7 +594,7 @@ void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 {
 	PCPP_LOG_DEBUG("HandleL2tpPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleL2tpPayload: passing layer of nullptr to function");
 		return;
@@ -627,6 +616,12 @@ void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 					  OnMessageHandled OnMessageReadyCallback)
 {
 	PCPP_LOG_DEBUG("HandleBgpPayload: tuplename: " << tuplename);
+
+	if (layer == NULL || packet == NULL)
+	{
+		PCPP_LOG_DEBUG("HandleBgpPayload: passing layer of nullptr to function");
+		return;
+	}
 
 	BgpLayer *bgp = BgpLayer::parseBgpLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 	ReassembleMessage(&(*bgp), tuplename, cookie, OnMessageReadyCallback);
@@ -701,7 +696,7 @@ void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 {
 	PCPP_LOG_DEBUG("HandleSslPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleSslPayload: passing layer of nullptr to function");
 		return;
@@ -741,7 +736,7 @@ void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 {
 	PCPP_LOG_DEBUG("HandleHttpPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleHttpPayload: passing layer of nullptr to function");
 		return;
@@ -755,7 +750,14 @@ void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 	else
 	{
 		HttpResponseLayer *httpResponse = packet->getLayerOfType<HttpResponseLayer>();
-		ReassembleMessage(httpResponse, tuplename, cookie, OnMessageReadyCallback);
+		if (httpResponse != NULL)
+		{
+			ReassembleMessage(httpResponse, tuplename, cookie, OnMessageReadyCallback);
+		}
+		else
+		{
+			HandleGenericPayload(layer, tuplename, packet, cookie, OnMessageReadyCallback);
+		}
 	}
 }
 
@@ -764,11 +766,12 @@ void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, v
 {
 	PCPP_LOG_DEBUG("HandleGenericPayload: tuplename: " << tuplename);
 
-	if (layer == NULL)
+	if (layer == NULL || packet == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleGenericPayload: passing layer of nullptr to function");
 		return;
 	}
+
 	PayloadLayer payload(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 	ReassemblePayload(&payload, tuplename, cookie, OnMessageReadyCallback);
 }
@@ -799,6 +802,12 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 								   OnMessageHandled OnMessageHandledCallback)
 {
 
+	if (payloadlayer == NULL)
+	{
+		PCPP_LOG_DEBUG("ReassemblePayload: passing layer of nullptr to function");
+		return Invalid;
+	}
+
 	ReassemblyStatus response = Handled;
 	std::string result;
 	payloadlayer->packet()->SetTuplename(tuple);
@@ -814,10 +823,6 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
 							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
 	{
-		// TODO(ycyaoxdu): this line is use to debug, need to remove
-		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
-				  << std::endl;
-
 		temp = layer->toString();
 		stk.push(temp);
 		layer = layer->getPrevLayer();
@@ -858,10 +863,6 @@ ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie
 	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
 							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
 	{
-		// TODO(ycyaoxdu): this line is use to debug, need to remove
-		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
-				  << std::endl;
-
 		temp = layer->toString();
 		stk.push(temp);
 		layer = layer->getPrevLayer();

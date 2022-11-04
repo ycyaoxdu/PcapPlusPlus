@@ -25,8 +25,6 @@ Layer *findLayer(Packet *packet)
 
 	while (layer != NULL && cnt >= 0)
 	{
-		std::cout << "Layer: " << std::hex << layer->getProtocol() << std::oct << "\tcnt: " << cnt << std::endl;
-
 		if (layer->getProtocol() == IPv4 || layer->getProtocol() == IPv6)
 		{
 			if (cnt == 0)
@@ -137,8 +135,7 @@ class IPv4FragmentWrapper : public IPFragmentWrapper
 	{
 		PCPP_LOG_DEBUG("stage processPacket: build IPv4FragmentWrapper...");
 
-		m_IPLayer =
-			fragment->isPacketOfType(IPv4) ? getv4(fragment) /*  fragment->getLayerOfType<IPv4Layer>() */ : NULL;
+		m_IPLayer =getv4(fragment);
 
 		if (m_IPLayer == NULL)
 		{
@@ -218,7 +215,7 @@ class IPv6FragmentWrapper : public IPFragmentWrapper
 	{
 		PCPP_LOG_DEBUG("stage processPacket: build IPv6FragmentWrapper...");
 
-		m_IPLayer = fragment->isPacketOfType(IPv6) ? getv6(fragment) /* fragment->getLayerOfType<IPv6Layer>() */ : NULL;
+		m_IPLayer = getv6(fragment);
 		if (m_IPLayer != NULL)
 			m_FragHeader = m_IPLayer->getExtensionOfType<IPv6FragmentationHeader>();
 		else
@@ -364,7 +361,7 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 	status = NON_IP_PACKET;
 
 	// packet is not an IP packet
-	if (!fragment->isPacketOfType(IPv4) && !fragment->isPacketOfType(IPv6))
+	if (findLayer(fragment)==NULL)
 	{
 		PCPP_LOG_DEBUG("Got a non-IP packet, returning packet to user");
 		status = NON_IP_PACKET;
@@ -377,9 +374,9 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 	IPv4FragmentWrapper ipv4Wrapper(fragment);
 	IPv6FragmentWrapper ipv6Wrapper(fragment);
 	IPFragmentWrapper *fragWrapper = NULL;
-	if (fragment->isPacketOfType(IPv4))
+	if (getv4(fragment) != NULL)
 		fragWrapper = &ipv4Wrapper;
-	else // fragment->isPacketOfType(IPv6)
+	else // getv6(fragment) != NULL
 		fragWrapper = &ipv6Wrapper;
 
 	if (fragWrapper == NULL)

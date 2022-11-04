@@ -507,6 +507,7 @@ void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp:
 				if (flag || i > 10)
 				{
 					PCPP_LOG_DEBUG("retryed: " << i << " times");
+					PCPP_LOG_DEBUG(rawPacket.getIPLayerCount());
 					break;
 				}
 			}
@@ -548,7 +549,6 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 	// read all packet from input file
 	while (quePointer->try_dequeue(rawPacket))
 	{
-		std::cout << "+++++++++++++++++++++++++++++++++++\n" << std::endl;
 		PCPP_LOG_DEBUG("read a ip packet from queue");
 
 		bool defragPacket = true;
@@ -656,7 +656,6 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 	}
 
 	PCPP_LOG_DEBUG("finished process ip packet");
-	std::cout << "\n+++++++++++++++++++++++++++++++++++" << std::endl;
 }
 
 /**
