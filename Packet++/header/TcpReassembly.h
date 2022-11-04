@@ -4,7 +4,6 @@
 #include "Packet.h"
 #include "IpAddress.h"
 #include "PointerVector.h"
-#include "ConcurrentQueue.h"
 #include <map>
 #include <list>
 #include <time.h>

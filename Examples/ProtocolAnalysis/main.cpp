@@ -1,5 +1,6 @@
+#define LOG_MODULE pcpp::ProtocolAnalysis
+
 #include "BgpLayer.h"
-#include "ConcurrentQueue.h"
 #include "GreLayer.h"
 #include "GtpLayer.h"
 #include "HttpLayer.h"
@@ -38,8 +39,6 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
-
-#define LOG_MODULE pcpp::ProtocolAnalysis
 
 #define EXIT_WITH_ERROR(reason)                                                                                        \
 	do                                                                                                                 \
@@ -268,9 +267,9 @@ typedef std::map<std::string, ReassemblyData>::iterator ReassemblyMgrIter;
 typedef std::map<uint32_t, TcpReassemblyData> TcpReassemblyConnMgr;
 typedef std::map<uint32_t, TcpReassemblyData>::iterator TcpReassemblyConnMgrIter;
 
-// concurrent queue to cache ip packets
-moodycamel::ConcurrentQueue<pcpp::RawPacket> q;
-moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer = &q;
+// queue to cache ip packets
+std::queue<pcpp::RawPacket> q;
+std::queue<pcpp::RawPacket> *quePointer = &q;
 
 static void OnMessageReadyCallback(std::string *data, std::string tuplename, void *userCookie)
 {
@@ -485,47 +484,14 @@ void printAppVersion()
 	exit(0);
 }
 
-// thread function to read ip packets
-void readDPDK(pcpp::IFileReaderDevice *reader, moodycamel::ConcurrentQueue<pcpp::RawPacket> *q)
-{
-	PCPP_LOG_DEBUG("started parsing packet from dpdk");
-
-	pcpp::RawPacket rawPacket;
-	while (reader->getNextPacket(rawPacket))
-	{
-		bool success = q->try_enqueue(rawPacket);
-		if (!success)
-		{
-			// log error here
-			// should not just continue here;, re-enqueue
-			PCPP_LOG_DEBUG("enqueue failed, retrying...");
-			int i = 0;
-			while (true)
-			{
-				i++;
-				bool flag = q->try_enqueue(rawPacket);
-				if (flag || i > 10)
-				{
-					PCPP_LOG_DEBUG("retryed: " << i << " times");
-					PCPP_LOG_DEBUG(rawPacket.getIPLayerCount());
-					break;
-				}
-			}
-		}
-	}
-
-	PCPP_LOG_DEBUG("stopped parsing packet from dpdk");
-	return;
-}
-
 /**
  * This method reads packets from the input file, decided which fragments pass the filters set by the user, de-fragment
  * the fragments who pass them, and writes the result packets to the output file
  */
 
 void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter,
-					bool filterByIpID, std::map<uint32_t, bool> fragIDs, pcpp::DefragStats &stats, void *UserCookie,
-					pcpp::TcpReassembly &tcpReassembly)
+					bool filterByIpID, std::map<uint32_t, bool> fragIDs, pcpp::DefragStats *stats, void *UserCookie,
+					pcpp::TcpReassembly &tcpReassembly, std::queue<pcpp::RawPacket> *quePointer)
 {
 	PCPP_LOG_DEBUG("ip packet process started");
 
@@ -536,24 +502,19 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 	pcpp::IPReassembly ipReassembly(NULL, NULL, maxPacketsToStore);
 	pcpp::IPReassembly::ReassemblyStatus status;
 
-	// start a new thraed to enqueue packets
-	std::thread readdpdk(readDPDK, reader, quePointer);
-	readdpdk.detach();
-	//
-
-	// wait thread to setup
-	PCPP_LOG_DEBUG("waiting ip queue to setup...");
-	sleep(1);
-
-	//// main thread
-	// read all packet from input file
-	while (quePointer->try_dequeue(rawPacket))
+	while (!quePointer->empty() || reader->getNextPacket(rawPacket))
 	{
 		PCPP_LOG_DEBUG("read a ip packet from queue");
 
+		if (!quePointer->empty())
+		{
+			rawPacket = quePointer->front();
+			quePointer->pop();
+		}
+
 		bool defragPacket = true;
 
-		stats.totalPacketsRead++;
+		stats->totalPacketsRead++;
 
 		// if user requested to filter by BPF
 		if (filterByBpf)
@@ -561,7 +522,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 			// check if packet matches the BPF filter supplied by the user
 			if (pcpp::IPcapDevice::matchPacketWithFilter(filter, &rawPacket))
 			{
-				stats.ipPacketsMatchBpfFilter++;
+				stats->ipPacketsMatchBpfFilter++;
 			}
 			else // if not - set the packet as not marked for de-fragmentation
 			{
@@ -569,20 +530,15 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 			}
 		}
 
-		bool isIPv4Packet = false;
-		bool isIPv6Packet = false;
-
 		// check if packet is of type IPv4 or IPv6
 		pcpp::Packet parsedPacket(&rawPacket);
 		if (parsedPacket.isPacketOfType(pcpp::IPv4))
 		{
-			stats.ipv4Packets++;
-			isIPv4Packet = true;
+			stats->ipv4Packets++;
 		}
 		else if (parsedPacket.isPacketOfType(pcpp::IPv6))
 		{
-			stats.ipv6Packets++;
-			isIPv6Packet = true;
+			stats->ipv6Packets++;
 		}
 		else // if not - set the packet as not marked for de-fragmentation
 		{
@@ -599,7 +555,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 				// check if packet ID matches one of the IP IDs requested by the user
 				if (fragIDs.find((uint32_t)pcpp::netToHost16(ipv4Layer->getIPv4Header()->ipId)) != fragIDs.end())
 				{
-					stats.ipv4PacketsMatchIpIDs++;
+					stats->ipv4PacketsMatchIpIDs++;
 				}
 				else // if not - set the packet as not marked for de-fragmentation
 				{
@@ -617,7 +573,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 				// check if fragment ID matches one of the fragment IDs requested by the user
 				if (fragIDs.find(pcpp::netToHost32(fragHdr->getFragHeader()->id)) != fragIDs.end())
 				{
-					stats.ipv6PacketsMatchFragIDs++;
+					stats->ipv6PacketsMatchFragIDs++;
 				}
 				else // if not - set the packet as not marked for de-fragmentation
 				{
@@ -629,29 +585,18 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		// if fragment is marked for de-fragmentation
 		if (defragPacket)
 		{
-			stats.totalPacketsWritten++;
+			stats->totalPacketsWritten++;
 
 			pcpp::ReassemblyStatus reassemblePacketStatus = Reassemble(
-				&ipReassembly, &status, &stats, &q, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
+				&ipReassembly, &status, quePointer, &parsedPacket, UserCookie, OnMessageReadyCallback, tcpReassembly);
 
 			// TODO(ycyaoxdu): handle status
-			PCPP_LOG_DEBUG("got reassemble status");
-
-			// update statistics if packet isn't fully reassembled
-			if (status == pcpp::IPReassembly::FIRST_FRAGMENT || status == pcpp::IPReassembly::FRAGMENT ||
-				status == pcpp::IPReassembly::OUT_OF_ORDER_FRAGMENT ||
-				status == pcpp::IPReassembly::MALFORMED_FRAGMENT || status == pcpp::IPReassembly::REASSEMBLED)
-			{
-				if (isIPv4Packet)
-					stats.ipv4FragmentsMatched++;
-				else if (isIPv6Packet)
-					stats.ipv6FragmentsMatched++;
-			}
+			PCPP_LOG_DEBUG("got reassemble status: " << reassemblePacketStatus);
 		}
 		// if packet isn't marked for de-fragmentation but the user asked to write all packets to output file
 		else
 		{
-			stats.totalPacketsWritten++;
+			stats->totalPacketsWritten++;
 		}
 	}
 
@@ -676,14 +621,6 @@ void printStats(const pcpp::DefragStats &stats, bool filterByIpID, bool filterBy
 	}
 	if (filterByBpf)
 		stream << "IP packets match BPF filter:             " << stats.ipPacketsMatchBpfFilter << std::endl;
-	stream << "Total fragments matched:                 " << (stats.ipv4FragmentsMatched + stats.ipv6FragmentsMatched)
-		   << std::endl;
-	stream << "IPv4 fragments matched:                  " << stats.ipv4FragmentsMatched << std::endl;
-	stream << "IPv6 fragments matched:                  " << stats.ipv6FragmentsMatched << std::endl;
-	stream << "Total packets reassembled:               "
-		   << (stats.ipv4PacketsDefragmented + stats.ipv6PacketsDefragmented) << std::endl;
-	stream << "IPv4 packets reassembled:                " << stats.ipv4PacketsDefragmented << std::endl;
-	stream << "IPv6 packets reassembled:                " << stats.ipv6PacketsDefragmented << std::endl;
 	stream << "Total packets written to output file:    " << stats.totalPacketsWritten << std::endl;
 
 	std::cout << stream.str();
@@ -838,8 +775,8 @@ int main(int argc, char *argv[])
 	// run the de-fragmentation process
 	pcpp::DefragStats stats;
 
-	processPackets(maxPacketsToStore, reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, stats, &mgr,
-				   tcpReassembly);
+	processPackets(maxPacketsToStore, reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, &stats, &mgr,
+				   tcpReassembly, quePointer);
 
 	// close files
 	reader->close();

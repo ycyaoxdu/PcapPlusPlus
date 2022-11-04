@@ -2,7 +2,6 @@
 
 #include "Reassembly.h"
 #include "BgpLayer.h"
-#include "ConcurrentQueue.h"
 #include "GreLayer.h"
 #include "GtpLayer.h"
 #include "HttpLayer.h"
@@ -45,9 +44,9 @@ namespace pcpp
 {
 
 // add the object of tcpReassembly
-ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket,
-							void *UserCookie, OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)
+ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr,
+							std::queue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie,
+							OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)
 {
 	PCPP_LOG_DEBUG("stage reassemble: start packet reassemble and analysis");
 
@@ -106,7 +105,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		// define ip
 		pcpp::IPAddress IpSrc, IpDst;
 
-		pcpp::Layer *ipLayer;
+		pcpp::Layer *ipLayer = NULL;
 
 		if (isIPv4Packet)
 		{
@@ -115,7 +114,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			IpDst = ipv4Layer->getDstIPAddress();
 			ipLayer = ipv4Layer;
 		}
-		else
+		else if (isIPv6Packet)
 		{
 			pcpp::IPv6Layer *ipv6Layer = getv6(result);
 			IpSrc = ipv6Layer->getSrcIPAddress();
@@ -217,11 +216,6 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	// update statistics if packet is fully reassembled (status of REASSEMBLED) and
 	if (status == pcpp::IPReassembly::REASSEMBLED)
 	{
-		if (isIPv4Packet)
-			stats->ipv4PacketsDefragmented++;
-		else if (isIPv6Packet)
-			stats->ipv6PacketsDefragmented++;
-
 		// free packet
 		delete result;
 	}
@@ -270,7 +264,7 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 }
 
 void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	PCPP_LOG_DEBUG("HandleGrePayload: tuplename: " << tuplename);
 
@@ -325,7 +319,7 @@ void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void 
 }
 
 void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	if (layer == NULL || packet == NULL)
 	{
@@ -379,7 +373,7 @@ void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 }
 
 void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	if (layer == NULL || packet == NULL)
 	{
@@ -439,8 +433,7 @@ void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 }
 
 void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-					   OnMessageHandled OnMessageReadyCallback,
-					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	if (layer == NULL || packet == NULL)
 	{
@@ -523,7 +516,7 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 }
 
 void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	PCPP_LOG_DEBUG("HandleGtpPayload: tuplename: " << tuplename);
 
@@ -554,7 +547,7 @@ void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 }
 
 void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	PCPP_LOG_DEBUG("HandlePppPayload: tuplename: " << tuplename);
 
@@ -589,8 +582,7 @@ void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 }
 
 void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					   OnMessageHandled OnMessageReadyCallback,
-					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+					   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
 {
 	PCPP_LOG_DEBUG("HandleL2tpPayload: tuplename: " << tuplename);
 
@@ -776,9 +768,7 @@ void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, v
 	ReassemblePayload(&payload, tuplename, cookie, OnMessageReadyCallback);
 }
 
-// TODO: error handling
-bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
-					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer)
+bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::RawPacket> *quePointer)
 {
 	PCPP_LOG_DEBUG("HandleIPPacket: tuplename: " << tuple);
 
@@ -794,10 +784,10 @@ bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
 		return false;
 	}
 
-	return quePointer->try_enqueue(*packet->getRawPacket());
+	quePointer->push(*packet->getRawPacket());
+	return true;
 }
 
-// TODO: error handling
 ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple, void *cookie,
 								   OnMessageHandled OnMessageHandledCallback)
 {
@@ -846,7 +836,6 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 	return response;
 }
 
-// TODO: error handling
 ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie,
 								   OnMessageHandled OnMessageHandledCallback)
 {

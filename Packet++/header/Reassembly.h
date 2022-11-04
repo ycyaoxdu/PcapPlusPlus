@@ -1,12 +1,12 @@
 #ifndef PACKETPP_REASSEMBLY
 #define PACKETPP_REASSEMBLY
 
-#include "ConcurrentQueue.h"
 #include "IPReassembly.h"
 #include "Layer.h"
 #include "PayloadLayer.h"
 #include "ProtocolType.h"
 #include "TcpReassembly.h"
+#include <queue>
 
 /**
  * @namespace pcpp
@@ -31,10 +31,6 @@ struct DefragStats
 	int ipv4PacketsMatchIpIDs;
 	int ipv6PacketsMatchFragIDs;
 	int ipPacketsMatchBpfFilter;
-	int ipv4FragmentsMatched;
-	int ipv6FragmentsMatched;
-	int ipv4PacketsDefragmented;
-	int ipv6PacketsDefragmented;
 	int totalPacketsWritten;
 
 	void clear()
@@ -49,8 +45,8 @@ struct DefragStats
 
 typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
-ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr, DefragStats *stats,
-							moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie, 
+ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr,
+							std::queue<pcpp::RawPacket>  *quePointer, Packet *parsedPacket, void *UserCookie, 
                             OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly);
 
 void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
@@ -61,30 +57,30 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 
 void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback,
-					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					  std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback,
-					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					  std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback,
-					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					  std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
 					   OnMessageHandled OnMessageReadyCallback,
-					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					   std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback);
 
 void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback,
-					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					  std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					   OnMessageHandled OnMessageReadyCallback,
-					   moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					   std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback);
@@ -97,13 +93,13 @@ void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 
 void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback,
-					  moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					  std::queue<pcpp::RawPacket> *quePointer);
 
 void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 						  OnMessageHandled OnMessageReadyCallback);
 
 bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple,
-					moodycamel::ConcurrentQueue<pcpp::RawPacket> *quePointer);
+					std::queue<pcpp::RawPacket> *quePointer);
 
 ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple, void *cookie,
 								   OnMessageHandled OnMessageHandledCallback);
