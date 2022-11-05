@@ -6,17 +6,24 @@
 #include "Logger.h"
 #include <vector>
 
+#include <ctime>
+#include <time.h>
+
 /**
  * @file
  * For details about PcapPlusPlus support for DPDK see DpdkDevice.h file description
  */
 
+
+
+typedef unsigned long long uint128_t;
 /**
 * \namespace pcpp
 * \brief The main namespace for the PcapPlusPlus lib
 */
 namespace pcpp
-{
+{ 
+
 
 	/**
 	 * @class DpdkWorkerThread
@@ -30,7 +37,11 @@ namespace pcpp
 	 */
 	class DpdkWorkerThread
 	{
+	private:
+		
 	public:
+		uint64_t  dz_local_packets_num;
+		uint128_t dz_local_Bytes_num;
 		/**
 		 * A virtual d'tor. Can be overridden by child class if needed
 		 */
@@ -56,6 +67,35 @@ namespace pcpp
 		 * @return The core ID the worker is running on
 		 */
 		virtual uint32_t getCoreId() const = 0;
+
+		void dz_set_local_packets_num(int set_num)
+		{
+			dz_local_packets_num=set_num;
+		}
+
+		void dz_set_local_Bytes_num(int set_num)
+		{
+			dz_local_Bytes_num=set_num;
+		}
+
+		void dz_change_local_packets_num(int change_amount)
+		{
+			dz_local_packets_num += change_amount;
+		}
+
+		void dz_change_local_Bytes_num(long long change_amount)
+		{
+			dz_local_Bytes_num +=  change_amount;
+		}
+
+		uint64_t dz_get_local_packets_num()
+		{
+			return dz_local_packets_num;
+		}
+		uint128_t dz_get_local_Bytes_num()
+		{
+			return dz_local_Bytes_num;
+		}
 	};
 
 	class KniDeviceList;
@@ -87,6 +127,10 @@ namespace pcpp
 		static bool verifyHugePagesAndDpdkDriver();
 
 		static int dpdkWorkerThreadStart(void* ptr);
+
+		
+		uint64_t dz_global_packets_num;
+		uint128_t dz_global_Bytes_num;
 	public:
 
 		~DpdkDeviceList();
@@ -197,6 +241,18 @@ namespace pcpp
 		 * they stop running
 		 */
 		void stopDpdkWorkerThreads();
+
+		u_int64_t dz_get_global_packets_num()
+		{
+			return dz_global_packets_num;
+		}
+
+		uint128_t dz_get_global_Bytes_num()
+		{
+			return dz_global_Bytes_num;
+		}
+
+		void Collect_Application_status();
 	};
 
 } // namespace pcpp
