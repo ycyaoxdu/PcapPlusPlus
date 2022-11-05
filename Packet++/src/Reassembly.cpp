@@ -185,8 +185,8 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		}
 		case pcpp::TCP: {
 			// tcp handle
-			// tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
-			HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
+			tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
+			// HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
 			break;
 		}
 		case pcpp::UDP: {
@@ -811,12 +811,28 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 	std::string temp = "";
 
 	// parse to datalink layer
-	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
-							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
+	while (layer != NULL) 
 	{
+		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
+				  << std::endl;
+
 		temp = layer->toString();
 		stk.push(temp);
-		layer = layer->getPrevLayer();
+		if (layer->getProtocol() == pcpp::IPv4 || layer->getProtocol() == pcpp::IPv6)
+		{
+			if (layer->packet()->getIPLayerCount() <= 1)
+			{
+				break;
+			}
+			layer->packet()->DecreaseIP();
+		}
+		else
+		{
+			layer = layer->getPrevLayer();
+		}
+
+		std::cout << "dsadasdas!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct
+				  << "!" << std::endl;
 	}
 	std::cout << std::endl;
 
@@ -850,12 +866,22 @@ ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie
 	std::string temp = "";
 
 	// parse to datalink layer
-	while (layer != NULL && (layer->getOsiModelLayer() > OsiModelDataLinkLayer ||
-							 layer->getProtocol() == pcpp::PPP_PPTP || layer->getProtocol() == pcpp::L2TP))
+	while (layer != NULL) 
 	{
 		temp = layer->toString();
 		stk.push(temp);
-		layer = layer->getPrevLayer();
+		if (layer->getProtocol() == pcpp::IPv4 || layer->getProtocol() == pcpp::IPv6)
+		{
+			if (layer->packet()->getIPLayerCount() <= 1)
+			{
+				break;
+			}
+			layer->packet()->DecreaseIP();
+		}
+		else
+		{
+			layer = layer->getPrevLayer();
+		}
 	}
 	std::cout << std::endl;
 

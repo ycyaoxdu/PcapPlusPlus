@@ -365,6 +365,7 @@ class Packet
 	void SetTuplename(std::string s);
 	std::string GetTuplename();
 	void CountIP();
+	void DecreaseIP();
 	int getIPLayerCount();
 
   private:

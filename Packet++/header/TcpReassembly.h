@@ -428,8 +428,8 @@ private:
 		uint16_t srcPort;
 		uint32_t sequence;
 		PointerVector<TcpFragment> tcpFragmentList;     
-		PointerVector<IPAddress> tcpIpSrcList;
-		PointerVector<IPAddress> tcpIpDstList;
+		std::vector<IPAddress*> tcpIpSrcList;
+		std::vector<IPAddress*> tcpIpDstList;
 		std::vector<Packet> tcpPacketList;
 		std::vector<Layer*> tcpNextLayerList;
 

@@ -83,6 +83,16 @@ void Packet::CountIP()
 		return;
 	}
 }
+void Packet::DecreaseIP()
+{
+	if (isRawPakcetValid())
+		m_RawPacket->DecreaseIP();
+	else
+	{
+		PCPP_LOG_DEBUG("Packet: CountIP failed");
+		return;
+	}
+}
 int Packet::getIPLayerCount()
 {
 	if (isRawPakcetValid())

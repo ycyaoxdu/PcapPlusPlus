@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Layer.h"
+#include <arpa/inet.h>
 
 /// @file
 

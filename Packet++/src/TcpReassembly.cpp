@@ -428,8 +428,8 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData,
 		memcpy(newTcpFrag->data, tcpLayer->getLayerPayload(), tcpPayloadSize);
 		
 		tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.pushBack(newTcpFrag);
-		tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.pushBack(IpSrc);    
-        tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.pushBack(IpDst);
+		tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.push_back(IpSrc);    
+        tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.push_back(IpDst);
 		tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.push_back(nextLayer);
 		tcpReassemblyData->twoSides[sideIndex].tcpPacketList.push_back(tcpData);  
 

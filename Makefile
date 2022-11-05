@@ -7,7 +7,6 @@ include mk/platform.mk
 COMMONPP_HOME        := Common++
 PACKETPP_HOME        := Packet++
 PCAPPP_HOME          := Pcap++
-FUZZERS_HOME         := Tests/Fuzzers
 EXAMPLE_DPDK1        := Examples/DpdkExample-FilterTraffic
 EXAMPLE_PF_RING1     := Examples/PfRingExample-FilterTraffic
 EXAMPLE_PROTOCOL_ANALYSIS    := Examples/ProtocolAnalysis
@@ -70,9 +69,6 @@ libs:
 	@echo Finished successfully building PcapPlusPlus libs
 	@echo ' '
 
-# PcapPlusPlus with fuzzers
-fuzzers: libs
-	@cd $(FUZZERS_HOME)              && $(MAKE)
 
 # Clean
 clean:
@@ -80,7 +76,6 @@ clean:
 	@cd $(PACKETPP_HOME)             && $(MAKE) clean
 	@cd $(PCAPPP_HOME)               && $(MAKE) clean
 	@cd $(EXAMPLE_PROTOCOL_ANALYSIS)         && $(MAKE) clean
-	@cd $(FUZZERS_HOME)              && $(MAKE) clean
 	@cd $(EXAMPLE_PCAP_PRINT)        && $(MAKE) clean
 	@cd $(EXAMPLE_PCAPSPLITTER)      && $(MAKE) clean
 	@cd $(EXAMPLE_PCAPSEARCH)        && $(MAKE) clean

@@ -43,6 +43,11 @@ class ParsedResult
 		IpLayerCount++;
 	}
 
+	void DecreaseIP()
+	{
+		IpLayerCount--;
+	}
+
 	int getIPLayerCount()
 	{
 		return IpLayerCount;
