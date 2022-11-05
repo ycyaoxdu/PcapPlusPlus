@@ -56,7 +56,7 @@
 
 #define DEFAULT_MAX_PACKETS_TO_STORE 500000
 // unless the user chooses otherwise - default number of concurrent used file descl2tptors is 500
-#define DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES 500
+#define DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES 50000
 
 /**
  * A singleton class containing the configuration as requested by the user. This singleton is used throughout the

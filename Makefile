@@ -7,8 +7,6 @@ include mk/platform.mk
 COMMONPP_HOME        := Common++
 PACKETPP_HOME        := Packet++
 PCAPPP_HOME          := Pcap++
-PACKETPP_TEST        := Tests/Packet++Test
-PCAPPP_TEST          := Tests/Pcap++Test
 FUZZERS_HOME         := Tests/Fuzzers
 EXAMPLE_DPDK1        := Examples/DpdkExample-FilterTraffic
 EXAMPLE_PF_RING1     := Examples/PfRingExample-FilterTraffic
@@ -25,8 +23,6 @@ UNAME := $(shell uname)
 .SILENT:
 
 all: libs
-	@cd $(PACKETPP_TEST)             && $(MAKE) Packet++Test
-	@cd $(PCAPPP_TEST)               && $(MAKE) Pcap++Test
 	@cd $(EXAMPLE_PROTOCOL_ANALYSIS)         && $(MAKE) ProtocolAnalysis
 	@cd $(EXAMPLE_PCAP_PRINT)        && $(MAKE) PcapPrinter
 	@cd $(EXAMPLE_PCAPSPLITTER)      && $(MAKE) PcapSplitter
@@ -83,8 +79,6 @@ clean:
 	@cd $(COMMONPP_HOME)             && $(MAKE) clean
 	@cd $(PACKETPP_HOME)             && $(MAKE) clean
 	@cd $(PCAPPP_HOME)               && $(MAKE) clean
-	@cd $(PACKETPP_TEST)             && $(MAKE) clean
-	@cd $(PCAPPP_TEST)               && $(MAKE) clean
 	@cd $(EXAMPLE_PROTOCOL_ANALYSIS)         && $(MAKE) clean
 	@cd $(FUZZERS_HOME)              && $(MAKE) clean
 	@cd $(EXAMPLE_PCAP_PRINT)        && $(MAKE) clean
