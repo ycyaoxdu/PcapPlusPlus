@@ -428,10 +428,10 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData,
 		memcpy(newTcpFrag->data, tcpLayer->getLayerPayload(), tcpPayloadSize);
 		
 		tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.pushBack(newTcpFrag);
-		tcpReassemblyData->twoSides[sideIndex].tcpPacketList.pushBack(&tcpData);
 		tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.pushBack(IpSrc);    
         tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.pushBack(IpDst);
-		tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.push_back(nextLayer);  
+		tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.push_back(nextLayer);
+		tcpReassemblyData->twoSides[sideIndex].tcpPacketList.push_back(tcpData);  
 
 		PCPP_LOG_DEBUG("Found out-of-order packet and added a new TCP fragment with size "
 					   << tcpPayloadSize << " to the out-of-order list of side " << sideIndex);
@@ -511,7 +511,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 			while (index < (int)tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.size())
 			{
 				TcpFragment *curTcpFrag = tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(index);
-				Packet *tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(index);    
+				Packet tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(index);    
                 Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(index);
 				IPAddress *IpSrc = tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.at(index);
 				IPAddress *IpDst = tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.at(index);
@@ -534,7 +534,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 							TcpStreamData streamData(curTcpFrag->data, curTcpFrag->dataLength, 0,
 													 tcpReassemblyData->connData, curTcpFrag->timestamp);
                             
-							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, tcpData, nextLayer, IpSrc, IpDst, m_cookie);    
+							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);    
 						}
 					}
 
@@ -582,7 +582,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 							TcpStreamData streamData(curTcpFrag->data + newLength, curTcpFrag->dataLength - newLength,
 													 0, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, tcpData, nextLayer, IpSrc, IpDst, m_cookie);     
+							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);     
 						}
 
 						foundSomething = true;
@@ -658,7 +658,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 		{
 			// get the fragment with the closest sequence
 			TcpFragment *curTcpFrag = tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(closestSequenceFragIndex);
-			Packet *tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(closestSequenceFragIndex);    
+			Packet tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(closestSequenceFragIndex);    
 			Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(closestSequenceFragIndex);
 			IPAddress *IpSrc = tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.at(closestSequenceFragIndex);
 			IPAddress *IpDst = tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.at(closestSequenceFragIndex);
@@ -690,7 +690,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 					TcpStreamData streamData(&dataWithMissingDataText[0], dataWithMissingDataText.size(),
 											 missingDataLen, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-					m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, tcpData, nextLayer, IpSrc, IpDst, m_cookie);     
+					m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);     
 
 					PCPP_LOG_DEBUG("Found missing data on side "
 								   << sideIndex << ": " << missingDataLen
