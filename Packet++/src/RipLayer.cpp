@@ -22,32 +22,22 @@ RipTableEntry::RipTableEntry(std::istream &is)
 
 void RipTableEntry::ToV1StructuredOutput(std::ostream &os)
 {
-	os << '\t' << "RipTableEntry:" << '\n';
-	os << "\t\t"
-	   << "address family identifier: " << get_family() << '\n';
-	os << "\t\t"
-	   << "route tag: " << get_tag() << '\n';
-	os << "\t\t"
-	   << "ip address: " << num2ip(get_prefix()) << '\n';
-	os << "\t\t"
-	   << "metric: " << get_metric() << '\n';
+	os << "RipTableEntry:" << '\n';
+	os << "address family identifier: " << get_family() << '\n';
+	os << "route tag: " << get_tag() << '\n';
+	os << "ip address: " << num2ip(get_prefix()) << '\n';
+	os << "metric: " << get_metric() << '\n';
 }
 
 void RipTableEntry::ToV2StructuredOutput(std::ostream &os)
 {
-	os << '\t' << "RipTableEntry:" << '\n';
-	os << "\t\t"
-	   << "address family identifier: " << get_family() << '\n';
-	os << "\t\t"
-	   << "route tag: " << get_tag() << '\n';
-	os << "\t\t"
-	   << "ip address: " << num2ip(get_prefix()) << '\n';
-	os << "\t\t"
-	   << "netmask: " << num2ip(get_mask()) << '\n';
-	os << "\t\t"
-	   << "nexthop: " << num2ip(get_nexthop()) << '\n';
-	os << "\t\t"
-	   << "metric: " << get_metric() << '\n';
+	os << "RipTableEntry:" << '\n';
+	os << "address family identifier: " << get_family() << '\n';
+	os << "route tag: " << get_tag() << '\n';
+	os << "ip address: " << num2ip(get_prefix()) << '\n';
+	os << "netmask: " << num2ip(get_mask()) << '\n';
+	os << "nexthop: " << num2ip(get_nexthop()) << '\n';
+	os << "metric: " << get_metric() << '\n';
 }
 
 uint16_t RipTableEntry::get_family()

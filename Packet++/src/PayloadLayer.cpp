@@ -50,7 +50,7 @@ void PayloadLayer::setPayload(const uint8_t *newPayload, size_t newPayloadLength
 std::string PayloadLayer::toString() const
 {
 	std::stringstream dataStream;
-	dataStream << "Payload:" << '\n';
+	dataStream << "PROTOCOM: PAYLOAD" << '\n';
 	dataStream << "Length: " << getPayloadLen() << "\n"
 			   << "Address: " << (unsigned int *)getPayload() << "\n"
 			   << "RawDate: ";

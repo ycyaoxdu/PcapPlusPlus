@@ -507,12 +507,6 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 
 	rip.parseNextLayer();
 	Layer *nextLayer = rip.getNextLayer();
-	if (nextLayer == NULL)
-	{
-		PCPP_LOG_DEBUG("HandleRipPayload: nextlayer of nullptr");
-		return;
-	}
-	// TODO(): handle this
 	ReassembleMessage(&rip, tuplename, cookie, OnMessageReadyCallback);
 }
 
