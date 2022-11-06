@@ -173,6 +173,11 @@ class Layer : public IDataContainer
 
 	Packet *packet();
 
+	void setPacket(Packet *p) 
+	{
+		m_Packet = p;
+	}
+
 	// abstract methods
 
 	/**

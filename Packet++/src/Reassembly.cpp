@@ -185,6 +185,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		}
 		case pcpp::TCP: {
 			// tcp handle
+
 			tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
 			// HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
 			break;
@@ -505,8 +506,6 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 	}
 	RipLayer rip(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 
-	rip.parseNextLayer();
-	Layer *nextLayer = rip.getNextLayer();
 	ReassembleMessage(&rip, tuplename, cookie, OnMessageReadyCallback);
 }
 
@@ -759,8 +758,8 @@ void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, v
 		return;
 	}
 
-	PayloadLayer payload(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-	ReassemblePayload(&payload, tuplename, cookie, OnMessageReadyCallback);
+	PayloadLayer *payload = new PayloadLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	ReassemblePayload(payload, tuplename, cookie, OnMessageReadyCallback);
 }
 
 bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::RawPacket> *quePointer)
@@ -798,6 +797,7 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 	payloadlayer->packet()->SetTuplename(tuple);
 
 	Layer *layer = payloadlayer;
+	layer->setPacket(payloadlayer->packet());
 	// use stack to store messages;
 	// print from back to front
 	// then pop
@@ -826,7 +826,6 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 		PCPP_LOG_DEBUG("dsadasdas!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol()
 									<< std::oct);
 	}
-	std::cout << std::endl;
 
 	PCPP_LOG_DEBUG("ReassemblePayload: 我出来了");
 
@@ -877,7 +876,6 @@ ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie
 		}
 		layer = layer->getPrevLayer();
 	}
-	std::cout << std::endl;
 
 	while (!stk.empty())
 	{

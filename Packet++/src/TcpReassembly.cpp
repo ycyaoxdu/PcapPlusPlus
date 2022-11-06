@@ -47,7 +47,8 @@ TcpReassembly::TcpReassembly(OnTcpMessageReady onMessageReadyCallback, void *use
 }
 
 // add the param for tcp handles
-TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData, Layer *nextLayer, IPAddress *IpSrc, IPAddress *IpDst)  
+TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData, Layer *nextLayer, IPAddress *IpSrc,
+																IPAddress *IpDst)
 {
 	// automatic cleanup
 	if (m_RemoveConnInfo == true)
@@ -287,7 +288,7 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData,
 			TcpStreamData streamData(tcpLayer->getLayerPayload(), tcpPayloadSize, 0, tcpReassemblyData->connData,
 									 timestampOfTheReceivedPacket);
 
-			m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);    
+			m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);
 		}
 		status = TcpMessageHandled;
 
@@ -325,7 +326,8 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData,
 				TcpStreamData streamData(tcpLayer->getLayerPayload() + newLength, tcpPayloadSize - newLength, 0,
 										 tcpReassemblyData->connData, timestampOfTheReceivedPacket);
 
-				m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);    
+				m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst,
+										 m_cookie);
 			}
 			status = TcpMessageHandled;
 		}
@@ -379,7 +381,7 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData,
 			TcpStreamData streamData(tcpLayer->getLayerPayload(), tcpPayloadSize, 0, tcpReassemblyData->connData,
 									 timestampOfTheReceivedPacket);
 
-			m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);    
+			m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);
 		}
 		status = TcpMessageHandled;
 
@@ -426,12 +428,12 @@ TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet &tcpData,
 		newTcpFrag->sequence = sequence;
 		newTcpFrag->timestamp = timestampOfTheReceivedPacket;
 		memcpy(newTcpFrag->data, tcpLayer->getLayerPayload(), tcpPayloadSize);
-		
+
 		tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.pushBack(newTcpFrag);
-		tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.push_back(IpSrc);    
-        tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.push_back(IpDst);
+		tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.push_back(IpSrc);
+		tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.push_back(IpDst);
 		tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.push_back(nextLayer);
-		tcpReassemblyData->twoSides[sideIndex].tcpPacketList.push_back(tcpData);  
+		tcpReassemblyData->twoSides[sideIndex].tcpPacketList.push_back(tcpData);
 
 		PCPP_LOG_DEBUG("Found out-of-order packet and added a new TCP fragment with size "
 					   << tcpPayloadSize << " to the out-of-order list of side " << sideIndex);
@@ -489,7 +491,7 @@ void TcpReassembly::handleFinOrRst(TcpReassemblyData *tcpReassemblyData, int8_t 
 }
 
 void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyData, int8_t sideIndex,
-											bool cleanWholeFragList)   
+											 bool cleanWholeFragList)
 {
 	bool foundSomething = false;
 
@@ -511,8 +513,8 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 			while (index < (int)tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.size())
 			{
 				TcpFragment *curTcpFrag = tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(index);
-				Packet tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(index);    
-                Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(index);
+				Packet tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(index);
+				Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(index);
 				IPAddress *IpSrc = tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.at(index);
 				IPAddress *IpDst = tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.at(index);
 
@@ -533,11 +535,13 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 						{
 							TcpStreamData streamData(curTcpFrag->data, curTcpFrag->dataLength, 0,
 													 tcpReassemblyData->connData, curTcpFrag->timestamp);
-                            
-							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);    
+
+							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc,
+													 IpDst, m_cookie);
 						}
 					}
 
+					std::cout << "here: line 541, error" << std::endl;
 					// remove fragment from list
 					tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + index);
@@ -549,7 +553,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 						tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.begin() + index);
 					tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.begin() + index);
-	    
+
 					foundSomething = true;
 
 					continue;
@@ -582,7 +586,8 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 							TcpStreamData streamData(curTcpFrag->data + newLength, curTcpFrag->dataLength - newLength,
 													 0, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);     
+							m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc,
+													 IpDst, m_cookie);
 						}
 
 						foundSomething = true;
@@ -594,6 +599,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 									   << curTcpFrag->dataLength << " on side " << sideIndex);
 					}
 
+					std::cout << "here: line 602, error" << std::endl;
 					// delete fragment from list
 					tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + index);
@@ -605,7 +611,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 						tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.begin() + index);
 					tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.erase(
 						tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.begin() + index);
-	
+
 					continue;
 				}
 
@@ -657,8 +663,9 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 		if (closestSequenceFragIndex > -1)
 		{
 			// get the fragment with the closest sequence
-			TcpFragment *curTcpFrag = tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(closestSequenceFragIndex);
-			Packet tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(closestSequenceFragIndex);    
+			TcpFragment *curTcpFrag =
+				tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.at(closestSequenceFragIndex);
+			Packet tcpData = tcpReassemblyData->twoSides[sideIndex].tcpPacketList.at(closestSequenceFragIndex);
 			Layer *nextLayer = tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.at(closestSequenceFragIndex);
 			IPAddress *IpSrc = tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.at(closestSequenceFragIndex);
 			IPAddress *IpDst = tcpReassemblyData->twoSides[sideIndex].tcpIpDstList.at(closestSequenceFragIndex);
@@ -690,7 +697,8 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 					TcpStreamData streamData(&dataWithMissingDataText[0], dataWithMissingDataText.size(),
 											 missingDataLen, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-					m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst, m_cookie);     
+					m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &tcpData, nextLayer, IpSrc, IpDst,
+											 m_cookie);
 
 					PCPP_LOG_DEBUG("Found missing data on side "
 								   << sideIndex << ": " << missingDataLen
@@ -704,7 +712,7 @@ void TcpReassembly::checkOutOfOrderFragments(TcpReassemblyData *tcpReassemblyDat
 			tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 				tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + closestSequenceFragIndex);
 			tcpReassemblyData->twoSides[sideIndex].tcpPacketList.erase(
-				tcpReassemblyData->twoSides[sideIndex].tcpPacketList.begin() + closestSequenceFragIndex);    
+				tcpReassemblyData->twoSides[sideIndex].tcpPacketList.begin() + closestSequenceFragIndex);
 			tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.erase(
 				tcpReassemblyData->twoSides[sideIndex].tcpNextLayerList.begin() + closestSequenceFragIndex);
 			tcpReassemblyData->twoSides[sideIndex].tcpIpSrcList.erase(
@@ -774,11 +782,11 @@ void TcpReassembly::closeAllConnections()
 		uint32_t flowKey = tcpReassemblyData.connData.flowKey;
 		PCPP_LOG_DEBUG("Closing connection with flow key 0x" << std::hex << flowKey);
 
-		PCPP_LOG_DEBUG("Calling checkOutOfOrderFragments on side 0");
-		checkOutOfOrderFragments(&tcpReassemblyData, 0, true);
+		// PCPP_LOG_DEBUG("Calling checkOutOfOrderFragments on side 0");
+		// checkOutOfOrderFragments(&tcpReassemblyData, 0, true);
 
-		PCPP_LOG_DEBUG("Calling checkOutOfOrderFragments on side 1");
-		checkOutOfOrderFragments(&tcpReassemblyData, 1, true);
+		// PCPP_LOG_DEBUG("Calling checkOutOfOrderFragments on side 1");
+		// checkOutOfOrderFragments(&tcpReassemblyData, 1, true);
 
 		if (m_OnConnEnd != NULL)
 			m_OnConnEnd(tcpReassemblyData.connData, TcpReassemblyConnectionClosedManually, m_UserCookie);

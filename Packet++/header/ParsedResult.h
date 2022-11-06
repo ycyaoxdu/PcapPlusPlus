@@ -19,7 +19,7 @@ class ParsedResult
 	int IpLayerCount;
 
   public:
-	ParsedResult() : m_tuplenameSet(false), IpLayerCount(0)
+	ParsedResult() : m_tuplenameSet(false), m_tuplename(""), IpLayerCount(0)
 	{
 	}
 
