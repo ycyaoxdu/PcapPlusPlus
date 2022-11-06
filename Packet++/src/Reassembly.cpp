@@ -811,30 +811,30 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 	std::string temp = "";
 
 	// parse to datalink layer
-	while (layer != NULL) 
+	while (layer != NULL)
 	{
-		std::cout << "!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!"
-				  << std::endl;
+
+		PCPP_LOG_DEBUG("!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct << "!");
 
 		temp = layer->toString();
 		stk.push(temp);
 		if (layer->getProtocol() == pcpp::IPv4 || layer->getProtocol() == pcpp::IPv6)
 		{
-			if (layer->packet()->getIPLayerCount() <= 1)
+			if (layer->packet()->getIPLayerCount() < 1)
 			{
+				PCPP_LOG_DEBUG("ReassemblePayload: 我要出来了");
 				break;
 			}
 			layer->packet()->DecreaseIP();
 		}
-		else
-		{
-			layer = layer->getPrevLayer();
-		}
+		layer = layer->getPrevLayer();
 
-		std::cout << "dsadasdas!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol() << std::oct
-				  << "!" << std::endl;
+		PCPP_LOG_DEBUG("dsadasdas!" << layer->getOsiModelLayer() << "!" << std::hex << layer->getProtocol()
+									<< std::oct);
 	}
 	std::cout << std::endl;
+
+	PCPP_LOG_DEBUG("ReassemblePayload: 我出来了");
 
 	while (!stk.empty())
 	{
@@ -844,10 +844,13 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 		result += temp;
 	}
 
+	PCPP_LOG_DEBUG("ReassemblePayload: 我读完了");
+
 	if (response == Handled)
 	{
 		// call the callback to write result
 		OnMessageHandledCallback(&result, payloadlayer->packet()->GetTuplename(), cookie);
+		PCPP_LOG_DEBUG("ReassemblePayload: 我写入完了");
 	}
 
 	return response;
@@ -866,22 +869,19 @@ ReassemblyStatus ReassembleMessage(Layer *layer, std::string tuple, void *cookie
 	std::string temp = "";
 
 	// parse to datalink layer
-	while (layer != NULL) 
+	while (layer != NULL)
 	{
 		temp = layer->toString();
 		stk.push(temp);
 		if (layer->getProtocol() == pcpp::IPv4 || layer->getProtocol() == pcpp::IPv6)
 		{
-			if (layer->packet()->getIPLayerCount() <= 1)
+			if (layer->packet()->getIPLayerCount() < 1)
 			{
 				break;
 			}
 			layer->packet()->DecreaseIP();
 		}
-		else
-		{
-			layer = layer->getPrevLayer();
-		}
+		layer = layer->getPrevLayer();
 	}
 	std::cout << std::endl;
 

@@ -91,11 +91,11 @@ void BgpLayer::ToStructuredOutput(std::ostream &os) const
 {
     os << "BGP Header:" << '\n';
 	os << "\t"
-	   << "Marker: \t" << (unsigned int*)getBasicHeader()->marker << '\n';
+	   << "Marker: " << (unsigned int*)getBasicHeader()->marker << '\n';
 	os << "\t"
-	   << "Length: \t" << getHeaderLen() << '\n';
+	   << "Length: " << getHeaderLen() << '\n';
 	os << "\t"
-	   << "Message Type: \t" << getMessageTypeAsString() << '\n';
+	   << "Message Type: " << getMessageTypeAsString() << '\n';
 }
 
 std::string BgpLayer::toString() const

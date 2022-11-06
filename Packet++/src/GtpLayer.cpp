@@ -20,17 +20,17 @@ void GtpV1Layer::ToStructuredOutput(std::ostream &os) const
 	os << "Gtp Header:" << '\n';
 	{
 	os << "\t"
-	   << "Version: \t" << "1" << '\n';		
+	   << "Version: " << "1" << '\n';		
 	os << "\t"
-	   << "Teid: \t" << be32toh(getHeader()->teid)<< '\n';
+	   << "Teid: " << be32toh(getHeader()->teid)<< '\n';
 	os << "\t"
-	   << "MessageType: \t" << getMessageType() << '\n';
+	   << "MessageType: " << getMessageType() << '\n';
 	os << "\t"
-	   << "TotalLength: \t" << getTotalLength() << '\n';
+	   << "TotalLength: " << getTotalLength() << '\n';
 	os << "\t"
-	   << "SequenceNumber: \t" << be16toh(getHeaderExtra()->sequenceNumber) << '\n';
+	   << "SequenceNumber: " << be16toh(getHeaderExtra()->sequenceNumber) << '\n';
 	os << "\t"
-	   << "NpduNumber: \t" << be16toh(getHeaderExtra()->npduNumber) << '\n';
+	   << "NpduNumber: " << be16toh(getHeaderExtra()->npduNumber) << '\n';
 
 	}
 	

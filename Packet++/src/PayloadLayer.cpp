@@ -52,7 +52,13 @@ std::string PayloadLayer::toString() const
 	std::stringstream dataStream;
 	dataStream << "Payload:" << '\n';
 	dataStream << "\tLength: " << getPayloadLen() << "\n"
-			   << "\tAddress: " << (unsigned int *)getPayload() << "\n";
+			   << "\tAddress: " << (unsigned int *)getPayload() << "\n"
+			   << "\tRawDate: ";
+	for (int i = 0; i < getPayloadLen(); i++)
+	{
+		dataStream << getPayload() + i;
+	}
+	dataStream << std::endl;
 
 	return dataStream.str();
 }

@@ -26,31 +26,31 @@ void L2tpLayer::ToStructuredOutput(std::ostream &os) const
 
 	os << "L2TP Header:" << '\n';
 	os << "\t"
-	   << "control bytes: \t"
+	   << "control bytes: "
 	   << "0b" << (std::bitset<8>)(uint16_t)*m_Data << '\n';
 	os << "\t"
-	   << "tunnel id: \t\t" << getTunnelID() << '\n';
+	   << "tunnel id: " << getTunnelID() << '\n';
 	os << "\t"
-	   << "session id: \t" << getSessionID() << '\n';
+	   << "session id: " << getSessionID() << '\n';
 	if (control)
 	{
 		os << "\t"
-		   << "type: \t\t\tcontrol message" << '\n'
+		   << "type: control message" << '\n'
 		   << "\t"
-		   << "length: \t\t" << getLength() << '\n'
+		   << "length: " << getLength() << '\n'
 		   << "\t"
-		   << "Ns: \t\t\t" << getNs() << '\n'
+		   << "Ns: " << getNs() << '\n'
 		   << "\t"
-		   << "Nr: \t\t\t" << getNr() << '\n';
+		   << "Nr: " << getNr() << '\n';
 	}
 	else
 	{
 		os << "\t"
-		   << "type: \t\t\tdata message\n"
+		   << "type: data message\n"
 		   << "\t"
-		   << "offset: \t\t" << getOffset() << '\n'
+		   << "offset: " << getOffset() << '\n'
 		   << "\t"
-		   << "priority: \t";
+		   << "priority: ";
 		if (isPriority())
 		{
 			os << "yes";

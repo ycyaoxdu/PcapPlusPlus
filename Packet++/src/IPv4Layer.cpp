@@ -561,15 +561,15 @@ void IPv4Layer::ToStructuredOutput(std::ostream &os) const
 	iphdr *hdr = getIPv4Header();
 	os << "IP Header:" << '\n';
 	os << "\t"
-	   << "Version: \t\t" << "0b"<< (std::bitset<4>)hdr->ipVersion << '\n';
+	   << "Version: " << "0b"<< (std::bitset<4>)hdr->ipVersion << '\n';
 	os << "\t"
-	   << "Header Length: \t" << "0b"<< (std::bitset<4>)hdr->internetHeaderLength << '\n';
+	   << "Header Length: " << "0b"<< (std::bitset<4>)hdr->internetHeaderLength << '\n';
 	os << "\t"
-	   << "Total Length: \t" << hdr->totalLength << '\n';
+	   << "Total Length: " << hdr->totalLength << '\n';
 	os << "\t"
-	   << "IP ID: \t\t\t" << hdr->ipId << '\n';
+	   << "IP ID: " << hdr->ipId << '\n';
 	os << "\t"
-	   << "Source IP: \t\t" << getSrcIPAddress().toString() << '\n';
+	   << "Source IP: " << getSrcIPAddress().toString() << '\n';
 	os << "\t"
 	   << "Destination IP: " << getDstIPAddress().toString() << '\n';
 }

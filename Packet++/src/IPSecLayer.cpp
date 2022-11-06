@@ -95,13 +95,13 @@ void AuthenticationHeaderLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "Authentication Header:" << '\n';
 	os << "\t"
-	   << "SPI: \t" << getSPI() << '\n';
+	   << "SPI: " << getSPI() << '\n';
 	os << "\t"
-	   << "Sequence Number: \t" << getSequenceNumber() << '\n';
+	   << "Sequence Number: " << getSequenceNumber() << '\n';
 	os << "\t"
-	   << "ICV Length: \t" << getICVLength() << '\n';
+	   << "ICV Length: " << getICVLength() << '\n';
 	os << "\t"
-	   << "ICV Hex Stream: \t" << getICVHexStream() << '\n';
+	   << "ICV Hex Stream: " << getICVHexStream() << '\n';
 }
 
 std::string AuthenticationHeaderLayer::toString() const
@@ -138,9 +138,9 @@ void ESPLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "ESP Header:" << '\n';
 	os << "\t"
-	   << "SPI: \t" << getSPI() << '\n';
+	   << "SPI: " << getSPI() << '\n';
 	os << "\t"
-	   << "Sequence Number: \t" << getSequenceNumber() << '\n';
+	   << "Sequence Number: " << getSequenceNumber() << '\n';
 }
 
 std::string ESPLayer::toString() const

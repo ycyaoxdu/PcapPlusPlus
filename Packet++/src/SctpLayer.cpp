@@ -24,13 +24,13 @@ void SctpLayer::ToStructuredOutput(std::ostream &os) const
 
 	os << "Sctp Header:" << '\n';
 	os << "\t"
-	   << "Source port: \t" << getSrcPort() << '\n';		
+	   << "Source port: " << getSrcPort() << '\n';		
 	os << "\t"
-	   << "Destination port: \t" << getDstPort() << '\n';
+	   << "Destination port: " << getDstPort() << '\n';
 	os << "\t"
-	   << "Verification Tag: \t" << getTag() << '\n';
+	   << "Verification Tag: " << getTag() << '\n';
 	os << "\t"
-	   << "Checksum: \t" << calculateChecksum(true) << '\n';
+	   << "Checksum: " << calculateChecksum(true) << '\n';
 }
 SctpLayer::SctpLayer(uint16_t portSrc, uint16_t portDst)
 {

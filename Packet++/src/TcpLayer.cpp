@@ -434,17 +434,17 @@ void TcpLayer::ToStructuredOutput(std::ostream &os) const
 		flag = "[ACK]";
     
 	os << "\t"
-	   << "Flag: \t" << flag << '\n';
+	   << "Flag: " << flag << '\n';
 	os << "\t"
-	   << "Source Port: \t" << getSrcPort() << '\n';
+	   << "Source Port: " << getSrcPort() << '\n';
 	os << "\t"
-	   << "Dest. Port: \t" << getDstPort() << '\n';
+	   << "Dest. Port: " << getDstPort() << '\n';
 	os << "\t"
-	   << "Sequence Number: \t" << be32toh(getTcpHeader()->sequenceNumber) << '\n';
+	   << "Sequence Number: " << be32toh(getTcpHeader()->sequenceNumber) << '\n';
 	os << "\t"
-	   << "Ack Number: \t" << be32toh(getTcpHeader()->ackNumber) << '\n';
+	   << "Ack Number: " << be32toh(getTcpHeader()->ackNumber) << '\n';
 	os << "\t"
-	   << "Header Length: \t\t" << getHeaderLen() << '\n';
+	   << "Header Length: " << getHeaderLen() << '\n';
 }
 
 std::string TcpLayer::toString() const

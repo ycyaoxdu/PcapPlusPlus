@@ -111,15 +111,15 @@ void SSLHandshakeLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "SSL Layer:" << '\n';
 	os << "\t"
-	   << "Type: \t" << "Handshake" << '\n';
+	   << "Type: " << "Handshake" << '\n';
 	os << "\t"
-	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	   << "Version: " << getRecordVersion().toString(true) << '\n';
 	os << "\t"
-	   << "Length: \t" << getHeaderLen() << '\n';
+	   << "Length: " << getHeaderLen() << '\n';
 	for(size_t i = 0; i < m_MessageList.size(); i++)
 	{
 	    os << "\t"
-		   << "Handshake Message: \t" << m_MessageList.at(i)->toString() << '\n'; 	    
+		   << "Handshake Message: " << m_MessageList.at(i)->toString() << '\n'; 	    
 	}   
 }
 
@@ -180,11 +180,11 @@ void SSLChangeCipherSpecLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "SSL Layer:" << '\n';
 	os << "\t"
-	   << "Type: \t" << "Change Cipher Spec" << '\n';
+	   << "Type: " << "Change Cipher Spec" << '\n';
 	os << "\t"
-	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	   << "Version: " << getRecordVersion().toString(true) << '\n';
 	os << "\t"
-	   << "Length: \t" << getHeaderLen() << '\n';  
+	   << "Length: " << getHeaderLen() << '\n';  
 }
 
 std::string SSLChangeCipherSpecLayer::toString() const
@@ -258,16 +258,16 @@ void SSLAlertLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "SSL Layer:" << '\n';
 	os << "\t"
-	   << "Type: \t" << "Alert" << '\n';
+	   << "Type: " << "Alert" << '\n';
 	os << "\t"
-	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	   << "Version: " << getRecordVersion().toString(true) << '\n';
 	os << "\t"
-	   << "Length: \t" << getHeaderLen() << '\n';
+	   << "Length: " << getHeaderLen() << '\n';
 
     if (getAlertLevel() == SSL_ALERT_LEVEL_ENCRYPTED)
 	{
 	    os << "\t"
-	       << "Alert Level: \t" << "Encrypted" << '\n';
+	       << "Alert Level: " << "Encrypted" << '\n';
 	}
 	else
 	{
@@ -384,15 +384,15 @@ void SSLApplicationDataLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "SSL Layer:" << '\n';
 	os << "\t"
-	   << "Type: \t" << "Application Data" << '\n';
+	   << "Type: " << "Application Data" << '\n';
 	os << "\t"
-	   << "Version: \t" << getRecordVersion().toString(true) << '\n';
+	   << "Version: " << getRecordVersion().toString(true) << '\n';
 	os << "\t"
-	   << "Length: \t" << getHeaderLen() << '\n';
+	   << "Length: " << getHeaderLen() << '\n';
 	os << "\t"
-	   << "Encrypted Application Data Length \t" << getEncryptedDataLen() << '\n';
+	   << "Encrypted Application Data Length: " << getEncryptedDataLen() << '\n';
 	os << "\t"
-	   << "Encrypted Application Data \t" << (unsigned int*)getEncryptedData() << '\n';
+	   << "Encrypted Application Data: " << (unsigned int*)getEncryptedData() << '\n';
 }
 
 std::string SSLApplicationDataLayer::toString() const

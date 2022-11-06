@@ -437,21 +437,21 @@ void GREv0Layer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "GRE Header:" << '\n';
 	os << "\t"
-	   << "version: \t" << 0 << '\n';
+	   << "version: " << 0 << '\n';
 	os << "\t"
-	   << "Recursion Control: \t" << "0b"<<(std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
+	   << "Recursion Control: " << "0b"<<(std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
 	os << "\t"
-	   << "C bit: \t" << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
+	   << "C bit: " << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
 	os << "\t"
-	   << "R bit: \t" << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
+	   << "R bit: " << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
 	os << "\t"
-	   << "K bit: \t" << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
+	   << "K bit: " << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
 	os << "\t"
-	   << "S bit: \t" << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
+	   << "S bit: " << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
 	os << "\t"
-	   << "s bit: \t" << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
+	   << "s bit: " << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
 	os << "\t"
-	   << "protocol: \t" << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
+	   << "protocol: " << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
 }
 
 std::string GREv0Layer::toString() const
@@ -551,25 +551,25 @@ void GREv1Layer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "GRE Header:" << '\n';
 	os << "\t"
-	   << "version: \t" << 1 << '\n';
+	   << "version: " << 1 << '\n';
 	os << "\t"
-	   << "Recursion Control: \t" << "0b"<< (std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
+	   << "Recursion Control: " << "0b"<< (std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
 	os << "\t"
-	   << "C bit: \t" << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
+	   << "C bit: " << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
 	os << "\t"
-	   << "R bit: \t" << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
+	   << "R bit: " << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
 	os << "\t"
-	   << "K bit: \t" << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
+	   << "K bit: " << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
 	os << "\t"
-	   << "S bit: \t" << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
+	   << "S bit: " << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
 	os << "\t"
-	   << "s bit: \t" << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
+	   << "s bit: " << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
 	os << "\t"
-	   << "protocol: \t" << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
+	   << "protocol: " << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
 	os << "\t"
-	   << "Payload Length: \t" << this->getGreHeader()->payloadLength << '\n';
+	   << "Payload Length: " << this->getGreHeader()->payloadLength << '\n';
 	os << "\t"
-	   << "Call ID: \t" << this->getGreHeader()->callID << '\n';
+	   << "Call ID: " << this->getGreHeader()->callID << '\n';
 }
 
 std::string GREv1Layer::toString() const
@@ -648,11 +648,11 @@ void PPP_PPTPLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "PPP Header:" << '\n';
 	os << "\t"
-	   << "Broadcast Address: \t" << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->address << '\n';
+	   << "Broadcast Address: " << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->address << '\n';
 	os << "\t"
-	   << "Control bytes: \t\t" << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
+	   << "Control bytes: " << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
 	os << "\t"
-	   << "next layer protocol: \t" << std::hex << getPPP_PPTPHeader()->protocol << std::oct << '\n';
+	   << "next layer protocol: " << std::hex << getPPP_PPTPHeader()->protocol << std::oct << '\n';
 }
 
 std::string PPP_PPTPLayer::toString() const

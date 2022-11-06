@@ -330,7 +330,7 @@ static void OnMessageReadyCallback(std::string *data, std::string tuplename, voi
 		// 2.3
 
 		// get the file name according to the 5-tuple etc.
-		std::string name = tuplename + ".txt";
+		std::string name = tuplename + ".yaml";
 		std::string fileName = GlobalConfig::getInstance().getFileName(name);
 
 		// 2.4

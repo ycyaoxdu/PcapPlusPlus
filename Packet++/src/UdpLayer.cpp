@@ -104,11 +104,11 @@ void UdpLayer::ToStructuredOutput(std::ostream &os) const
 {
 	os << "UDP Header:" << '\n';
 	os << "\t"
-	   << "Source Port: \t" << getSrcPort() << '\n';
+	   << "Source Port: " << getSrcPort() << '\n';
 	os << "\t"
-	   << "Dest. Port: \t" << getDstPort() << '\n';
+	   << "Dest. Port: " << getDstPort() << '\n';
 	os << "\t"
-	   << "Length: \t\t" << getUdpHeader()->length << '\n';
+	   << "Length: " << getUdpHeader()->length << '\n';
 }
 
 void UdpLayer::parseNextLayer()

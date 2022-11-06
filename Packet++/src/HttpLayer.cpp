@@ -144,25 +144,25 @@ void HttpRequestLayer::ToStructuredOutput(std::ostream &os) const
 		}
 
 		os << "\t"
-	       << "First Line: \t" << first_line << '\n';
+	       << "First Line: " << first_line << '\n';
 		os << "\t"
-	       << "Host: \t" << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << '\n';
+	       << "Host: " << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "User-Agent: \t" << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << '\n';
+	       << "User-Agent: " << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Accept: \t" << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue() << '\n';
+	       << "Accept: " << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Accept-Encoding: \t" << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue() << '\n';
+	       << "Accept-Encoding: " << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Accept-Language: \t" << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue() << '\n';
+	       << "Accept-Language: " << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Cookie: \t" << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << '\n';
+	       << "Cookie: " << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Referer: \t" << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue() << '\n';
+	       << "Referer: " << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Content-Type: \t" << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
+	       << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
 		os << "\t"
-	       << "Content-Length: \t" << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+	       << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
 	}
 }
 
@@ -835,13 +835,13 @@ void HttpResponseLayer::ToStructuredOutput(std::ostream &os) const
 	}
 
 	os << "\t"
-	   << "First Line: \t" << first_line << '\n';
+	   << "First Line: " << first_line << '\n';
 	os << "\t"
-	   << "Server: \t" << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue() << '\n';
+	   << "Server: " << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue() << '\n';
 	os << "\t"
-	   << "Content-Type: \t" << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
+	   << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
 	os << "\t"
-	   << "Content-Length: \t" << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+	   << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
 }
 
 std::string HttpResponseLayer::toString() const
