@@ -2,9 +2,9 @@
 
 #include "RipLayer.h"
 #include "EndianPortable.h"
+#include "GeneralUtils.h"
 #include "Logger.h"
 #include "PacketUtils.h"
-#include "GeneralUtils.h"
 #include <sstream>
 #include <string.h>
 
@@ -98,10 +98,10 @@ std::shared_ptr<RipTableEntry> RipLayer::getRte(uint32_t index)
 
 void RipLayer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "Rip Packet:" << '\n';
-	os << '\t' << "command: " << (uint32_t)getCommand() << '\n'; // uint8_t有些值是不可见字符
-	os << '\t' << "version: " << (uint32_t)getVersion() << '\n';
-	os << '\t' << "total length: " << getDataLen() << '\n';
+	os << "PROTOCOLTYPE: RIP" << '\n';
+	os << "command: " << (uint32_t)getCommand() << '\n'; // uint8_t有些值是不可见字符
+	os << "version: " << (uint32_t)getVersion() << '\n';
+	os << "total length: " << getDataLen() << '\n';
 	for (auto &var : rtes)
 	{
 		if (getVersion() == uint8_t(1))
@@ -122,7 +122,7 @@ void RipLayer::computeCalculateFields()
 
 std::string RipLayer::toString() const
 {
-	
+
 	std::stringstream stream;
 	ToStructuredOutput(stream);
 	return stream.str();

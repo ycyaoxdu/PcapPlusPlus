@@ -354,15 +354,15 @@ void TcpLayer::parseNextLayer()
 	size_t payloadLen = m_DataLen - headerLen;
 	uint16_t portDst = getDstPort();
 	uint16_t portSrc = getSrcPort();
-    
+
 	// need http request
 	if (HttpMessage::isHttpPort(portDst) &&
-		             HttpRequestFirstLine::parseMethod((char *)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
+		HttpRequestFirstLine::parseMethod((char *)payload, payloadLen) != HttpRequestLayer::HttpMethodUnknown)
 		m_NextLayer = new HttpRequestLayer(payload, payloadLen, this, m_Packet);
-	
-    // need http response
+
+	// need http response
 	else if (HttpMessage::isHttpPort(portSrc) && HttpResponseFirstLine::parseStatusCode((char *)payload, payloadLen) !=
-						  HttpResponseLayer::HttpStatusCodeUnknown)
+													 HttpResponseLayer::HttpStatusCodeUnknown)
 		m_NextLayer = new HttpResponseLayer(payload, payloadLen, this, m_Packet);
 	// need ssl
 	else if (SSLLayer::IsSSLMessage(portSrc, portDst, payload, payloadLen))
@@ -374,7 +374,7 @@ void TcpLayer::parseNextLayer()
 
 	// need gtp
 	else if ((GtpV1Layer::isGTPv1Port(portDst) || GtpV1Layer::isGTPv1Port(portSrc)) &&
-			  GtpV1Layer::isGTPv1(payload, payloadLen))
+			 GtpV1Layer::isGTPv1(payload, payloadLen))
 		m_NextLayer = new GtpV1Layer(payload, payloadLen, this, m_Packet);
 
 	else if (SipLayer::isSipPort(portDst))
@@ -413,38 +413,32 @@ void TcpLayer::computeCalculateFields()
 
 void TcpLayer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "TCP Header:" << '\n';
-    tcphdr *hdr = getTcpHeader();
+	os << "PROTOCOLTYPE: TCP" << '\n';
+	tcphdr *hdr = getTcpHeader();
 	std::string flag;
 	if (hdr->synFlag)
 	{
 		if (hdr->ackFlag)
-			flag = "[SYN, ACK]";
+			flag = "SYN, ACK";
 		else
-			flag = "[SYN]";
+			flag = "SYN";
 	}
 	else if (hdr->finFlag)
 	{
 		if (hdr->ackFlag)
-			flag = "[FIN, ACK]";
+			flag = "FIN, ACK";
 		else
-			flag = "[FIN]";
+			flag = "FIN";
 	}
 	else if (hdr->ackFlag)
-		flag = "[ACK]";
-    
-	os << "\t"
-	   << "Flag: " << flag << '\n';
-	os << "\t"
-	   << "Source Port: " << getSrcPort() << '\n';
-	os << "\t"
-	   << "Dest. Port: " << getDstPort() << '\n';
-	os << "\t"
-	   << "Sequence Number: " << be32toh(getTcpHeader()->sequenceNumber) << '\n';
-	os << "\t"
-	   << "Ack Number: " << be32toh(getTcpHeader()->ackNumber) << '\n';
-	os << "\t"
-	   << "Header Length: " << getHeaderLen() << '\n';
+		flag = "ACK";
+
+	os << "Flag: " << flag << '\n';
+	os << "Source Port: " << getSrcPort() << '\n';
+	os << "Dest. Port: " << getDstPort() << '\n';
+	os << "Sequence Number: " << be32toh(getTcpHeader()->sequenceNumber) << '\n';
+	os << "Ack Number: " << be32toh(getTcpHeader()->ackNumber) << '\n';
+	os << "Header Length: " << getHeaderLen() << '\n';
 }
 
 std::string TcpLayer::toString() const

@@ -102,13 +102,10 @@ uint16_t UdpLayer::calculateChecksum(bool writeResultToPacket)
 
 void UdpLayer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "UDP Header:" << '\n';
-	os << "\t"
-	   << "Source Port: " << getSrcPort() << '\n';
-	os << "\t"
-	   << "Dest. Port: " << getDstPort() << '\n';
-	os << "\t"
-	   << "Length: " << getUdpHeader()->length << '\n';
+	os << "PROTOCOLTYPE: UDP" << '\n';
+	os << "Source Port: " << getSrcPort() << '\n';
+	os << "Dest. Port: " << getDstPort() << '\n';
+	os << "Length: " << getUdpHeader()->length << '\n';
 }
 
 void UdpLayer::parseNextLayer()

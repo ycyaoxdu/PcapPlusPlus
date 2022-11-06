@@ -24,32 +24,22 @@ void L2tpLayer::ToStructuredOutput(std::ostream &os) const
 {
 	bool control = isControlMessage();
 
-	os << "L2TP Header:" << '\n';
-	os << "\t"
-	   << "control bytes: "
+	os << "PROTOCOLTYPE: L2TP" << '\n';
+	os << "control bytes: "
 	   << "0b" << (std::bitset<8>)(uint16_t)*m_Data << '\n';
-	os << "\t"
-	   << "tunnel id: " << getTunnelID() << '\n';
-	os << "\t"
-	   << "session id: " << getSessionID() << '\n';
+	os << "tunnel id: " << getTunnelID() << '\n';
+	os << "session id: " << getSessionID() << '\n';
 	if (control)
 	{
-		os << "\t"
-		   << "type: control message" << '\n'
-		   << "\t"
+		os << "type: control message" << '\n'
 		   << "length: " << getLength() << '\n'
-		   << "\t"
 		   << "Ns: " << getNs() << '\n'
-		   << "\t"
 		   << "Nr: " << getNr() << '\n';
 	}
 	else
 	{
-		os << "\t"
-		   << "type: data message\n"
-		   << "\t"
+		os << "type: data message\n"
 		   << "offset: " << getOffset() << '\n'
-		   << "\t"
 		   << "priority: ";
 		if (isPriority())
 		{

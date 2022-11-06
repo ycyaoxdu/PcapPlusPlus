@@ -435,23 +435,16 @@ void GREv0Layer::computeCalculateFields()
 
 void GREv0Layer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "GRE Header:" << '\n';
-	os << "\t"
-	   << "version: " << 0 << '\n';
-	os << "\t"
-	   << "Recursion Control: " << "0b"<<(std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
-	os << "\t"
-	   << "C bit: " << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
-	os << "\t"
-	   << "R bit: " << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
-	os << "\t"
-	   << "K bit: " << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
-	os << "\t"
-	   << "S bit: " << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
-	os << "\t"
-	   << "s bit: " << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
-	os << "\t"
-	   << "protocol: " << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
+	os << "PROTOCOLTYPE: GRE" << '\n';
+	os << "version: " << 0 << '\n';
+	os << "Recursion Control: "
+	   << "0b" << (std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
+	os << "C bit: " << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
+	os << "R bit: " << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
+	os << "K bit: " << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
+	os << "S bit: " << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
+	os << "s bit: " << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
+	os << "protocol: " << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
 }
 
 std::string GREv0Layer::toString() const
@@ -549,27 +542,18 @@ void GREv1Layer::computeCalculateFields()
 
 void GREv1Layer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "GRE Header:" << '\n';
-	os << "\t"
-	   << "version: " << 1 << '\n';
-	os << "\t"
-	   << "Recursion Control: " << "0b"<< (std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
-	os << "\t"
-	   << "C bit: " << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
-	os << "\t"
-	   << "R bit: " << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
-	os << "\t"
-	   << "K bit: " << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
-	os << "\t"
-	   << "S bit: " << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
-	os << "\t"
-	   << "s bit: " << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
-	os << "\t"
-	   << "protocol: " << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
-	os << "\t"
-	   << "Payload Length: " << this->getGreHeader()->payloadLength << '\n';
-	os << "\t"
-	   << "Call ID: " << this->getGreHeader()->callID << '\n';
+	os << "PROTOCOLTYPE: GRE" << '\n';
+	os << "version: " << 1 << '\n';
+	os << "Recursion Control: "
+	   << "0b" << (std::bitset<3>)this->getGreHeader()->recursionControl << '\n';
+	os << "C bit: " << (std::bitset<1>)this->getGreHeader()->checksumBit << '\n';
+	os << "R bit: " << (std::bitset<1>)this->getGreHeader()->routingBit << '\n';
+	os << "K bit: " << (std::bitset<1>)this->getGreHeader()->keyBit << '\n';
+	os << "S bit: " << (std::bitset<1>)this->getGreHeader()->sequenceNumBit << '\n';
+	os << "s bit: " << (std::bitset<1>)this->getGreHeader()->strictSourceRouteBit << '\n';
+	os << "protocol: " << std::hex << "0x" << this->getGreHeader()->protocol << std::oct << '\n';
+	os << "Payload Length: " << this->getGreHeader()->payloadLength << '\n';
+	os << "Call ID: " << this->getGreHeader()->callID << '\n';
 }
 
 std::string GREv1Layer::toString() const
@@ -646,13 +630,12 @@ void PPP_PPTPLayer::computeCalculateFields()
 
 void PPP_PPTPLayer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "PPP Header:" << '\n';
-	os << "\t"
-	   << "Broadcast Address: " << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->address << '\n';
-	os << "\t"
-	   << "Control bytes: " << "0b"<< (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
-	os << "\t"
-	   << "next layer protocol: " << std::hex << getPPP_PPTPHeader()->protocol << std::oct << '\n';
+	os << "PROTOCOLTYPE: PPP" << '\n';
+	os << "Broadcast Address: "
+	   << "0b" << (std::bitset<8>)getPPP_PPTPHeader()->address << '\n';
+	os << "Control bytes: "
+	   << "0b" << (std::bitset<8>)getPPP_PPTPHeader()->control << '\n';
+	os << "next layer protocol: " << std::hex << getPPP_PPTPHeader()->protocol << std::oct << '\n';
 }
 
 std::string PPP_PPTPLayer::toString() const

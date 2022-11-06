@@ -200,6 +200,8 @@ class IPv6Layer : public Layer, public IPLayer
 	 */
 	static inline bool isDataValid(const uint8_t *data, size_t dataLen);
 
+	void ToStructuredOutput(std::ostream &os) const;
+
 	// implement abstract methods
 
 	/**

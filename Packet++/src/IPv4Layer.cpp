@@ -559,19 +559,14 @@ bool IPv4Layer::removeAllOptions()
 void IPv4Layer::ToStructuredOutput(std::ostream &os) const
 {
 	iphdr *hdr = getIPv4Header();
-	os << "IP Header:" << '\n';
-	os << "\t"
-	   << "Version: " << "0b"<< (std::bitset<4>)hdr->ipVersion << '\n';
-	os << "\t"
-	   << "Header Length: " << "0b"<< (std::bitset<4>)hdr->internetHeaderLength << '\n';
-	os << "\t"
-	   << "Total Length: " << hdr->totalLength << '\n';
-	os << "\t"
-	   << "IP ID: " << hdr->ipId << '\n';
-	os << "\t"
-	   << "Source IP: " << getSrcIPAddress().toString() << '\n';
-	os << "\t"
-	   << "Destination IP: " << getDstIPAddress().toString() << '\n';
+	os << "PROTOCOLTYPE: IPV4" << '\n';
+	os << "Version: " << 4 << '\n';
+	os << "Header Length: "
+	   << "0b" << (std::bitset<4>)hdr->internetHeaderLength << '\n';
+	os << "Total Length: " << hdr->totalLength << '\n';
+	os << "IP ID: " << hdr->ipId << '\n';
+	os << "Source IP: " << getSrcIPAddress().toString() << '\n';
+	os << "Destination IP: " << getDstIPAddress().toString() << '\n';
 }
 
 } // namespace pcpp

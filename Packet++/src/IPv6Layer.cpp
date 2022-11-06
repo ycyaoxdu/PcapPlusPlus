@@ -300,46 +300,49 @@ void IPv6Layer::computeCalculateFields()
 	}
 }
 
-std::string IPv6Layer::toString() const
+void IPv6Layer::ToStructuredOutput(std::ostream &os) const
 {
-	std::string result =
-		"IPv6 Layer:\n\tSrc: " + getSrcIPv6Address().toString() + "\n\tDst: " + getDstIPv6Address().toString();
+	os << "PROTOCOLTYPE: IPV6" << '\n';
+	os << "Src: " << getSrcIPv6Address().toString() << "Dst: " << getDstIPv6Address().toString();
 	if (m_ExtensionsLen > 0)
 	{
-		result += "\n\tOptions=[";
+		os << "Options=[";
 		IPv6Extension *curExt = m_FirstExtension;
 		while (curExt != NULL)
 		{
 			switch (curExt->getExtensionType())
 			{
 			case IPv6Extension::IPv6Fragmentation:
-				result += "Fragment,";
+				os << "Fragment,";
 				break;
 			case IPv6Extension::IPv6HopByHop:
-				result += "Hop-By-Hop,";
+				os << "Hop-By-Hop,";
 				break;
 			case IPv6Extension::IPv6Destination:
-				result += "Destination,";
+				os << "Destination,";
 				break;
 			case IPv6Extension::IPv6Routing:
-				result += "Routing,";
+				os << "Routing,";
 				break;
 			case IPv6Extension::IPv6AuthenticationHdr:
-				result += "Authentication,";
+				os << "Authentication,";
 				break;
 			default:
-				result += "Unknown,";
+				os << "Unknown,";
 				break;
 			}
 
 			curExt = curExt->getNextHeader();
 		}
-
-		// replace the last ','
-		result[result.size() - 1] = ']';
+		os << "]";
 	}
+}
 
-	return result + "\n";
+std::string IPv6Layer::toString() const
+{
+	std::stringstream stream;
+	ToStructuredOutput(stream);
+	return stream.str();
 }
 
 } // namespace pcpp

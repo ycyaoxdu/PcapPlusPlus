@@ -1,10 +1,10 @@
 #define LOG_MODULE PacketLogModuleBgpLayer
 
-#include <string.h>
-#include "Logger.h"
 #include "BgpLayer.h"
 #include "EndianPortable.h"
 #include "GeneralUtils.h"
+#include "Logger.h"
+#include <string.h>
 
 namespace pcpp
 {
@@ -28,12 +28,12 @@ size_t BgpLayer::getHeaderLen() const
 	return (size_t)messageLen;
 }
 
-BgpLayer* BgpLayer::parseBgpLayer(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+BgpLayer *BgpLayer::parseBgpLayer(uint8_t *data, size_t dataLen, Layer *prevLayer, Packet *packet)
 {
 	if (dataLen < sizeof(bgp_common_header))
 		return NULL;
 
-	bgp_common_header* bgpHeader = (bgp_common_header*)data;
+	bgp_common_header *bgpHeader = (bgp_common_header *)data;
 
 	// illegal header data - length is too small
 	if (be16toh(bgpHeader->length) < static_cast<uint16_t>(sizeof(bgp_common_header)))
@@ -60,18 +60,18 @@ std::string BgpLayer::getMessageTypeAsString() const
 {
 	switch (getBgpMessageType())
 	{
-		case BgpLayer::Open:
-			return "OPEN";
-		case BgpLayer::Update:
-			return "UPDATE";
-		case BgpLayer::Notification:
-			return "NOTIFICATION";
-		case BgpLayer::Keepalive:
-			return "KEEPALIVE";
-		case BgpLayer::RouteRefresh:
-			return "ROUTE-REFRESH";
-		default:
-			return "Unknown";
+	case BgpLayer::Open:
+		return "OPEN";
+	case BgpLayer::Update:
+		return "UPDATE";
+	case BgpLayer::Notification:
+		return "NOTIFICATION";
+	case BgpLayer::Keepalive:
+		return "KEEPALIVE";
+	case BgpLayer::RouteRefresh:
+		return "ROUTE-REFRESH";
+	default:
+		return "Unknown";
 	}
 }
 
@@ -81,7 +81,7 @@ void BgpLayer::parseNextLayer()
 	if (m_DataLen <= headerLen || headerLen == 0)
 		return;
 
-	uint8_t* payload = m_Data + headerLen;
+	uint8_t *payload = m_Data + headerLen;
 	size_t payloadLen = m_DataLen - headerLen;
 
 	m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
@@ -89,18 +89,14 @@ void BgpLayer::parseNextLayer()
 
 void BgpLayer::ToStructuredOutput(std::ostream &os) const
 {
-    os << "BGP Header:" << '\n';
-	os << "\t"
-	   << "Marker: " << (unsigned int*)getBasicHeader()->marker << '\n';
-	os << "\t"
-	   << "Length: " << getHeaderLen() << '\n';
-	os << "\t"
-	   << "Message Type: " << getMessageTypeAsString() << '\n';
+	os << "PROTOCOLTYPE: BGP" << '\n';
+	os << "Marker: " << (unsigned int *)getBasicHeader()->marker << '\n';
+	os << "Length: " << getHeaderLen() << '\n';
+	os << "Message Type: " << getMessageTypeAsString() << '\n';
 }
 
 std::string BgpLayer::toString() const
 {
-	//return "BGP Layer, " + getMessageTypeAsString() + " message";
 	std::stringstream stream;
 	ToStructuredOutput(stream);
 	return stream.str();
@@ -108,16 +104,16 @@ std::string BgpLayer::toString() const
 
 void BgpLayer::computeCalculateFields()
 {
-	bgp_common_header* bgpHeader = getBasicHeader();
-	memset(bgpHeader->marker, 0xff, 16*sizeof(uint8_t));
+	bgp_common_header *bgpHeader = getBasicHeader();
+	memset(bgpHeader->marker, 0xff, 16 * sizeof(uint8_t));
 	bgpHeader->messageType = (uint8_t)getBgpMessageType();
 	bgpHeader->length = htobe16(getHeaderLen());
 }
 
 void BgpLayer::setBgpFields(size_t messageLen)
 {
-	bgp_common_header* bgpHdr = getBasicHeader();
-	memset(bgpHdr->marker, 0xff, 16*sizeof(uint8_t));
+	bgp_common_header *bgpHdr = getBasicHeader();
+	memset(bgpHdr->marker, 0xff, 16 * sizeof(uint8_t));
 	bgpHdr->messageType = (uint8_t)getBgpMessageType();
 	if (messageLen != 0)
 	{
@@ -129,8 +125,6 @@ void BgpLayer::setBgpFields(size_t messageLen)
 	}
 }
 
-
-
 // ~~~~~~~~~~~~~~~~~~~~
 // BgpOpenMessageLayer
 // ~~~~~~~~~~~~~~~~~~~~
@@ -141,8 +135,8 @@ BgpOpenMessageLayer::optional_parameter::optional_parameter(uint8_t typeVal, std
 	length = hexStringToByteArray(valueAsHexString, value, 32);
 }
 
-BgpOpenMessageLayer::BgpOpenMessageLayer(uint16_t myAutonomousSystem, uint16_t holdTime, const IPv4Address& bgpId,
-		const std::vector<optional_parameter>& optionalParams)
+BgpOpenMessageLayer::BgpOpenMessageLayer(uint16_t myAutonomousSystem, uint16_t holdTime, const IPv4Address &bgpId,
+										 const std::vector<optional_parameter> &optionalParams)
 {
 	uint8_t optionalParamsData[1500];
 	size_t optionalParamsDataLen = optionalParamsToByteArray(optionalParams, optionalParamsData, 1500);
@@ -153,7 +147,7 @@ BgpOpenMessageLayer::BgpOpenMessageLayer(uint16_t myAutonomousSystem, uint16_t h
 	memset(m_Data, 0, headerLen);
 	setBgpFields(headerLen);
 
-	bgp_open_message* msgHdr = getOpenMsgHeader();
+	bgp_open_message *msgHdr = getOpenMsgHeader();
 	msgHdr->version = 4;
 	msgHdr->myAutonomousSystem = htobe16(myAutonomousSystem);
 	msgHdr->holdTime = htobe16(holdTime);
@@ -167,7 +161,8 @@ BgpOpenMessageLayer::BgpOpenMessageLayer(uint16_t myAutonomousSystem, uint16_t h
 	m_Protocol = BGP;
 }
 
-size_t BgpOpenMessageLayer::optionalParamsToByteArray(const std::vector<optional_parameter>& optionalParams, uint8_t* resultByteArr, size_t maxByteArrSize)
+size_t BgpOpenMessageLayer::optionalParamsToByteArray(const std::vector<optional_parameter> &optionalParams,
+													  uint8_t *resultByteArr, size_t maxByteArrSize)
 {
 	if (resultByteArr == NULL || maxByteArrSize == 0)
 	{
@@ -176,7 +171,8 @@ size_t BgpOpenMessageLayer::optionalParamsToByteArray(const std::vector<optional
 
 	size_t dataLen = 0;
 
-	for (std::vector<optional_parameter>::const_iterator iter = optionalParams.begin(); iter != optionalParams.end(); iter++)
+	for (std::vector<optional_parameter>::const_iterator iter = optionalParams.begin(); iter != optionalParams.end();
+		 iter++)
 	{
 		if (iter->length > 32)
 		{
@@ -184,7 +180,7 @@ size_t BgpOpenMessageLayer::optionalParamsToByteArray(const std::vector<optional
 			break; // illegal value
 		}
 
-		size_t curDataSize = 2*sizeof(uint8_t) + (size_t)iter->length;
+		size_t curDataSize = 2 * sizeof(uint8_t) + (size_t)iter->length;
 
 		if (dataLen + curDataSize > maxByteArrSize)
 		{
@@ -195,7 +191,7 @@ size_t BgpOpenMessageLayer::optionalParamsToByteArray(const std::vector<optional
 		resultByteArr[1] = iter->length;
 		if (iter->length > 0)
 		{
-			memcpy(resultByteArr + 2*sizeof(uint8_t), iter->value, iter->length);
+			memcpy(resultByteArr + 2 * sizeof(uint8_t), iter->value, iter->length);
 		}
 
 		dataLen += curDataSize;
@@ -205,14 +201,14 @@ size_t BgpOpenMessageLayer::optionalParamsToByteArray(const std::vector<optional
 	return dataLen;
 }
 
-void BgpOpenMessageLayer::setBgpId(const IPv4Address& newBgpId)
+void BgpOpenMessageLayer::setBgpId(const IPv4Address &newBgpId)
 {
 	if (!newBgpId.isValid())
 	{
 		return;
 	}
 
-	bgp_open_message* msgHdr = getOpenMsgHeader();
+	bgp_open_message *msgHdr = getOpenMsgHeader();
 	if (msgHdr == NULL)
 	{
 		return;
@@ -221,9 +217,9 @@ void BgpOpenMessageLayer::setBgpId(const IPv4Address& newBgpId)
 	msgHdr->bgpId = newBgpId.toInt();
 }
 
-void BgpOpenMessageLayer::getOptionalParameters(std::vector<optional_parameter>& optionalParameters)
+void BgpOpenMessageLayer::getOptionalParameters(std::vector<optional_parameter> &optionalParameters)
 {
-	bgp_open_message* msgHdr = getOpenMsgHeader();
+	bgp_open_message *msgHdr = getOpenMsgHeader();
 	if (msgHdr == NULL || msgHdr->optionalParameterLength == 0)
 	{
 		return;
@@ -236,7 +232,7 @@ void BgpOpenMessageLayer::getOptionalParameters(std::vector<optional_parameter>&
 		optionalParamsLen = getHeaderLen() - sizeof(bgp_open_message);
 	}
 
-	uint8_t* dataPtr = m_Data + sizeof(bgp_open_message);
+	uint8_t *dataPtr = m_Data + sizeof(bgp_open_message);
 	size_t byteCount = 0;
 	while (byteCount < optionalParamsLen)
 	{
@@ -252,7 +248,7 @@ void BgpOpenMessageLayer::getOptionalParameters(std::vector<optional_parameter>&
 
 		if (op.length > 0)
 		{
-			memcpy(op.value, dataPtr + 2*sizeof(uint8_t), (op.length > 32 ? 32 : op.length));
+			memcpy(op.value, dataPtr + 2 * sizeof(uint8_t), (op.length > 32 ? 32 : op.length));
 		}
 
 		optionalParameters.push_back(op);
@@ -264,7 +260,7 @@ void BgpOpenMessageLayer::getOptionalParameters(std::vector<optional_parameter>&
 
 size_t BgpOpenMessageLayer::getOptionalParametersLength()
 {
-	bgp_open_message* msgHdr = getOpenMsgHeader();
+	bgp_open_message *msgHdr = getOpenMsgHeader();
 	if (msgHdr != NULL)
 	{
 		return (size_t)(msgHdr->optionalParameterLength);
@@ -273,7 +269,7 @@ size_t BgpOpenMessageLayer::getOptionalParametersLength()
 	return 0;
 }
 
-bool BgpOpenMessageLayer::setOptionalParameters(const std::vector<optional_parameter>& optionalParameters)
+bool BgpOpenMessageLayer::setOptionalParameters(const std::vector<optional_parameter> &optionalParameters)
 {
 	uint8_t newOptionalParamsData[1500];
 	size_t newOptionalParamsDataLen = optionalParamsToByteArray(optionalParameters, newOptionalParamsData, 1500);
@@ -314,8 +310,6 @@ bool BgpOpenMessageLayer::clearOptionalParameters()
 	return setOptionalParameters(std::vector<optional_parameter>());
 }
 
-
-
 // ~~~~~~~~~~~~~~~~~~~~~
 // BgpUpdateMessageLayer
 // ~~~~~~~~~~~~~~~~~~~~~
@@ -327,10 +321,9 @@ BgpUpdateMessageLayer::path_attribute::path_attribute(uint8_t flagsVal, uint8_t 
 	length = hexStringToByteArray(dataAsHexString, data, 32);
 }
 
-BgpUpdateMessageLayer::BgpUpdateMessageLayer(
-		const std::vector<prefix_and_ip>& withdrawnRoutes,
-		const std::vector<path_attribute>& pathAttributes,
-		const std::vector<prefix_and_ip>& nlri)
+BgpUpdateMessageLayer::BgpUpdateMessageLayer(const std::vector<prefix_and_ip> &withdrawnRoutes,
+											 const std::vector<path_attribute> &pathAttributes,
+											 const std::vector<prefix_and_ip> &nlri)
 {
 	uint8_t withdrawnRoutesData[1500];
 	uint8_t pathAttributesData[1500];
@@ -339,13 +332,14 @@ BgpUpdateMessageLayer::BgpUpdateMessageLayer(
 	size_t pathAttributesDataLen = pathAttributesToByteArray(pathAttributes, pathAttributesData, 1500);
 	size_t nlriDataLen = prefixAndIPDataToByteArray(nlri, nlriData, 1500);
 
-	size_t headerLen = sizeof(bgp_common_header) + 2*sizeof(uint16_t) + withdrawnRoutesDataLen + pathAttributesDataLen + nlriDataLen;
+	size_t headerLen =
+		sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + withdrawnRoutesDataLen + pathAttributesDataLen + nlriDataLen;
 	m_DataLen = headerLen;
 	m_Data = new uint8_t[headerLen];
 	memset(m_Data, 0, headerLen);
 	setBgpFields(headerLen);
 
-	uint8_t* dataPtr = m_Data + sizeof(bgp_common_header);
+	uint8_t *dataPtr = m_Data + sizeof(bgp_common_header);
 
 	// copy withdrawn routes data
 	uint16_t withdrawnRoutesDataLenBE = htobe16(withdrawnRoutesDataLen);
@@ -376,7 +370,7 @@ BgpUpdateMessageLayer::BgpUpdateMessageLayer(
 	m_Protocol = BGP;
 }
 
-void BgpUpdateMessageLayer::parsePrefixAndIPData(uint8_t* dataPtr, size_t dataLen, std::vector<prefix_and_ip>& result)
+void BgpUpdateMessageLayer::parsePrefixAndIPData(uint8_t *dataPtr, size_t dataLen, std::vector<prefix_and_ip> &result)
 {
 	size_t byteCount = 0;
 	while (byteCount < dataLen)
@@ -386,25 +380,25 @@ void BgpUpdateMessageLayer::parsePrefixAndIPData(uint8_t* dataPtr, size_t dataLe
 		size_t curByteCount = 1;
 		if (wr.prefix == 32)
 		{
-			uint8_t octets[4] = { dataPtr[1], dataPtr[2], dataPtr[3], dataPtr[4] };
+			uint8_t octets[4] = {dataPtr[1], dataPtr[2], dataPtr[3], dataPtr[4]};
 			wr.ipAddr = IPv4Address(octets);
 			curByteCount += 4;
 		}
 		else if (wr.prefix == 24)
 		{
-			uint8_t octets[4] = { dataPtr[1], dataPtr[2], dataPtr[3], 0 };
+			uint8_t octets[4] = {dataPtr[1], dataPtr[2], dataPtr[3], 0};
 			wr.ipAddr = IPv4Address(octets);
 			curByteCount += 3;
 		}
 		else if (wr.prefix == 16)
 		{
-			uint8_t octets[4] = { dataPtr[1], dataPtr[2], 0, 0 };
+			uint8_t octets[4] = {dataPtr[1], dataPtr[2], 0, 0};
 			wr.ipAddr = IPv4Address(octets);
 			curByteCount += 2;
 		}
 		else if (wr.prefix == 8)
 		{
-			uint8_t octets[4] = { dataPtr[1], 0, 0, 0 };
+			uint8_t octets[4] = {dataPtr[1], 0, 0, 0};
 			wr.ipAddr = IPv4Address(octets);
 			curByteCount += 1;
 		}
@@ -420,7 +414,8 @@ void BgpUpdateMessageLayer::parsePrefixAndIPData(uint8_t* dataPtr, size_t dataLe
 	}
 }
 
-size_t BgpUpdateMessageLayer::prefixAndIPDataToByteArray(const std::vector<prefix_and_ip>& prefixAndIpData, uint8_t* resultByteArr, size_t maxByteArrSize)
+size_t BgpUpdateMessageLayer::prefixAndIPDataToByteArray(const std::vector<prefix_and_ip> &prefixAndIpData,
+														 uint8_t *resultByteArr, size_t maxByteArrSize)
 {
 	if (resultByteArr == NULL || maxByteArrSize == 0)
 	{
@@ -429,12 +424,13 @@ size_t BgpUpdateMessageLayer::prefixAndIPDataToByteArray(const std::vector<prefi
 
 	size_t dataLen = 0;
 
-	for (std::vector<prefix_and_ip>::const_iterator iter = prefixAndIpData.begin(); iter != prefixAndIpData.end(); iter++)
+	for (std::vector<prefix_and_ip>::const_iterator iter = prefixAndIpData.begin(); iter != prefixAndIpData.end();
+		 iter++)
 	{
 		uint8_t curData[5];
 		curData[0] = iter->prefix;
 		size_t curDataSize = 1;
-		const uint8_t* octets = iter->ipAddr.toBytes();
+		const uint8_t *octets = iter->ipAddr.toBytes();
 		if (iter->prefix == 32)
 		{
 			curDataSize += 4;
@@ -481,7 +477,8 @@ size_t BgpUpdateMessageLayer::prefixAndIPDataToByteArray(const std::vector<prefi
 	return dataLen;
 }
 
-size_t BgpUpdateMessageLayer::pathAttributesToByteArray(const std::vector<path_attribute>& pathAttributes, uint8_t* resultByteArr, size_t maxByteArrSize)
+size_t BgpUpdateMessageLayer::pathAttributesToByteArray(const std::vector<path_attribute> &pathAttributes,
+														uint8_t *resultByteArr, size_t maxByteArrSize)
 {
 	if (resultByteArr == NULL || maxByteArrSize == 0)
 	{
@@ -490,7 +487,8 @@ size_t BgpUpdateMessageLayer::pathAttributesToByteArray(const std::vector<path_a
 
 	size_t dataLen = 0;
 
-	for (std::vector<path_attribute>::const_iterator iter = pathAttributes.begin(); iter != pathAttributes.end(); iter++)
+	for (std::vector<path_attribute>::const_iterator iter = pathAttributes.begin(); iter != pathAttributes.end();
+		 iter++)
 	{
 		if (iter->length > 32)
 		{
@@ -498,7 +496,7 @@ size_t BgpUpdateMessageLayer::pathAttributesToByteArray(const std::vector<path_a
 			break; // illegal value
 		}
 
-		size_t curDataSize = 3*sizeof(uint8_t) + (size_t)iter->length;
+		size_t curDataSize = 3 * sizeof(uint8_t) + (size_t)iter->length;
 
 		if (dataLen + curDataSize > maxByteArrSize)
 		{
@@ -510,7 +508,7 @@ size_t BgpUpdateMessageLayer::pathAttributesToByteArray(const std::vector<path_a
 		resultByteArr[2] = iter->length;
 		if (iter->length > 0)
 		{
-			memcpy(resultByteArr + 3*sizeof(uint8_t), iter->data, iter->length);
+			memcpy(resultByteArr + 3 * sizeof(uint8_t), iter->data, iter->length);
 		}
 
 		dataLen += curDataSize;
@@ -526,7 +524,7 @@ size_t BgpUpdateMessageLayer::getWithdrawnRoutesLength() const
 	size_t minLen = sizeof(bgp_common_header) + sizeof(uint16_t);
 	if (headerLen >= minLen)
 	{
-		uint16_t res = be16toh(*(uint16_t*)(m_Data + sizeof(bgp_common_header)));
+		uint16_t res = be16toh(*(uint16_t *)(m_Data + sizeof(bgp_common_header)));
 		if ((size_t)res > headerLen - minLen)
 		{
 			return headerLen - minLen;
@@ -538,7 +536,7 @@ size_t BgpUpdateMessageLayer::getWithdrawnRoutesLength() const
 	return 0;
 }
 
-void BgpUpdateMessageLayer::getWithdrawnRoutes(std::vector<prefix_and_ip>& withdrawnRoutes)
+void BgpUpdateMessageLayer::getWithdrawnRoutes(std::vector<prefix_and_ip> &withdrawnRoutes)
 {
 	size_t withdrawnRouteLen = getWithdrawnRoutesLength();
 	if (withdrawnRouteLen == 0)
@@ -546,18 +544,19 @@ void BgpUpdateMessageLayer::getWithdrawnRoutes(std::vector<prefix_and_ip>& withd
 		return;
 	}
 
-	uint8_t* dataPtr = m_Data + sizeof(bgp_common_header) + sizeof(uint16_t);
+	uint8_t *dataPtr = m_Data + sizeof(bgp_common_header) + sizeof(uint16_t);
 	parsePrefixAndIPData(dataPtr, withdrawnRouteLen, withdrawnRoutes);
 }
 
 size_t BgpUpdateMessageLayer::getPathAttributesLength() const
 {
 	size_t headerLen = getHeaderLen();
-	size_t minLen = sizeof(bgp_common_header) + 2*sizeof(uint16_t);
+	size_t minLen = sizeof(bgp_common_header) + 2 * sizeof(uint16_t);
 	if (headerLen >= minLen)
 	{
 		size_t withdrawnRouteLen = getWithdrawnRoutesLength();
-		uint16_t res = be16toh(*(uint16_t*)(m_Data + sizeof(bgp_common_header) + sizeof(uint16_t) + withdrawnRouteLen));
+		uint16_t res =
+			be16toh(*(uint16_t *)(m_Data + sizeof(bgp_common_header) + sizeof(uint16_t) + withdrawnRouteLen));
 		if ((size_t)res > headerLen - minLen - withdrawnRouteLen)
 		{
 			return headerLen - minLen - withdrawnRouteLen;
@@ -569,7 +568,7 @@ size_t BgpUpdateMessageLayer::getPathAttributesLength() const
 	return 0;
 }
 
-bool BgpUpdateMessageLayer::setWithdrawnRoutes(const std::vector<prefix_and_ip>& withdrawnRoutes)
+bool BgpUpdateMessageLayer::setWithdrawnRoutes(const std::vector<prefix_and_ip> &withdrawnRoutes)
 {
 	uint8_t newWithdrawnRoutesData[1500];
 	size_t newWithdrawnRoutesDataLen = prefixAndIPDataToByteArray(withdrawnRoutes, newWithdrawnRoutesData, 1500);
@@ -577,7 +576,8 @@ bool BgpUpdateMessageLayer::setWithdrawnRoutes(const std::vector<prefix_and_ip>&
 
 	if (newWithdrawnRoutesDataLen > curWithdrawnRoutesDataLen)
 	{
-		bool res = extendLayer(sizeof(bgp_common_header) + sizeof(uint16_t), newWithdrawnRoutesDataLen - curWithdrawnRoutesDataLen);
+		bool res = extendLayer(sizeof(bgp_common_header) + sizeof(uint16_t),
+							   newWithdrawnRoutesDataLen - curWithdrawnRoutesDataLen);
 		if (!res)
 		{
 			PCPP_LOG_ERROR("Couldn't extend BGP update layer to include the additional withdrawn routes");
@@ -586,7 +586,8 @@ bool BgpUpdateMessageLayer::setWithdrawnRoutes(const std::vector<prefix_and_ip>&
 	}
 	else if (newWithdrawnRoutesDataLen < curWithdrawnRoutesDataLen)
 	{
-		bool res = shortenLayer(sizeof(bgp_common_header) + sizeof(uint16_t), curWithdrawnRoutesDataLen - newWithdrawnRoutesDataLen);
+		bool res = shortenLayer(sizeof(bgp_common_header) + sizeof(uint16_t),
+								curWithdrawnRoutesDataLen - newWithdrawnRoutesDataLen);
 		if (!res)
 		{
 			PCPP_LOG_ERROR("Couldn't shorten BGP update layer to set the right size of the withdrawn routes data");
@@ -596,10 +597,12 @@ bool BgpUpdateMessageLayer::setWithdrawnRoutes(const std::vector<prefix_and_ip>&
 
 	if (newWithdrawnRoutesDataLen > 0)
 	{
-		memcpy(m_Data + sizeof(bgp_common_header) + sizeof(uint16_t), newWithdrawnRoutesData, newWithdrawnRoutesDataLen);
+		memcpy(m_Data + sizeof(bgp_common_header) + sizeof(uint16_t), newWithdrawnRoutesData,
+			   newWithdrawnRoutesDataLen);
 	}
 
-	getBasicHeader()->length = htobe16(be16toh(getBasicHeader()->length) + newWithdrawnRoutesDataLen - curWithdrawnRoutesDataLen);
+	getBasicHeader()->length =
+		htobe16(be16toh(getBasicHeader()->length) + newWithdrawnRoutesDataLen - curWithdrawnRoutesDataLen);
 
 	uint16_t newWithdrawnRoutesDataLenBE = htobe16(newWithdrawnRoutesDataLen);
 	memcpy(m_Data + sizeof(bgp_common_header), &newWithdrawnRoutesDataLenBE, sizeof(uint16_t));
@@ -612,7 +615,7 @@ bool BgpUpdateMessageLayer::clearWithdrawnRoutes()
 	return setWithdrawnRoutes(std::vector<prefix_and_ip>());
 }
 
-void BgpUpdateMessageLayer::getPathAttributes(std::vector<path_attribute>& pathAttributes)
+void BgpUpdateMessageLayer::getPathAttributes(std::vector<path_attribute> &pathAttributes)
 {
 	size_t pathAttrLen = getPathAttributesLength();
 	if (pathAttrLen == 0)
@@ -620,7 +623,7 @@ void BgpUpdateMessageLayer::getPathAttributes(std::vector<path_attribute>& pathA
 		return;
 	}
 
-	uint8_t* dataPtr = m_Data + sizeof(bgp_common_header) + 2*sizeof(uint16_t) + getWithdrawnRoutesLength();
+	uint8_t *dataPtr = m_Data + sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + getWithdrawnRoutesLength();
 	size_t byteCount = 0;
 	while (byteCount < pathAttrLen)
 	{
@@ -632,7 +635,7 @@ void BgpUpdateMessageLayer::getPathAttributes(std::vector<path_attribute>& pathA
 		if (pa.length > 0)
 		{
 			size_t dataLenToCopy = (pa.length <= 32 ? pa.length : 32);
-			memcpy(pa.data, dataPtr+3, dataLenToCopy);
+			memcpy(pa.data, dataPtr + 3, dataLenToCopy);
 		}
 
 		pathAttributes.push_back(pa);
@@ -641,7 +644,7 @@ void BgpUpdateMessageLayer::getPathAttributes(std::vector<path_attribute>& pathA
 	}
 }
 
-bool BgpUpdateMessageLayer::setPathAttributes(const std::vector<path_attribute>& pathAttributes)
+bool BgpUpdateMessageLayer::setPathAttributes(const std::vector<path_attribute> &pathAttributes)
 {
 	uint8_t newPathAttributesData[1500];
 	size_t newPathAttributesDataLen = pathAttributesToByteArray(pathAttributes, newPathAttributesData, 1500);
@@ -650,7 +653,8 @@ bool BgpUpdateMessageLayer::setPathAttributes(const std::vector<path_attribute>&
 
 	if (newPathAttributesDataLen > curPathAttributesDataLen)
 	{
-		bool res = extendLayer(sizeof(bgp_common_header) + 2*sizeof(uint16_t) + curWithdrawnRoutesDataLen, newPathAttributesDataLen - curPathAttributesDataLen);
+		bool res = extendLayer(sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + curWithdrawnRoutesDataLen,
+							   newPathAttributesDataLen - curPathAttributesDataLen);
 		if (!res)
 		{
 			PCPP_LOG_ERROR("Couldn't extend BGP update layer to include the additional path attributes");
@@ -659,7 +663,8 @@ bool BgpUpdateMessageLayer::setPathAttributes(const std::vector<path_attribute>&
 	}
 	else if (newPathAttributesDataLen < curPathAttributesDataLen)
 	{
-		bool res = shortenLayer(sizeof(bgp_common_header) + 2*sizeof(uint16_t) + curWithdrawnRoutesDataLen, curPathAttributesDataLen - newPathAttributesDataLen);
+		bool res = shortenLayer(sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + curWithdrawnRoutesDataLen,
+								curPathAttributesDataLen - newPathAttributesDataLen);
 		if (!res)
 		{
 			PCPP_LOG_ERROR("Couldn't shorten BGP update layer to set the right size of the path attributes data");
@@ -669,13 +674,16 @@ bool BgpUpdateMessageLayer::setPathAttributes(const std::vector<path_attribute>&
 
 	if (newPathAttributesDataLen > 0)
 	{
-		memcpy(m_Data + sizeof(bgp_common_header) + 2*sizeof(uint16_t) + curWithdrawnRoutesDataLen, newPathAttributesData, newPathAttributesDataLen);
+		memcpy(m_Data + sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + curWithdrawnRoutesDataLen,
+			   newPathAttributesData, newPathAttributesDataLen);
 	}
 
-	getBasicHeader()->length = htobe16(be16toh(getBasicHeader()->length) + newPathAttributesDataLen - curPathAttributesDataLen);
+	getBasicHeader()->length =
+		htobe16(be16toh(getBasicHeader()->length) + newPathAttributesDataLen - curPathAttributesDataLen);
 
 	uint16_t newWithdrawnRoutesDataLenBE = htobe16(newPathAttributesDataLen);
-	memcpy(m_Data + sizeof(bgp_common_header) + sizeof(uint16_t) + curWithdrawnRoutesDataLen, &newWithdrawnRoutesDataLenBE, sizeof(uint16_t));
+	memcpy(m_Data + sizeof(bgp_common_header) + sizeof(uint16_t) + curWithdrawnRoutesDataLen,
+		   &newWithdrawnRoutesDataLenBE, sizeof(uint16_t));
 
 	return true;
 }
@@ -688,7 +696,7 @@ bool BgpUpdateMessageLayer::clearPathAttributes()
 size_t BgpUpdateMessageLayer::getNetworkLayerReachabilityInfoLength() const
 {
 	size_t headerLen = getHeaderLen();
-	size_t minLen = sizeof(bgp_common_header) + 2*sizeof(uint16_t);
+	size_t minLen = sizeof(bgp_common_header) + 2 * sizeof(uint16_t);
 	if (headerLen >= minLen)
 	{
 		size_t withdrawnRouteLen = getWithdrawnRoutesLength();
@@ -705,7 +713,7 @@ size_t BgpUpdateMessageLayer::getNetworkLayerReachabilityInfoLength() const
 	return 0;
 }
 
-void BgpUpdateMessageLayer::getNetworkLayerReachabilityInfo(std::vector<prefix_and_ip>& nlri)
+void BgpUpdateMessageLayer::getNetworkLayerReachabilityInfo(std::vector<prefix_and_ip> &nlri)
 {
 	size_t nlriSize = getNetworkLayerReachabilityInfoLength();
 	if (nlriSize == 0)
@@ -713,11 +721,12 @@ void BgpUpdateMessageLayer::getNetworkLayerReachabilityInfo(std::vector<prefix_a
 		return;
 	}
 
-	uint8_t* dataPtr = m_Data + sizeof(bgp_common_header) + 2*sizeof(uint16_t) + getWithdrawnRoutesLength() + getPathAttributesLength();
+	uint8_t *dataPtr = m_Data + sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + getWithdrawnRoutesLength() +
+					   getPathAttributesLength();
 	parsePrefixAndIPData(dataPtr, nlriSize, nlri);
 }
 
-bool BgpUpdateMessageLayer::setNetworkLayerReachabilityInfo(const std::vector<prefix_and_ip>& nlri)
+bool BgpUpdateMessageLayer::setNetworkLayerReachabilityInfo(const std::vector<prefix_and_ip> &nlri)
 {
 	uint8_t newNlriData[1500];
 	size_t newNlriDataLen = prefixAndIPDataToByteArray(nlri, newNlriData, 1500);
@@ -727,7 +736,9 @@ bool BgpUpdateMessageLayer::setNetworkLayerReachabilityInfo(const std::vector<pr
 
 	if (newNlriDataLen > curNlriDataLen)
 	{
-		bool res = extendLayer(sizeof(bgp_common_header) + 2*sizeof(uint16_t) + curWithdrawnRoutesDataLen + curPathAttributesDataLen, newNlriDataLen - curNlriDataLen);
+		bool res = extendLayer(sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + curWithdrawnRoutesDataLen +
+								   curPathAttributesDataLen,
+							   newNlriDataLen - curNlriDataLen);
 		if (!res)
 		{
 			PCPP_LOG_ERROR("Couldn't extend BGP update layer to include the additional NLRI data");
@@ -736,7 +747,9 @@ bool BgpUpdateMessageLayer::setNetworkLayerReachabilityInfo(const std::vector<pr
 	}
 	else if (newNlriDataLen < curNlriDataLen)
 	{
-		bool res = shortenLayer(sizeof(bgp_common_header) + 2*sizeof(uint16_t) + curWithdrawnRoutesDataLen + curPathAttributesDataLen, curNlriDataLen - newNlriDataLen);
+		bool res = shortenLayer(sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + curWithdrawnRoutesDataLen +
+									curPathAttributesDataLen,
+								curNlriDataLen - newNlriDataLen);
 		if (!res)
 		{
 			PCPP_LOG_ERROR("Couldn't shorten BGP update layer to set the right size of the NLRI data");
@@ -746,7 +759,9 @@ bool BgpUpdateMessageLayer::setNetworkLayerReachabilityInfo(const std::vector<pr
 
 	if (newNlriDataLen > 0)
 	{
-		memcpy(m_Data + sizeof(bgp_common_header) + 2*sizeof(uint16_t) + curWithdrawnRoutesDataLen + curPathAttributesDataLen, newNlriData, newNlriDataLen);
+		memcpy(m_Data + sizeof(bgp_common_header) + 2 * sizeof(uint16_t) + curWithdrawnRoutesDataLen +
+				   curPathAttributesDataLen,
+			   newNlriData, newNlriDataLen);
 	}
 
 	getBasicHeader()->length = htobe16(be16toh(getBasicHeader()->length) + newNlriDataLen - curNlriDataLen);
@@ -759,9 +774,6 @@ bool BgpUpdateMessageLayer::clearNetworkLayerReachabilityInfo()
 	return setNetworkLayerReachabilityInfo(std::vector<prefix_and_ip>());
 }
 
-
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // BgpNotificationMessageLayer
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -771,19 +783,22 @@ BgpNotificationMessageLayer::BgpNotificationMessageLayer(uint8_t errorCode, uint
 	initMessageData(errorCode, errorSubCode, NULL, 0);
 }
 
-BgpNotificationMessageLayer::BgpNotificationMessageLayer(uint8_t errorCode, uint8_t errorSubCode, const uint8_t* notificationData, size_t notificationDataLen)
+BgpNotificationMessageLayer::BgpNotificationMessageLayer(uint8_t errorCode, uint8_t errorSubCode,
+														 const uint8_t *notificationData, size_t notificationDataLen)
 {
 	initMessageData(errorCode, errorSubCode, notificationData, notificationDataLen);
 }
 
-BgpNotificationMessageLayer::BgpNotificationMessageLayer(uint8_t errorCode, uint8_t errorSubCode, const std::string& notificationData)
+BgpNotificationMessageLayer::BgpNotificationMessageLayer(uint8_t errorCode, uint8_t errorSubCode,
+														 const std::string &notificationData)
 {
 	uint8_t notificationDataByteArr[1500];
 	size_t notificationDataLen = hexStringToByteArray(notificationData, notificationDataByteArr, 1500);
 	initMessageData(errorCode, errorSubCode, notificationDataByteArr, notificationDataLen);
 }
 
-void BgpNotificationMessageLayer::initMessageData(uint8_t errorCode, uint8_t errorSubCode, const uint8_t* notificationData, size_t notificationDataLen)
+void BgpNotificationMessageLayer::initMessageData(uint8_t errorCode, uint8_t errorSubCode,
+												  const uint8_t *notificationData, size_t notificationDataLen)
 {
 	size_t headerLen = sizeof(bgp_notification_message);
 	if (notificationData != NULL && notificationDataLen > 0)
@@ -794,7 +809,7 @@ void BgpNotificationMessageLayer::initMessageData(uint8_t errorCode, uint8_t err
 	m_Data = new uint8_t[headerLen];
 	memset(m_Data, 0, headerLen);
 	setBgpFields(headerLen);
-	bgp_notification_message* msgHdr = getNotificationMsgHeader();
+	bgp_notification_message *msgHdr = getNotificationMsgHeader();
 	msgHdr->errorCode = errorCode;
 	msgHdr->errorSubCode = errorSubCode;
 	memcpy(m_Data + sizeof(bgp_notification_message), notificationData, notificationDataLen);
@@ -812,7 +827,7 @@ size_t BgpNotificationMessageLayer::getNotificationDataLen() const
 	return 0;
 }
 
-uint8_t* BgpNotificationMessageLayer::getNotificationData() const
+uint8_t *BgpNotificationMessageLayer::getNotificationData() const
 {
 	if (getNotificationDataLen() > 0)
 	{
@@ -824,7 +839,7 @@ uint8_t* BgpNotificationMessageLayer::getNotificationData() const
 
 std::string BgpNotificationMessageLayer::getNotificationDataAsHexString() const
 {
-	uint8_t* notificationData = getNotificationData();
+	uint8_t *notificationData = getNotificationData();
 	if (notificationData == NULL)
 	{
 		return "";
@@ -833,7 +848,7 @@ std::string BgpNotificationMessageLayer::getNotificationDataAsHexString() const
 	return byteArrayToHexString(notificationData, getNotificationDataLen());
 }
 
-bool BgpNotificationMessageLayer::setNotificationData(const uint8_t* newNotificationData, size_t newNotificationDataLen)
+bool BgpNotificationMessageLayer::setNotificationData(const uint8_t *newNotificationData, size_t newNotificationDataLen)
 {
 	if (newNotificationData == NULL)
 	{
@@ -871,7 +886,7 @@ bool BgpNotificationMessageLayer::setNotificationData(const uint8_t* newNotifica
 	return true;
 }
 
-bool BgpNotificationMessageLayer::setNotificationData(const std::string& newNotificationDataAsHexString)
+bool BgpNotificationMessageLayer::setNotificationData(const std::string &newNotificationDataAsHexString)
 {
 	if (newNotificationDataAsHexString.empty())
 	{
@@ -890,8 +905,6 @@ bool BgpNotificationMessageLayer::setNotificationData(const std::string& newNoti
 	return setNotificationData(newNotificationData, newNotificationDataLen);
 }
 
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 // BgpKeepaliveMessageLayer
 // ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -906,8 +919,6 @@ BgpKeepaliveMessageLayer::BgpKeepaliveMessageLayer() : BgpLayer()
 	m_Protocol = BGP;
 }
 
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // BgpRouteRefreshMessageLayer
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -919,10 +930,10 @@ BgpRouteRefreshMessageLayer::BgpRouteRefreshMessageLayer(uint16_t afi, uint8_t s
 	m_Data = new uint8_t[headerLen];
 	memset(m_Data, 0, headerLen);
 	setBgpFields(headerLen);
-	bgp_route_refresh_message* msgHdr = getRouteRefreshHeader();
+	bgp_route_refresh_message *msgHdr = getRouteRefreshHeader();
 	msgHdr->afi = htobe16(afi);
 	msgHdr->safi = safi;
 	m_Protocol = BGP;
 }
 
-}
+} // namespace pcpp

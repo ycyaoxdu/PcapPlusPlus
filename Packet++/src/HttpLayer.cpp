@@ -1,21 +1,19 @@
 #define LOG_MODULE PacketLogModuleHttpLayer
 
-#include "Logger.h"
-#include "GeneralUtils.h"
 #include "HttpLayer.h"
-#include <string.h>
+#include "GeneralUtils.h"
+#include "Logger.h"
 #include <algorithm>
-#include <stdlib.h>
 #include <exception>
+#include <stdlib.h>
+#include <string.h>
 
 namespace pcpp
 {
 
-
 // -------- Class HttpMessage -----------------
 
-
-HeaderField* HttpMessage::addField(const std::string& fieldName, const std::string& fieldValue)
+HeaderField *HttpMessage::addField(const std::string &fieldName, const std::string &fieldValue)
 {
 	if (getFieldByName(fieldName) != NULL)
 	{
@@ -26,7 +24,7 @@ HeaderField* HttpMessage::addField(const std::string& fieldName, const std::stri
 	return TextBasedProtocolMessage::addField(fieldName, fieldValue);
 }
 
-HeaderField* HttpMessage::addField(const HeaderField& newField)
+HeaderField *HttpMessage::addField(const HeaderField &newField)
 {
 	if (getFieldByName(newField.getFieldName()) != NULL)
 	{
@@ -37,7 +35,8 @@ HeaderField* HttpMessage::addField(const HeaderField& newField)
 	return TextBasedProtocolMessage::addField(newField);
 }
 
-HeaderField* HttpMessage::insertField(HeaderField* prevField, const std::string& fieldName, const std::string& fieldValue)
+HeaderField *HttpMessage::insertField(HeaderField *prevField, const std::string &fieldName,
+									  const std::string &fieldValue)
 {
 	if (getFieldByName(fieldName) != NULL)
 	{
@@ -48,7 +47,7 @@ HeaderField* HttpMessage::insertField(HeaderField* prevField, const std::string&
 	return TextBasedProtocolMessage::insertField(prevField, fieldName, fieldValue);
 }
 
-HeaderField* HttpMessage::insertField(HeaderField* prevField, const HeaderField& newField)
+HeaderField *HttpMessage::insertField(HeaderField *prevField, const HeaderField &newField)
 {
 	if (getFieldByName(newField.getFieldName()) != NULL)
 	{
@@ -59,11 +58,10 @@ HeaderField* HttpMessage::insertField(HeaderField* prevField, const HeaderField&
 	return TextBasedProtocolMessage::insertField(prevField, newField);
 }
 
-
-
 // -------- Class HttpRequestLayer -----------------
 
-HttpRequestLayer::HttpRequestLayer(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet) : HttpMessage(data, dataLen, prevLayer, packet)
+HttpRequestLayer::HttpRequestLayer(uint8_t *data, size_t dataLen, Layer *prevLayer, Packet *packet)
+	: HttpMessage(data, dataLen, prevLayer, packet)
 {
 	m_Protocol = HTTPRequest;
 	m_FirstLine = new HttpRequestFirstLine(this);
@@ -78,12 +76,12 @@ HttpRequestLayer::HttpRequestLayer(HttpMethod method, std::string uri, HttpVersi
 	m_FieldsOffset = m_FirstLine->getSize();
 }
 
-HttpRequestLayer::HttpRequestLayer(const HttpRequestLayer& other) : HttpMessage(other)
+HttpRequestLayer::HttpRequestLayer(const HttpRequestLayer &other) : HttpMessage(other)
 {
 	m_FirstLine = new HttpRequestFirstLine(this);
 }
 
-HttpRequestLayer& HttpRequestLayer::operator=(const HttpRequestLayer& other)
+HttpRequestLayer &HttpRequestLayer::operator=(const HttpRequestLayer &other)
 {
 	HttpMessage::operator=(other);
 
@@ -95,10 +93,9 @@ HttpRequestLayer& HttpRequestLayer::operator=(const HttpRequestLayer& other)
 	return *this;
 }
 
-
 std::string HttpRequestLayer::getUrl() const
 {
-	HeaderField* hostField = getFieldByName(PCPP_HTTP_HOST_FIELD);
+	HeaderField *hostField = getFieldByName(PCPP_HTTP_HOST_FIELD);
 	if (hostField == NULL)
 		return m_FirstLine->getUri();
 
@@ -112,57 +109,46 @@ HttpRequestLayer::~HttpRequestLayer()
 
 void HttpRequestLayer::ToStructuredOutput(std::ostream &os) const
 {
-    os << "Http Request:" << '\n';
+	os << "PROTOCOLTYPE: HTTP REQUEST" << '\n';
 
 	std::string first_line;
 	static const int maxLengthToPrint = 120;
 	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
 	if (size <= 0)
 	{
-		os << "\t"
-	       << "Corrupt Data" << '\n';
+		os << "Corrupt Data" << '\n';
 	}
 	else
 	{
-        if (size <= maxLengthToPrint)
-	    {
-		    char* firstLine = new char[size+1];
-		    strncpy(firstLine, (char*)m_Data, size);
-		    firstLine[size] = 0;
-		    first_line = std::string(firstLine);
-		    delete[] firstLine;
-	    }
+		if (size <= maxLengthToPrint)
+		{
+			char *firstLine = new char[size + 1];
+			strncpy(firstLine, (char *)m_Data, size);
+			firstLine[size] = 0;
+			first_line = std::string(firstLine);
+			delete[] firstLine;
+		}
 		else
 		{
-			char firstLine[maxLengthToPrint+1];
-		    strncpy(firstLine, (char*)m_Data, maxLengthToPrint-3);
-		    firstLine[maxLengthToPrint-3] = '.';
-		    firstLine[maxLengthToPrint-2] = '.';
-		    firstLine[maxLengthToPrint-1] = '.';
-		    firstLine[maxLengthToPrint] = 0;
-		    first_line = std::string(firstLine);
+			char firstLine[maxLengthToPrint + 1];
+			strncpy(firstLine, (char *)m_Data, maxLengthToPrint - 3);
+			firstLine[maxLengthToPrint - 3] = '.';
+			firstLine[maxLengthToPrint - 2] = '.';
+			firstLine[maxLengthToPrint - 1] = '.';
+			firstLine[maxLengthToPrint] = 0;
+			first_line = std::string(firstLine);
 		}
 
-		os << "\t"
-	       << "First Line: " << first_line << '\n';
-		os << "\t"
-	       << "Host: " << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "User-Agent: " << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Accept: " << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Accept-Encoding: " << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Accept-Language: " << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Cookie: " << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Referer: " << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
-		os << "\t"
-	       << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+		os << "First Line: " << first_line << '\n';
+		os << "Host: " << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << '\n';
+		os << "User-Agent: " << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << '\n';
+		os << "Accept: " << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue() << '\n';
+		os << "Accept-Encoding: " << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue() << '\n';
+		os << "Accept-Language: " << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue() << '\n';
+		os << "Cookie: " << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << '\n';
+		os << "Referer: " << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue() << '\n';
+		os << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
+		os << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
 	}
 }
 
@@ -203,36 +189,16 @@ std::string HttpRequestLayer::toString() const
 	return stream.str();
 }
 
-
-
-
-
-
-
 // -------- Class HttpRequestFirstLine -----------------
 
+const std::string MethodEnumToString[9] = {"GET",	"HEAD",	   "POST",	  "PUT",  "DELETE",
+										   "TRACE", "OPTIONS", "CONNECT", "PATCH"};
 
-const std::string MethodEnumToString[9] = {
-		"GET",
-		"HEAD",
-		"POST",
-		"PUT",
-		"DELETE",
-		"TRACE",
-		"OPTIONS",
-		"CONNECT",
-		"PATCH"
-};
+const std::string VersionEnumToString[3] = {"0.9", "1.0", "1.1"};
 
-const std::string VersionEnumToString[3] = {
-		"0.9",
-		"1.0",
-		"1.1"
-};
-
-HttpRequestFirstLine::HttpRequestFirstLine(HttpRequestLayer* httpRequest) : m_HttpRequest(httpRequest)
+HttpRequestFirstLine::HttpRequestFirstLine(HttpRequestLayer *httpRequest) : m_HttpRequest(httpRequest)
 {
-	m_Method = parseMethod((char*)m_HttpRequest->m_Data, m_HttpRequest->getDataLen());
+	m_Method = parseMethod((char *)m_HttpRequest->m_Data, m_HttpRequest->getDataLen());
 	if (m_Method == HttpRequestLayer::HttpMethodUnknown)
 	{
 		m_UriOffset = -1;
@@ -247,17 +213,18 @@ HttpRequestFirstLine::HttpRequestFirstLine(HttpRequestLayer* httpRequest) : m_Ht
 		m_UriOffset = MethodEnumToString[m_Method].length() + 1;
 
 	parseVersion();
-	if(m_VersionOffset < 0)
+	if (m_VersionOffset < 0)
 	{
 		m_IsComplete = false;
 		m_FirstLineEndOffset = m_HttpRequest->getDataLen();
 		return;
 	}
 
-	char* endOfFirstLine;
-	if ((endOfFirstLine = (char*)memchr((char*)(m_HttpRequest->m_Data + m_VersionOffset), '\n', m_HttpRequest->m_DataLen-(size_t)m_VersionOffset)) != NULL)
+	char *endOfFirstLine;
+	if ((endOfFirstLine = (char *)memchr((char *)(m_HttpRequest->m_Data + m_VersionOffset), '\n',
+										 m_HttpRequest->m_DataLen - (size_t)m_VersionOffset)) != NULL)
 	{
-		m_FirstLineEndOffset = endOfFirstLine - (char*)m_HttpRequest->m_Data + 1;
+		m_FirstLineEndOffset = endOfFirstLine - (char *)m_HttpRequest->m_Data + 1;
 		m_IsComplete = true;
 	}
 	else
@@ -268,16 +235,16 @@ HttpRequestFirstLine::HttpRequestFirstLine(HttpRequestLayer* httpRequest) : m_Ht
 
 	if (Logger::getInstance().isDebugEnabled(PacketLogModuleHttpLayer))
 	{
-		std::string method = m_Method == HttpRequestLayer::HttpMethodUnknown? "Unknown" : MethodEnumToString[m_Method];
-		PCPP_LOG_DEBUG(
-			"Method='" << method << "'; "
-			<< "HTTP version='" << VersionEnumToString[m_Version] << "'; "
-			<< "URI='" << getUri() << "'");
+		std::string method = m_Method == HttpRequestLayer::HttpMethodUnknown ? "Unknown" : MethodEnumToString[m_Method];
+		PCPP_LOG_DEBUG("Method='" << method << "'; "
+								  << "HTTP version='" << VersionEnumToString[m_Version] << "'; "
+								  << "URI='" << getUri() << "'");
 	}
 }
 
-HttpRequestFirstLine::HttpRequestFirstLine(HttpRequestLayer* httpRequest, HttpRequestLayer::HttpMethod method, HttpVersion version, std::string uri)
-try		// throw(HttpRequestFirstLineException)
+HttpRequestFirstLine::HttpRequestFirstLine(HttpRequestLayer *httpRequest, HttpRequestLayer::HttpMethod method,
+										   HttpVersion version, std::string uri)
+try // throw(HttpRequestFirstLineException)
 {
 	if (method == HttpRequestLayer::HttpMethodUnknown)
 	{
@@ -296,9 +263,10 @@ try		// throw(HttpRequestFirstLineException)
 	m_Method = method;
 	m_Version = version;
 
-	std::string firstLine = MethodEnumToString[m_Method] + " " + uri + " "  + "HTTP/" + VersionEnumToString[m_Version] + "\r\n";
+	std::string firstLine =
+		MethodEnumToString[m_Method] + " " + uri + " " + "HTTP/" + VersionEnumToString[m_Version] + "\r\n";
 
-	m_UriOffset =  MethodEnumToString[m_Method].length() + 1;
+	m_UriOffset = MethodEnumToString[m_Method].length() + 1;
 	m_FirstLineEndOffset = firstLine.length();
 	m_VersionOffset = m_UriOffset + uri.length() + 6;
 
@@ -308,16 +276,16 @@ try		// throw(HttpRequestFirstLineException)
 
 	m_IsComplete = true;
 }
-catch(const HttpRequestFirstLineException&)
+catch (const HttpRequestFirstLineException &)
 {
 	throw;
 }
-catch(...)
+catch (...)
 {
 	std::terminate();
 }
 
-HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char* data, size_t dataLen)
+HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char *data, size_t dataLen)
 {
 	if (dataLen < 4)
 	{
@@ -336,7 +304,8 @@ HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char* data, size_
 	case 'D':
 		if (dataLen < 7)
 			return HttpRequestLayer::HttpMethodUnknown;
-		else if (data[1] == 'E' && data[2] == 'L' && data[3] == 'E' && data[4] == 'T' && data[5] == 'E' && data[6] == ' ')
+		else if (data[1] == 'E' && data[2] == 'L' && data[3] == 'E' && data[4] == 'T' && data[5] == 'E' &&
+				 data[6] == ' ')
 			return HttpRequestLayer::HttpDELETE;
 		else
 			return HttpRequestLayer::HttpMethodUnknown;
@@ -345,7 +314,8 @@ HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char* data, size_
 	case 'C':
 		if (dataLen < 8)
 			return HttpRequestLayer::HttpMethodUnknown;
-		else if (data[1] == 'O' && data[2] == 'N' && data[3] == 'N' && data[4] == 'E' && data[5] == 'C' && data[6] == 'T' && data[7] == ' ')
+		else if (data[1] == 'O' && data[2] == 'N' && data[3] == 'N' && data[4] == 'E' && data[5] == 'C' &&
+				 data[6] == 'T' && data[7] == ' ')
 			return HttpRequestLayer::HttpCONNECT;
 		else
 			return HttpRequestLayer::HttpMethodUnknown;
@@ -360,7 +330,6 @@ HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char* data, size_
 			return HttpRequestLayer::HttpMethodUnknown;
 		break;
 
-
 	case 'H':
 		if (dataLen < 5)
 			return HttpRequestLayer::HttpMethodUnknown;
@@ -373,7 +342,8 @@ HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char* data, size_
 	case 'O':
 		if (dataLen < 8)
 			return HttpRequestLayer::HttpMethodUnknown;
-		else if (data[1] == 'P' && data[2] == 'T' && data[3] == 'I' && data[4] == 'O' && data[5] == 'N' && data[6] == 'S' && data[7] == ' ')
+		else if (data[1] == 'P' && data[2] == 'T' && data[3] == 'I' && data[4] == 'O' && data[5] == 'N' &&
+				 data[6] == 'S' && data[7] == ' ')
 			return HttpRequestLayer::HttpOPTIONS;
 		else
 			return HttpRequestLayer::HttpMethodUnknown;
@@ -419,8 +389,8 @@ HttpRequestLayer::HttpMethod HttpRequestFirstLine::parseMethod(char* data, size_
 
 void HttpRequestFirstLine::parseVersion()
 {
-	char* data = (char*)(m_HttpRequest->m_Data + m_UriOffset);
-	char* verPos = cross_platform_memmem(data, m_HttpRequest->getDataLen() - m_UriOffset, " HTTP/", 6);
+	char *data = (char *)(m_HttpRequest->m_Data + m_UriOffset);
+	char *verPos = cross_platform_memmem(data, m_HttpRequest->getDataLen() - m_UriOffset, " HTTP/", 6);
 	if (verPos == NULL)
 	{
 		m_Version = HttpVersionUnknown;
@@ -429,14 +399,14 @@ void HttpRequestFirstLine::parseVersion()
 	}
 
 	// verify packet doesn't end before the version, meaning still left place for " HTTP/x.y" (9 chars)
-	if ((uint16_t)(verPos + 9 - (char*)m_HttpRequest->m_Data) > m_HttpRequest->getDataLen())
+	if ((uint16_t)(verPos + 9 - (char *)m_HttpRequest->m_Data) > m_HttpRequest->getDataLen())
 	{
 		m_Version = HttpVersionUnknown;
 		m_VersionOffset = -1;
 		return;
 	}
 
-	//skip " HTTP/" (6 chars)
+	// skip " HTTP/" (6 chars)
 	verPos += 6;
 	switch (verPos[0])
 	{
@@ -460,7 +430,7 @@ void HttpRequestFirstLine::parseVersion()
 		m_Version = HttpVersionUnknown;
 	}
 
-	m_VersionOffset = verPos - (char*)m_HttpRequest->m_Data;
+	m_VersionOffset = verPos - (char *)m_HttpRequest->m_Data;
 }
 
 bool HttpRequestFirstLine::setMethod(HttpRequestLayer::HttpMethod newMethod)
@@ -471,7 +441,7 @@ bool HttpRequestFirstLine::setMethod(HttpRequestLayer::HttpMethod newMethod)
 		return false;
 	}
 
-	//extend or shorten layer
+	// extend or shorten layer
 	int lengthDifference = MethodEnumToString[newMethod].length() - MethodEnumToString[m_Method].length();
 	if (lengthDifference > 0)
 	{
@@ -483,11 +453,10 @@ bool HttpRequestFirstLine::setMethod(HttpRequestLayer::HttpMethod newMethod)
 	}
 	else if (lengthDifference < 0)
 	{
-		if (!m_HttpRequest->shortenLayer(0, 0-lengthDifference))
+		if (!m_HttpRequest->shortenLayer(0, 0 - lengthDifference))
 		{
 			PCPP_LOG_ERROR("Cannot change layer size");
 			return false;
-
 		}
 	}
 
@@ -507,9 +476,9 @@ std::string HttpRequestFirstLine::getUri() const
 {
 	std::string result;
 	if (m_UriOffset != -1 && m_VersionOffset != -1)
-		result.assign((const char*)m_HttpRequest->m_Data + m_UriOffset, m_VersionOffset - 6 - m_UriOffset);
+		result.assign((const char *)m_HttpRequest->m_Data + m_UriOffset, m_VersionOffset - 6 - m_UriOffset);
 
-	//else first line is illegal, return empty string
+	// else first line is illegal, return empty string
 
 	return result;
 }
@@ -520,7 +489,7 @@ bool HttpRequestFirstLine::setUri(std::string newUri)
 	if (newUri.compare(0, 1, "/") != 0)
 		newUri = "/" + newUri;
 
-	//extend or shorten layer
+	// extend or shorten layer
 	std::string currentUri = getUri();
 	int lengthDifference = newUri.length() - currentUri.length();
 	if (lengthDifference > 0)
@@ -533,7 +502,7 @@ bool HttpRequestFirstLine::setUri(std::string newUri)
 	}
 	else if (lengthDifference < 0)
 	{
-		if (!m_HttpRequest->shortenLayer(m_UriOffset, 0-lengthDifference))
+		if (!m_HttpRequest->shortenLayer(m_UriOffset, 0 - lengthDifference))
 		{
 			PCPP_LOG_ERROR("Cannot change layer size");
 			return false;
@@ -558,191 +527,103 @@ void HttpRequestFirstLine::setVersion(HttpVersion newVersion)
 	if (newVersion == HttpVersionUnknown)
 		return;
 
-	char* verPos = (char*)(m_HttpRequest->m_Data + m_VersionOffset);
+	char *verPos = (char *)(m_HttpRequest->m_Data + m_VersionOffset);
 	memcpy(verPos, VersionEnumToString[newVersion].c_str(), 3);
 
 	m_Version = newVersion;
 }
 
-
-
-
-
-
 // -------- Class HttpResponseLayer -----------------
 
+const std::string StatusCodeEnumToString[80] = {"Continue",
+												"Switching Protocols",
+												"Processing",
+												"OK",
+												"Created",
+												"Accepted",
+												"Non-Authoritative Information",
+												"No Content",
+												"Reset Content",
+												"Partial Content",
+												"Multi-Status",
+												"Already Reported",
+												"IM Used",
+												"Multiple Choices",
+												"Moved Permanently",
+												"Found",
+												"See Other",
+												"Not Modified",
+												"Use Proxy",
+												"Switch Proxy",
+												"Temporary Redirect",
+												"Permanent Redirect",
+												"Bad Request",
+												"Unauthorized",
+												"Payment Required",
+												"Forbidden",
+												"Not Found",
+												"Method Not Allowed",
+												"Not Acceptable",
+												"Proxy Authentication Required",
+												"Request Timeout",
+												"Conflict",
+												"Gone",
+												"Length Required",
+												"Precondition Failed",
+												"Request Entity Too Large",
+												"Request-URI Too Long",
+												"Unsupported Media Type",
+												"Requested Range Not Satisfiable",
+												"Expectation Failed",
+												"I'm a teapot",
+												"Authentication Timeout",
+												"Method Failure",
+												"Unprocessable Entity",
+												"Locked",
+												"Failed Dependency",
+												"Upgrade Required",
+												"Precondition Required",
+												"Too Many Requests",
+												"Request Header Fields Too Large",
+												"Login Timeout",
+												"No Response",
+												"Retry With",
+												"Blocked by Windows Parental Controls",
+												"Unavailable For Legal Reasons",
+												"Request Header Too Large",
+												"Cert Error",
+												"No Cert",
+												"HTTP to HTTPS",
+												"Token expired/invalid",
+												"Client Closed Request",
+												"Internal Server Error",
+												"Not Implemented",
+												"Bad Gateway",
+												"Service Unavailable",
+												"Gateway Timeout",
+												"HTTP Version Not Supported",
+												"Variant Also Negotiates",
+												"Insufficient Storage",
+												"Loop Detected",
+												"Bandwidth Limit Exceeded",
+												"Not Extended",
+												"Network Authentication Required",
+												"Origin Error",
+												"Web server is down",
+												"Connection timed out",
+												"Proxy Declined Request",
+												"A timeout occurred",
+												"Network read timeout error",
+												"Network connect timeout error"};
 
+const int StatusCodeEnumToInt[80] = {100, 101, 102, 200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302,
+									 303, 304, 305, 306, 307, 308, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409,
+									 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 422, 423, 424, 426, 428,
+									 429, 431, 440, 444, 449, 450, 451, 494, 495, 496, 497, 498, 499, 500, 501, 502,
+									 503, 504, 505, 506, 507, 508, 509, 510, 511, 520, 521, 522, 523, 524, 598, 599};
 
-const std::string StatusCodeEnumToString[80] = {
-		"Continue",
-		"Switching Protocols",
-		"Processing",
-		"OK",
-		"Created",
-		"Accepted",
-		"Non-Authoritative Information",
-		"No Content",
-		"Reset Content",
-		"Partial Content",
-		"Multi-Status",
-		"Already Reported",
-		"IM Used",
-		"Multiple Choices",
-		"Moved Permanently",
-		"Found",
-		"See Other",
-		"Not Modified",
-		"Use Proxy",
-		"Switch Proxy",
-		"Temporary Redirect",
-		"Permanent Redirect",
-		"Bad Request",
-		"Unauthorized",
-		"Payment Required",
-		"Forbidden",
-		"Not Found",
-		"Method Not Allowed",
-		"Not Acceptable",
-		"Proxy Authentication Required",
-		"Request Timeout",
-		"Conflict",
-		"Gone",
-		"Length Required",
-		"Precondition Failed",
-		"Request Entity Too Large",
-		"Request-URI Too Long",
-		"Unsupported Media Type",
-		"Requested Range Not Satisfiable",
-		"Expectation Failed",
-		"I'm a teapot",
-		"Authentication Timeout",
-		"Method Failure",
-		"Unprocessable Entity",
-		"Locked",
-		"Failed Dependency",
-		"Upgrade Required",
-		"Precondition Required",
-		"Too Many Requests",
-		"Request Header Fields Too Large",
-		"Login Timeout",
-		"No Response",
-		"Retry With",
-		"Blocked by Windows Parental Controls",
-		"Unavailable For Legal Reasons",
-		"Request Header Too Large",
-		"Cert Error",
-		"No Cert",
-		"HTTP to HTTPS",
-		"Token expired/invalid",
-		"Client Closed Request",
-		"Internal Server Error",
-		"Not Implemented",
-		"Bad Gateway",
-		"Service Unavailable",
-		"Gateway Timeout",
-		"HTTP Version Not Supported",
-		"Variant Also Negotiates",
-		"Insufficient Storage",
-		"Loop Detected",
-		"Bandwidth Limit Exceeded",
-		"Not Extended",
-		"Network Authentication Required",
-		"Origin Error",
-		"Web server is down",
-		"Connection timed out",
-		"Proxy Declined Request",
-		"A timeout occurred",
-		"Network read timeout error",
-		"Network connect timeout error"
-};
-
-
-const int StatusCodeEnumToInt[80] = {
-		100,
-		101,
-		102,
-		200,
-		201,
-		202,
-		203,
-		204,
-		205,
-		206,
-		207,
-		208,
-		226,
-		300,
-		301,
-		302,
-		303,
-		304,
-		305,
-		306,
-		307,
-		308,
-		400,
-		401,
-		402,
-		403,
-		404,
-		405,
-		406,
-		407,
-		408,
-		409,
-		410,
-		411,
-		412,
-		413,
-		414,
-		415,
-		416,
-		417,
-		418,
-		419,
-		420,
-		422,
-		423,
-		424,
-		426,
-		428,
-		429,
-		431,
-		440,
-		444,
-		449,
-		450,
-		451,
-		494,
-		495,
-		496,
-		497,
-		498,
-		499,
-		500,
-		501,
-		502,
-		503,
-		504,
-		505,
-		506,
-		507,
-		508,
-		509,
-		510,
-		511,
-		520,
-		521,
-		522,
-		523,
-		524,
-		598,
-		599
-};
-
-
-
-HttpResponseLayer::HttpResponseLayer(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)  : HttpMessage(data, dataLen, prevLayer, packet)
+HttpResponseLayer::HttpResponseLayer(uint8_t *data, size_t dataLen, Layer *prevLayer, Packet *packet)
+	: HttpMessage(data, dataLen, prevLayer, packet)
 {
 	m_Protocol = HTTPResponse;
 	m_FirstLine = new HttpResponseFirstLine(this);
@@ -750,7 +631,8 @@ HttpResponseLayer::HttpResponseLayer(uint8_t* data, size_t dataLen, Layer* prevL
 	parseFields();
 }
 
-HttpResponseLayer::HttpResponseLayer(HttpVersion version, HttpResponseLayer::HttpResponseStatusCode statusCode, std::string statusCodeString)
+HttpResponseLayer::HttpResponseLayer(HttpVersion version, HttpResponseLayer::HttpResponseStatusCode statusCode,
+									 std::string statusCodeString)
 {
 	m_Protocol = HTTPResponse;
 	m_FirstLine = new HttpResponseFirstLine(this, version, statusCode, statusCodeString);
@@ -762,13 +644,12 @@ HttpResponseLayer::~HttpResponseLayer()
 	delete m_FirstLine;
 }
 
-
-HttpResponseLayer::HttpResponseLayer(const HttpResponseLayer& other) : HttpMessage(other)
+HttpResponseLayer::HttpResponseLayer(const HttpResponseLayer &other) : HttpMessage(other)
 {
 	m_FirstLine = new HttpResponseFirstLine(this);
 }
 
-HttpResponseLayer& HttpResponseLayer::operator=(const HttpResponseLayer& other)
+HttpResponseLayer &HttpResponseLayer::operator=(const HttpResponseLayer &other)
 {
 	HttpMessage::operator=(other);
 
@@ -780,16 +661,15 @@ HttpResponseLayer& HttpResponseLayer::operator=(const HttpResponseLayer& other)
 	return *this;
 }
 
-
-HeaderField* HttpResponseLayer::setContentLength(int contentLength, const std::string prevFieldName)
+HeaderField *HttpResponseLayer::setContentLength(int contentLength, const std::string prevFieldName)
 {
 	std::ostringstream contentLengthAsString;
 	contentLengthAsString << contentLength;
 	std::string contentLengthFieldName(PCPP_HTTP_CONTENT_LENGTH_FIELD);
-	HeaderField* contentLengthField = getFieldByName(contentLengthFieldName);
+	HeaderField *contentLengthField = getFieldByName(contentLengthFieldName);
 	if (contentLengthField == NULL)
 	{
-		HeaderField* prevField = getFieldByName(prevFieldName);
+		HeaderField *prevField = getFieldByName(prevFieldName);
 		contentLengthField = insertField(prevField, PCPP_HTTP_CONTENT_LENGTH_FIELD, contentLengthAsString.str());
 	}
 	else
@@ -801,8 +681,9 @@ HeaderField* HttpResponseLayer::setContentLength(int contentLength, const std::s
 int HttpResponseLayer::getContentLength() const
 {
 	std::string contentLengthFieldName(PCPP_HTTP_CONTENT_LENGTH_FIELD);
-	std::transform(contentLengthFieldName.begin(), contentLengthFieldName.end(), contentLengthFieldName.begin(), ::tolower);
-	HeaderField* contentLengthField = getFieldByName(contentLengthFieldName);
+	std::transform(contentLengthFieldName.begin(), contentLengthFieldName.end(), contentLengthFieldName.begin(),
+				   ::tolower);
+	HeaderField *contentLengthField = getFieldByName(contentLengthFieldName);
 	if (contentLengthField != NULL)
 		return atoi(contentLengthField->getFieldValue().c_str());
 	return 0;
@@ -810,42 +691,38 @@ int HttpResponseLayer::getContentLength() const
 
 void HttpResponseLayer::ToStructuredOutput(std::ostream &os) const
 {
-	os << "Http Response:" << '\n';
+	os << "PROTOCOLTYPE: HTTP RESPONSE" << '\n';
 
-   	std::string first_line;
+	std::string first_line;
 	static const int maxLengthToPrint = 120;
 	int size = m_FirstLine->getSize() - 2; // the -2 is to remove \r\n at the end of the first line
 	if (size <= maxLengthToPrint)
 	{
-		char* firstLine = new char[size+1];
-		strncpy(firstLine, (char*)m_Data, size);
+		char *firstLine = new char[size + 1];
+		strncpy(firstLine, (char *)m_Data, size);
 		firstLine[size] = 0;
 		first_line = std::string(firstLine);
 		delete[] firstLine;
 	}
 	else
 	{
-		char firstLine[maxLengthToPrint+1];
-		strncpy(firstLine, (char*)m_Data, maxLengthToPrint-3);
-		firstLine[maxLengthToPrint-3] = '.';
-		firstLine[maxLengthToPrint-2] = '.';
-		firstLine[maxLengthToPrint-1] = '.';
+		char firstLine[maxLengthToPrint + 1];
+		strncpy(firstLine, (char *)m_Data, maxLengthToPrint - 3);
+		firstLine[maxLengthToPrint - 3] = '.';
+		firstLine[maxLengthToPrint - 2] = '.';
+		firstLine[maxLengthToPrint - 1] = '.';
 		firstLine[maxLengthToPrint] = 0;
 		first_line = std::string(firstLine);
 	}
 
-	os << "\t"
-	   << "First Line: " << first_line << '\n';
-	os << "\t"
-	   << "Server: " << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue() << '\n';
-	os << "\t"
-	   << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
-	os << "\t"
-	   << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+	os << "First Line: " << first_line << '\n';
+	os << "Server: " << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue() << '\n';
+	os << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
+	os << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
 }
 
 std::string HttpResponseLayer::toString() const
-{   
+{
 	/*
 	static const int maxLengthToPrint = 120;
 	std::string result = "HTTP response, ";
@@ -870,22 +747,13 @@ std::string HttpResponseLayer::toString() const
 	}
 
 	return result;
-    */
-   	std::stringstream stream;
+	*/
+	std::stringstream stream;
 	ToStructuredOutput(stream);
 	return stream.str();
 }
 
-
-
-
-
-
-
-
 // -------- Class HttpResponseFirstLine -----------------
-
-
 
 int HttpResponseFirstLine::getStatusCodeAsInt() const
 {
@@ -901,15 +769,17 @@ std::string HttpResponseFirstLine::getStatusCodeString() const
 		int statusStringEndOffset = m_FirstLineEndOffset - 2;
 		if ((*(m_HttpResponse->m_Data + statusStringEndOffset)) != '\r')
 			statusStringEndOffset++;
-		result.assign((char*)(m_HttpResponse->m_Data + statusStringOffset), statusStringEndOffset-statusStringOffset);
+		result.assign((char *)(m_HttpResponse->m_Data + statusStringOffset),
+					  statusStringEndOffset - statusStringOffset);
 	}
 
-	//else first line is illegal, return empty string
+	// else first line is illegal, return empty string
 
 	return result;
 }
 
-bool HttpResponseFirstLine::setStatusCode(HttpResponseLayer::HttpResponseStatusCode newStatusCode, std::string statusCodeString)
+bool HttpResponseFirstLine::setStatusCode(HttpResponseLayer::HttpResponseStatusCode newStatusCode,
+										  std::string statusCodeString)
 {
 	if (newStatusCode == HttpResponseLayer::HttpStatusCodeUnknown)
 	{
@@ -917,7 +787,7 @@ bool HttpResponseFirstLine::setStatusCode(HttpResponseLayer::HttpResponseStatusC
 		return false;
 	}
 
-	//extend or shorten layer
+	// extend or shorten layer
 
 	size_t statusStringOffset = 13;
 	if (statusCodeString == "")
@@ -933,11 +803,10 @@ bool HttpResponseFirstLine::setStatusCode(HttpResponseLayer::HttpResponseStatusC
 	}
 	else if (lengthDifference < 0)
 	{
-		if (!m_HttpResponse->shortenLayer(statusStringOffset, 0-lengthDifference))
+		if (!m_HttpResponse->shortenLayer(statusStringOffset, 0 - lengthDifference))
 		{
 			PCPP_LOG_ERROR("Cannot change layer size");
 			return false;
-
 		}
 	}
 
@@ -945,19 +814,18 @@ bool HttpResponseFirstLine::setStatusCode(HttpResponseLayer::HttpResponseStatusC
 		m_HttpResponse->shiftFieldsOffset(m_HttpResponse->getFirstField(), lengthDifference);
 
 	// copy status string
-	memcpy(m_HttpResponse->m_Data+statusStringOffset, statusCodeString.c_str(), statusCodeString.length());
+	memcpy(m_HttpResponse->m_Data + statusStringOffset, statusCodeString.c_str(), statusCodeString.length());
 
 	// change status code
 	std::ostringstream statusCodeAsString;
 	statusCodeAsString << StatusCodeEnumToInt[newStatusCode];
-	memcpy(m_HttpResponse->m_Data+9, statusCodeAsString.str().c_str(), 3);
+	memcpy(m_HttpResponse->m_Data + 9, statusCodeAsString.str().c_str(), 3);
 
 	m_StatusCode = newStatusCode;
 
 	m_FirstLineEndOffset += lengthDifference;
 
 	return true;
-
 }
 
 void HttpResponseFirstLine::setVersion(HttpVersion newVersion)
@@ -965,13 +833,14 @@ void HttpResponseFirstLine::setVersion(HttpVersion newVersion)
 	if (newVersion == HttpVersionUnknown)
 		return;
 
-	char* verPos = (char*)(m_HttpResponse->m_Data + 5);
+	char *verPos = (char *)(m_HttpResponse->m_Data + 5);
 	memcpy(verPos, VersionEnumToString[newVersion].c_str(), 3);
 
 	m_Version = newVersion;
 }
 
-HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::validateStatusCode(char* data, size_t dataLen, HttpResponseLayer::HttpResponseStatusCode potentialCode)
+HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::validateStatusCode(
+	char *data, size_t dataLen, HttpResponseLayer::HttpResponseStatusCode potentialCode)
 {
 	if (dataLen < 1 || data[0] != ' ')
 		return HttpResponseLayer::HttpStatusCodeUnknown;
@@ -979,7 +848,7 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::validateStatusC
 	return potentialCode;
 }
 
-HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode(char* data, size_t dataLen)
+HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode(char *data, size_t dataLen)
 {
 	if (parseVersion(data, dataLen) == HttpVersionUnknown)
 		return HttpResponseLayer::HttpStatusCodeUnknown;
@@ -988,7 +857,7 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 	if (dataLen < 12)
 		return HttpResponseLayer::HttpStatusCodeUnknown;
 
-	char* statusCodeData = data + 9;
+	char *statusCodeData = data + 9;
 	size_t statusCodeDataLen = dataLen - 9;
 
 	switch (statusCodeData[0])
@@ -1000,11 +869,14 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http100Continue);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http100Continue);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http101SwitchingProtocols);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http101SwitchingProtocols);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http102Processing);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http102Processing);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1023,26 +895,32 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http200OK);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http200OK);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http201Created);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http201Created);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http202Accepted);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http202Accepted);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http203NonAuthoritativeInformation);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http203NonAuthoritativeInformation);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http204NoContent);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http204NoContent);
 			case '5':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http205ResetContent);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http205ResetContent);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http206PartialContent);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http206PartialContent);
 			case '7':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http207MultiStatus);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http207MultiStatus);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http208AlreadyReported);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http208AlreadyReported);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
-
 			};
 
 			break;
@@ -1050,7 +928,7 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http226IMUsed);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http226IMUsed);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1059,7 +937,6 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 
 		default:
 			return HttpResponseLayer::HttpStatusCodeUnknown;
-
 		};
 
 		break;
@@ -1071,26 +948,33 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http300MultipleChoices);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http300MultipleChoices);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http301MovedPermanently);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http301MovedPermanently);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http302);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http302);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http303SeeOther);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http303SeeOther);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http304NotModified);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http304NotModified);
 			case '5':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http305UseProxy);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http305UseProxy);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http306SwitchProxy);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http306SwitchProxy);
 			case '7':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http307TemporaryRedirect);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http307TemporaryRedirect);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http308PermanentRedirect);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http308PermanentRedirect);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
-
 			};
 
 			break;
@@ -1108,28 +992,37 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http400BadRequest);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http400BadRequest);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http401Unauthorized);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http401Unauthorized);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http402PaymentRequired);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http402PaymentRequired);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http403Forbidden);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http403Forbidden);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http404NotFound);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http404NotFound);
 			case '5':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http405MethodNotAllowed);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http405MethodNotAllowed);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http406NotAcceptable);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http406NotAcceptable);
 			case '7':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http407ProxyAuthenticationRequired);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http407ProxyAuthenticationRequired);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http408RequestTimeout);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http408RequestTimeout);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http409Conflict);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http409Conflict);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
-
 			};
 
 			break;
@@ -1138,28 +1031,36 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http410Gone);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http410Gone);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http411LengthRequired);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http411LengthRequired);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http412PreconditionFailed);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http412PreconditionFailed);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http413RequestEntityTooLarge);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http413RequestEntityTooLarge);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http414RequestURITooLong);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http414RequestURITooLong);
 			case '5':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http415UnsupportedMediaType);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http415UnsupportedMediaType);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http416RequestedRangeNotSatisfiable);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http416RequestedRangeNotSatisfiable);
 			case '7':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http417ExpectationFailed);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http417ExpectationFailed);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http418Imateapot);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http418Imateapot);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http419AuthenticationTimeout);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http419AuthenticationTimeout);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
-
 			};
 
 			break;
@@ -1168,38 +1069,46 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http420);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http420);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http422UnprocessableEntity);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http422UnprocessableEntity);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http423Locked);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http423Locked);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http424FailedDependency);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http424FailedDependency);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http426UpgradeRequired);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http426UpgradeRequired);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http428PreconditionRequired);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http428PreconditionRequired);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http429TooManyRequests);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http429TooManyRequests);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
-
 			};
 
 			break;
 
 		case '3':
-			return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http431RequestHeaderFieldsTooLarge);
+			return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+									  HttpResponseLayer::Http431RequestHeaderFieldsTooLarge);
 
 		case '4':
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http440LoginTimeout);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http440LoginTimeout);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http444NoResponse);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http444NoResponse);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http449RetryWith);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http449RetryWith);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1210,9 +1119,10 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http450BlockedByWindowsParentalControls);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http450BlockedByWindowsParentalControls);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http451);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http451);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1223,17 +1133,21 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http494RequestHeaderTooLarge);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http494RequestHeaderTooLarge);
 			case '5':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http495CertError);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http495CertError);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http496NoCert);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http496NoCert);
 			case '7':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http497HTTPtoHTTPS);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http497HTTPtoHTTPS);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http498TokenExpiredInvalid);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http498TokenExpiredInvalid);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http499);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3, HttpResponseLayer::Http499);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1253,28 +1167,37 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http500InternalServerError);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http500InternalServerError);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http501NotImplemented);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http501NotImplemented);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http502BadGateway);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http502BadGateway);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http503ServiceUnavailable);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http503ServiceUnavailable);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http504GatewayTimeout);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http504GatewayTimeout);
 			case '5':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http505HTTPVersionNotSupported);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http505HTTPVersionNotSupported);
 			case '6':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http506VariantAlsoNegotiates);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http506VariantAlsoNegotiates);
 			case '7':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http507InsufficientStorage);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http507InsufficientStorage);
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http508LoopDetected);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http508LoopDetected);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http509BandwidthLimitExceeded);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http509BandwidthLimitExceeded);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
-
 			};
 
 			break;
@@ -1283,9 +1206,11 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http510NotExtended);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http510NotExtended);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http511NetworkAuthenticationRequired);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http511NetworkAuthenticationRequired);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1296,15 +1221,20 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '0':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http520OriginError);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http520OriginError);
 			case '1':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http521WebServerIsDown);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http521WebServerIsDown);
 			case '2':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http522ConnectionTimedOut);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http522ConnectionTimedOut);
 			case '3':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http523ProxyDeclinedRequest);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http523ProxyDeclinedRequest);
 			case '4':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http524aTimeoutOccurred);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http524aTimeoutOccurred);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1315,9 +1245,11 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 			switch (statusCodeData[2])
 			{
 			case '8':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http598NetworkReadTimeoutError);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http598NetworkReadTimeoutError);
 			case '9':
-				return validateStatusCode(statusCodeData+3, statusCodeDataLen-3, HttpResponseLayer::Http599NetworkConnectTimeoutError);
+				return validateStatusCode(statusCodeData + 3, statusCodeDataLen - 3,
+										  HttpResponseLayer::Http599NetworkConnectTimeoutError);
 			default:
 				return HttpResponseLayer::HttpStatusCodeUnknown;
 			};
@@ -1337,23 +1269,22 @@ HttpResponseLayer::HttpResponseStatusCode HttpResponseFirstLine::parseStatusCode
 	return HttpResponseLayer::HttpStatusCodeUnknown;
 }
 
-HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer* httpResponse) : m_HttpResponse(httpResponse)
+HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer *httpResponse) : m_HttpResponse(httpResponse)
 {
-	m_Version = parseVersion((char*)m_HttpResponse->m_Data, m_HttpResponse->getDataLen());
+	m_Version = parseVersion((char *)m_HttpResponse->m_Data, m_HttpResponse->getDataLen());
 	if (m_Version == HttpVersionUnknown)
 	{
 		m_StatusCode = HttpResponseLayer::HttpStatusCodeUnknown;
 	}
 	else
 	{
-		m_StatusCode = parseStatusCode((char*)m_HttpResponse->m_Data, m_HttpResponse->getDataLen());
+		m_StatusCode = parseStatusCode((char *)m_HttpResponse->m_Data, m_HttpResponse->getDataLen());
 	}
 
-
-	char* endOfFirstLine;
-	if ((endOfFirstLine = (char*)memchr((char*)(m_HttpResponse->m_Data), '\n', m_HttpResponse->m_DataLen)) != NULL)
+	char *endOfFirstLine;
+	if ((endOfFirstLine = (char *)memchr((char *)(m_HttpResponse->m_Data), '\n', m_HttpResponse->m_DataLen)) != NULL)
 	{
-		m_FirstLineEndOffset = endOfFirstLine - (char*)m_HttpResponse->m_Data + 1;
+		m_FirstLineEndOffset = endOfFirstLine - (char *)m_HttpResponse->m_Data + 1;
 		m_IsComplete = true;
 	}
 	else
@@ -1365,13 +1296,16 @@ HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer* httpResponse) : 
 	if (Logger::getInstance().isDebugEnabled(PacketLogModuleHttpLayer))
 	{
 		std::string version = (m_Version == HttpVersionUnknown ? "Unknown" : VersionEnumToString[m_Version]);
-		int statusCode = (m_StatusCode == HttpResponseLayer::HttpStatusCodeUnknown ? 0 : StatusCodeEnumToInt[m_StatusCode]);
-		PCPP_LOG_DEBUG("Version='" << version << "'; Status code=" << statusCode << " '" << getStatusCodeString() << "'");
+		int statusCode =
+			(m_StatusCode == HttpResponseLayer::HttpStatusCodeUnknown ? 0 : StatusCodeEnumToInt[m_StatusCode]);
+		PCPP_LOG_DEBUG("Version='" << version << "'; Status code=" << statusCode << " '" << getStatusCodeString()
+								   << "'");
 	}
 }
 
-
-HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer* httpResponse,  HttpVersion version, HttpResponseLayer::HttpResponseStatusCode statusCode, std::string statusCodeString)
+HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer *httpResponse, HttpVersion version,
+											 HttpResponseLayer::HttpResponseStatusCode statusCode,
+											 std::string statusCodeString)
 {
 	if (statusCode == HttpResponseLayer::HttpStatusCodeUnknown)
 	{
@@ -1394,7 +1328,8 @@ HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer* httpResponse,  H
 	statusCodeAsString << StatusCodeEnumToInt[m_StatusCode];
 	if (statusCodeString == "")
 		statusCodeString = StatusCodeEnumToString[m_StatusCode];
-	std::string firstLine = "HTTP/" + VersionEnumToString[m_Version] + " " + statusCodeAsString.str() + " " +  statusCodeString +  "\r\n";
+	std::string firstLine =
+		"HTTP/" + VersionEnumToString[m_Version] + " " + statusCodeAsString.str() + " " + statusCodeString + "\r\n";
 
 	m_FirstLineEndOffset = firstLine.length();
 
@@ -1405,7 +1340,7 @@ HttpResponseFirstLine::HttpResponseFirstLine(HttpResponseLayer* httpResponse,  H
 	m_IsComplete = true;
 }
 
-HttpVersion HttpResponseFirstLine::parseVersion(char* data, size_t dataLen)
+HttpVersion HttpResponseFirstLine::parseVersion(char *data, size_t dataLen)
 {
 	if (dataLen < 8) // "HTTP/x.y"
 	{
@@ -1419,7 +1354,7 @@ HttpVersion HttpResponseFirstLine::parseVersion(char* data, size_t dataLen)
 		return HttpVersionUnknown;
 	}
 
-	char* verPos = data + 5;
+	char *verPos = data + 5;
 	switch (verPos[0])
 	{
 	case '0':
