@@ -7,6 +7,8 @@
 #include <map>
 #include <list>
 #include <time.h>
+#include <queue>
+#define PURGE_FREQ_SECS 1
 
 /**
  * @file
@@ -233,6 +235,7 @@ struct TcpReassemblyConfiguration
 class TcpReassembly
 {
 public:
+	std::queue<pcpp::RawPacket> *m_quePointer;
 
 	/**
 	 * An enum for connection end reasons
@@ -324,7 +327,7 @@ public:
 	 * @param[in] IpSrc  A pointer to the destination ip of tcp packet
 	 * @param[in] cookie  A pointer to the cookie provided by IP manager
 	 */
-	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData& tcpData, void* userCookie, Packet* tcpPacket, Layer* nextlayer, IPAddress* IpSrc, IPAddress* IpDst, void* cookie);    
+	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData& tcpData, void* userCookie, Packet* tcpPacket, Layer* nextlayer, IPAddress* IpSrc, IPAddress* IpDst, void* cookie,std::queue<pcpp::RawPacket> * quePointer);    
 
 	/**
 	 * @typedef OnTcpConnectionStart
@@ -351,7 +354,9 @@ public:
 	 * @param[in] onConnectionEndCallback The callback to be invoked when a new connection is terminated (either by a FIN/RST packet or manually by the user). This parameter is optional
 	 * @param[in] config Optional parameter for defining special configuration parameters. If not set the default parameters will be set
 	 */
-	TcpReassembly(OnTcpMessageReady onMessageReadyCallback, void* userCookie = NULL, OnTcpConnectionStart onConnectionStartCallback = NULL, OnTcpConnectionEnd onConnectionEndCallback = NULL, const TcpReassemblyConfiguration &config = TcpReassemblyConfiguration());
+	TcpReassembly(std::queue<pcpp::RawPacket> q ,OnTcpMessageReady onMessageReadyCallback, void* userCookie = NULL, OnTcpConnectionStart onConnectionStartCallback = NULL, OnTcpConnectionEnd onConnectionEndCallback = NULL, const TcpReassemblyConfiguration &config = TcpReassemblyConfiguration() );
+	// TcpReassembly(std::queue<pcpp::RawPacket> q ,OnTcpMessageReady onMessageReadyCallback, void *userCookie,OnTcpConnectionStart onConnectionStartCallback, OnTcpConnectionEnd onConnectionEndCallback,const TcpReassemblyConfiguration &config);
+	
 
 	/** 
 	 * The most important method of this class which gets a packet from the user and processes it. If this packet opens a new connection, ends a connection or contains new data on an
@@ -427,10 +432,10 @@ private:
 		IPAddress srcIP;
 		uint16_t srcPort;
 		uint32_t sequence;
-		PointerVector<TcpFragment> tcpFragmentList;     
+		PointerVector<TcpFragment> tcpFragmentList;
+		std::vector<Packet> tcpPacketList;      
 		std::vector<IPAddress*> tcpIpSrcList;
 		std::vector<IPAddress*> tcpIpDstList;
-		std::vector<Packet> tcpPacketList;
 		std::vector<Layer*> tcpNextLayerList;
 
 		bool gotFinOrRst;
