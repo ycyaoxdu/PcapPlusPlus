@@ -13,6 +13,7 @@
 #include "PacketUtils.h"
 #include "PayloadLayer.h"
 #include "VlanLayer.h"
+#include <bitset>
 
 // ==============
 // L2tpLayer class

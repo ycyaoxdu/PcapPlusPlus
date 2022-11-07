@@ -5,6 +5,7 @@
 #include "GeneralUtils.h"
 #include "Logger.h"
 #include "PacketUtils.h"
+#include "arpa/inet.h"
 #include <sstream>
 #include <string.h>
 

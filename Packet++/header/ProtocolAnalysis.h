@@ -1,7 +1,9 @@
 #ifndef PCAPPP_PROTOCOL_ANALYSIS
 #define PCAPPP_PROTOCOL_ANALYSIS
 
+#ifndef LOG_MODULE
 #define LOG_MODULE pcpp::ProtocolAnalysis
+#endif
 
 #include "BgpLayer.h"
 #include "GreLayer.h"
@@ -59,6 +61,39 @@
 
 // unless the user chooses otherwise - default number of concurrent used file descl2tptors is 500
 #define DEFAULT_MAX_NUMBER_OF_CONCURRENT_OPEN_FILES 50000
+
+/**
+ * Print application usage
+ */
+void printUsage()
+{
+	std::cout
+		<< std::endl
+		<< "Usage:" << std::endl
+		<< "------" << std::endl
+		<< pcpp::AppName::get()
+		<< " input_file -o output_file [-p max-packet-number] [-d frag_ids] [-f bpf_filter][-b] [-a] [-h] [-v]"
+		<< std::endl
+		<< std::endl
+		<< "Options:" << std::endl
+		<< std::endl
+		<< "    input_file      	: Input pcap/pcapng file" << std::endl
+		<< "    -o output_file  	: Output file. Output file type (pcap/pcapng) will match the input file type"
+		<< std::endl
+		<< "    -p max-packet-number: Number of ip packets to store, Default to 500000" << std::endl
+		<< "    -d frag_ids     	: De-fragment only fragments that match this comma-separated list of IP IDs (for "
+		   "IPv4) or"
+		<< std::endl
+		<< "                      fragment IDs (for IPv6) in decimal format" << std::endl
+		<< "    -f bpf_filter   	: De-fragment only fragments that match bpf_filter. Filter should be provided in "
+		   "Berkeley Packet Filter (BPF)"
+		<< std::endl
+		<< "                      syntax (http://biot.com/capstats/bpf.html) i.e: 'ip net 1.1.1.1'" << std::endl
+		<< "	-b 					: Run with debug mode if flag is set" << std::endl
+		<< "    -v              	: Displays the current version and exits" << std::endl
+		<< "    -h              	: Displays this help message and exits" << std::endl
+		<< std::endl;
+}
 
 /**
  * A singleton class containing the configuration as requested by the user. This singleton is used throughout the

@@ -2,7 +2,6 @@
 #define PACKETPP_GRE_LAYER
 
 #include "Layer.h"
-#include <bitset>
 
 /// @file
 
