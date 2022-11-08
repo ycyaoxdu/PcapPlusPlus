@@ -112,6 +112,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			pcpp::IPv4Layer *ipv4Layer = getv4(result);
 			IpSrc = ipv4Layer->getSrcIPAddress();
 			IpDst = ipv4Layer->getDstIPAddress();
+			ipv4Layer->parseNextLayer();
 			ipLayer = ipv4Layer;
 		}
 		else if (isIPv6Packet)
@@ -119,12 +120,12 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			pcpp::IPv6Layer *ipv6Layer = getv6(result);
 			IpSrc = ipv6Layer->getSrcIPAddress();
 			IpDst = ipv6Layer->getDstIPAddress();
+			ipv6Layer->parseNextLayer();
 			ipLayer = ipv6Layer;
 		}
 
 		// parse next layer
 		// any unknow protocol is payload
-		ipLayer->parseNextLayer();
 		Layer *nextLayer = ipLayer->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -186,7 +187,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		case pcpp::TCP: {
 			// tcp handle
 
-			tcpReassembly.reassemblePacket(*result, nextLayer, &IpSrc, &IpDst);
+			tcpReassembly.reassemblePacket(result, nextLayer, &IpSrc, &IpDst);
 			// HandleTcpPayload(nextLayer, IpSrc, IpDst, result, UserCookie, OnMessageReadyCallback, quePointer);
 			break;
 		}

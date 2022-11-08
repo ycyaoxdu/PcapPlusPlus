@@ -246,7 +246,10 @@ void IPv4Layer::parseNextLayer()
 {
 	size_t hdrLen = getHeaderLen();
 	if (m_DataLen <= hdrLen || hdrLen == 0)
+	{
+		PCPP_LOG_ERROR("Cannot get header: m_DataLen <= hdrLen || hdrLen == 0");
 		return;
+	}
 
 	iphdr *ipHdr = getIPv4Header();
 
