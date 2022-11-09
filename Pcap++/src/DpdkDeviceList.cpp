@@ -437,6 +437,18 @@ void DpdkDeviceList::Collect_Application_status()
 	} 
 }
 
+void DpdkDeviceList::Reset_Application_status()
+{
+	for (std::vector<DpdkWorkerThread*>::iterator iter = m_WorkerThreads.begin(); iter != m_WorkerThreads.end(); iter++)
+	{
+		(*iter)->dz_reset_local_status();
+		
+		// RTE_LOG(INFO,APPLICATION,"core %d received %d  packets %lld  bytes.\n",(*iter)->getCoreId(),temp_local_packets_num, temp_local_Bytes_num);
+		dz_global_packets_num =0;
+		dz_global_Bytes_num =0;		
+	} 
+}
+
 void DpdkDeviceList::stopDpdkWorkerThreads()
 {
 	if (m_WorkerThreads.empty())
@@ -449,11 +461,11 @@ void DpdkDeviceList::stopDpdkWorkerThreads()
 	
 	for (std::vector<DpdkWorkerThread*>::iterator iter = m_WorkerThreads.begin(); iter != m_WorkerThreads.end(); iter++)
 	{
-		int temp_local_packets_num =(*iter)->dz_get_local_packets_num();
-		long long temp_local_Bytes_num = (*iter)->dz_get_local_Bytes_num();
-		RTE_LOG(INFO,APPLICATION,"core %d received %d  packets %lld  bytes.\n",(*iter)->getCoreId(),temp_local_packets_num, temp_local_Bytes_num);
-		dz_global_packets_num += temp_local_packets_num;
-		dz_global_Bytes_num += temp_local_Bytes_num;
+		// int temp_local_packets_num =(*iter)->dz_get_local_packets_num();
+		// long long temp_local_Bytes_num = (*iter)->dz_get_local_Bytes_num();
+		// RTE_LOG(INFO,APPLICATION,"core %d received %d  packets %lld  bytes.\n",(*iter)->getCoreId(),temp_local_packets_num, temp_local_Bytes_num);
+		// dz_global_packets_num += temp_local_packets_num;
+		// dz_global_Bytes_num += temp_local_Bytes_num;
 		 
 		(*iter)->stop();
 		rte_eal_wait_lcore((*iter)->getCoreId());

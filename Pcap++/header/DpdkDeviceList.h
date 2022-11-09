@@ -6,6 +6,9 @@
 #include "Logger.h"
 #include <vector>
 
+// #include <stdatomic.h>
+#include <atomic>
+
 #include <ctime>
 #include <time.h>
 
@@ -40,8 +43,8 @@ namespace pcpp
 	private:
 		
 	public:
-		uint64_t  dz_local_packets_num;
-		uint128_t dz_local_Bytes_num;
+		std::atomic<unsigned int>  dz_local_packets_num;
+		std::atomic<unsigned long> dz_local_Bytes_num;
 		/**
 		 * A virtual d'tor. Can be overridden by child class if needed
 		 */
@@ -68,33 +71,39 @@ namespace pcpp
 		 */
 		virtual uint32_t getCoreId() const = 0;
 
-		void dz_set_local_packets_num(int set_num)
+		void dz_set_local_packets_num(unsigned int set_num)
 		{
 			dz_local_packets_num=set_num;
 		}
 
-		void dz_set_local_Bytes_num(int set_num)
+		void dz_set_local_Bytes_num(unsigned long set_num)
 		{
 			dz_local_Bytes_num=set_num;
 		}
 
-		void dz_change_local_packets_num(int change_amount)
+		void dz_change_local_packets_num(unsigned int change_amount)
 		{
 			dz_local_packets_num += change_amount;
 		}
 
-		void dz_change_local_Bytes_num(long long change_amount)
+		void dz_change_local_Bytes_num(unsigned long change_amount)
 		{
 			dz_local_Bytes_num +=  change_amount;
 		}
 
-		uint64_t dz_get_local_packets_num()
+		unsigned int dz_get_local_packets_num()
 		{
 			return dz_local_packets_num;
 		}
-		uint128_t dz_get_local_Bytes_num()
+		unsigned long dz_get_local_Bytes_num()
 		{
 			return dz_local_Bytes_num;
+		}
+
+		void dz_reset_local_status()
+		{
+			dz_local_packets_num = 0;
+			dz_local_Bytes_num = 0;
 		}
 	};
 
@@ -253,6 +262,8 @@ namespace pcpp
 		}
 
 		void Collect_Application_status();
+
+		void Reset_Application_status();
 	};
 
 } // namespace pcpp
