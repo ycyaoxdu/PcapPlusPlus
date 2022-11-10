@@ -44,9 +44,9 @@ namespace pcpp
 {
 
 // add the object of tcpReassembly
-ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr,
-							std::queue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie,
-							OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)
+void Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr,
+				std::queue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie,
+				OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)
 {
 	PCPP_LOG_DEBUG("stage reassemble: start packet reassemble and analysis");
 
@@ -56,14 +56,14 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	if (parsedPacket == NULL)
 	{
 		PCPP_LOG_DEBUG("stage reassemble: Input empty pointer to Packet");
-		return Invalid;
+		return;
 	}
 
 	Layer *next = findLayer(parsedPacket);
 	if (next == NULL)
 	{
 		PCPP_LOG_DEBUG("stage reassemble: non-ip packet!");
-		return Invalid;
+		return;
 	}
 
 	if (findLayer(parsedPacket)->getProtocol() == IPv4)
@@ -80,7 +80,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 	{
 		// non-ip packet should not be passed in
 		PCPP_LOG_DEBUG("stage reassemble: not-ip packet!");
-		return Invalid;
+		return;
 	}
 
 	// process the packet in the IP reassembly mechanism
@@ -130,8 +130,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 		if (nextLayer == NULL)
 		{
 			PCPP_LOG_DEBUG("stage ip analysis: get nextlayer of nullptr");
-			// invalid data
-			return Invalid;
+			return;
 		}
 
 		// switch statement
@@ -226,7 +225,7 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 
 	*statusPtr = status;
 	PCPP_LOG_DEBUG("stage reassemble: finished packet reassemble and analysis");
-	return Handled;
+	return;
 }
 
 void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
@@ -239,7 +238,7 @@ void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void
 		PCPP_LOG_DEBUG("HandleOspfPayload: passing layer of nullptr to function");
 		return;
 	}
-	// OspfLayer ospf(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	OspfLayer *ospf = static_cast<OspfLayer *>(layer);
 	ReassembleMessage(ospf, tuplename, cookie, OnMessageReadyCallback);
 }
@@ -254,7 +253,7 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		PCPP_LOG_DEBUG("HandleEspPayload: passing layer of nullptr to function");
 		return;
 	}
-	// ESPLayer esp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	ESPLayer *esp = static_cast<ESPLayer *>(layer);
 	esp->parseNextLayer();
 	Layer *nextLayer = esp->getNextLayer();
@@ -283,14 +282,12 @@ void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void 
 	Layer *nextLayer;
 	if (layer->getProtocol() == GREv0)
 	{
-		// GREv0Layer grev0(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 		GREv0Layer *grev0 = static_cast<GREv0Layer *>(layer);
 		grev0->parseNextLayer();
 		nextLayer = grev0->getNextLayer();
 	}
 	else if (layer->getProtocol() == GREv1)
 	{
-		// GREv1Layer grev1(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 		GREv1Layer *grev1 = static_cast<GREv1Layer *>(layer);
 		grev1->parseNextLayer();
 		nextLayer = grev1->getNextLayer();
@@ -333,7 +330,7 @@ void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 		PCPP_LOG_DEBUG("HandleUdpPayload: passing layer of nullptr to function");
 		return;
 	}
-	// UdpLayer udp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	UdpLayer *udp = static_cast<UdpLayer *>(layer);
 
 	// calculate 5-tuple name
@@ -388,7 +385,7 @@ void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 		PCPP_LOG_DEBUG("HandleTcpPayload: passing layer of nullptr to function");
 		return;
 	}
-	// TcpLayer tcp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	TcpLayer *tcp = static_cast<TcpLayer *>(layer);
 
 	// calculate 5-tuple name
@@ -449,7 +446,7 @@ void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *p
 		PCPP_LOG_DEBUG("HandleSctpPayload: passing layer of nullptr to function");
 		return;
 	}
-	// SctpLayer sctp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	SctpLayer *sctp = static_cast<SctpLayer *>(layer);
 	// calculate 5-tuple name
 	std::string protoname = "sctp";
@@ -511,7 +508,7 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		PCPP_LOG_DEBUG("HandleRipPayload: passing layer of nullptr to function");
 		return;
 	}
-	// RipLayer rip(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	RipLayer *rip = static_cast<RipLayer *>(layer);
 
 	ReassembleMessage(rip, tuplename, cookie, OnMessageReadyCallback);
@@ -528,7 +525,6 @@ void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	// pcpp::GtpV1Layer gtp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 	GtpV1Layer *gtp = static_cast<GtpV1Layer *>(layer);
 
 	gtp->parseNextLayer();
@@ -560,7 +556,6 @@ void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	// pcpp::PPP_PPTPLayer ppp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 	PPP_PPTPLayer *ppp = static_cast<PPP_PPTPLayer *>(layer);
 	ppp->parseNextLayer();
 	Layer *nextLayer = ppp->getNextLayer();
@@ -594,7 +589,7 @@ void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 		PCPP_LOG_DEBUG("HandleL2tpPayload: passing layer of nullptr to function");
 		return;
 	}
-	// pcpp::L2tpLayer l2tp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+
 	L2tpLayer *l2tp = static_cast<L2tpLayer *>(layer);
 
 	l2tp->parseNextLayer();
@@ -763,7 +758,6 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 		{
 			if (layer->packet()->getIPLayerCount() < 1)
 			{
-				PCPP_LOG_DEBUG("ReassemblePayload: 我要出来了");
 				break;
 			}
 			layer->packet()->DecreaseIP();
@@ -774,8 +768,6 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 									<< std::oct);
 	}
 
-	PCPP_LOG_DEBUG("ReassemblePayload: 我出来了");
-
 	while (!stk.empty())
 	{
 		temp = stk.top();
@@ -783,8 +775,6 @@ ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple
 
 		result += temp;
 	}
-
-	PCPP_LOG_DEBUG("ReassemblePayload: 我读完了");
 
 	if (response == Handled)
 	{

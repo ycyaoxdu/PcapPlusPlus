@@ -245,10 +245,8 @@ int main(int argc, char *argv[])
 	processPackets(maxPacketsToStore, reader, filterByBpfFilter, bpfFilter, filterByFragID, fragIDMap, &stats, &mgr,
 				   tcpReassembly, quePointer);
 
-	std::cout << "closing......" << std::endl;
 	// close all tcp connections
 	tcpReassembly.closeAllConnections();
-	std::cout << "closed......" << std::endl;
 
 	// close files
 	reader->close();
