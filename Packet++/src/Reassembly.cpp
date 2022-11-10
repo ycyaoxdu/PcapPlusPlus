@@ -149,9 +149,10 @@ ReassemblyStatus Reassemble(IPReassembly *ipReassembly, IPReassembly::Reassembly
 			protoname = "authenticationHeader";
 			TupleName = getTupleName(IpSrc, IpDst, 0, 0, protoname);
 
-			AuthenticationHeaderLayer ahlayer(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
-			ahlayer.parseNextLayer();
-			nextLayer = ahlayer.getNextLayer();
+			// AuthenticationHeaderLayer ahlayer(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
+			AuthenticationHeaderLayer *ahlayer = static_cast<AuthenticationHeaderLayer *>(nextLayer);
+			ahlayer->parseNextLayer();
+			nextLayer = ahlayer->getNextLayer();
 
 			// esp handle
 			if (nextLayer->getProtocol() == pcpp::ESP)
@@ -238,8 +239,9 @@ void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void
 		PCPP_LOG_DEBUG("HandleOspfPayload: passing layer of nullptr to function");
 		return;
 	}
-	OspfLayer ospf(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-	ReassembleMessage(&ospf, tuplename, cookie, OnMessageReadyCallback);
+	// OspfLayer ospf(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	OspfLayer *ospf = static_cast<OspfLayer *>(layer);
+	ReassembleMessage(ospf, tuplename, cookie, OnMessageReadyCallback);
 }
 
 void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
@@ -252,10 +254,10 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		PCPP_LOG_DEBUG("HandleEspPayload: passing layer of nullptr to function");
 		return;
 	}
-	ESPLayer esp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-
-	esp.parseNextLayer();
-	Layer *nextLayer = esp.getNextLayer();
+	// ESPLayer esp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	ESPLayer *esp = static_cast<ESPLayer *>(layer);
+	esp->parseNextLayer();
+	Layer *nextLayer = esp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleEspPayload: nextlayer of nullptr");
@@ -281,15 +283,17 @@ void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void 
 	Layer *nextLayer;
 	if (layer->getProtocol() == GREv0)
 	{
-		GREv0Layer grev0(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		grev0.parseNextLayer();
-		nextLayer = grev0.getNextLayer();
+		// GREv0Layer grev0(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+		GREv0Layer *grev0 = static_cast<GREv0Layer *>(layer);
+		grev0->parseNextLayer();
+		nextLayer = grev0->getNextLayer();
 	}
 	else if (layer->getProtocol() == GREv1)
 	{
-		GREv1Layer grev1(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		grev1.parseNextLayer();
-		nextLayer = grev1.getNextLayer();
+		// GREv1Layer grev1(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+		GREv1Layer *grev1 = static_cast<GREv1Layer *>(layer);
+		grev1->parseNextLayer();
+		nextLayer = grev1->getNextLayer();
 	}
 	else
 	{
@@ -329,17 +333,18 @@ void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 		PCPP_LOG_DEBUG("HandleUdpPayload: passing layer of nullptr to function");
 		return;
 	}
-	UdpLayer udp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// UdpLayer udp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	UdpLayer *udp = static_cast<UdpLayer *>(layer);
 
 	// calculate 5-tuple name
 	std::string protoname = "udp";
-	uint16_t PortSrc = udp.getSrcPort();
-	uint16_t PortDst = udp.getDstPort();
+	uint16_t PortSrc = udp->getSrcPort();
+	uint16_t PortDst = udp->getDstPort();
 	std::string TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 	// next layer
-	udp.parseNextLayer();
-	Layer *nextLayer = udp.getNextLayer();
+	udp->parseNextLayer();
+	Layer *nextLayer = udp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleUdpPayload: nextlayer of nullptr");
@@ -383,17 +388,18 @@ void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *pa
 		PCPP_LOG_DEBUG("HandleTcpPayload: passing layer of nullptr to function");
 		return;
 	}
-	TcpLayer tcp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// TcpLayer tcp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	TcpLayer *tcp = static_cast<TcpLayer *>(layer);
 
 	// calculate 5-tuple name
 	std::string protoname = "tcp";
-	uint16_t PortSrc = tcp.getSrcPort();
-	uint16_t PortDst = tcp.getDstPort();
+	uint16_t PortSrc = tcp->getSrcPort();
+	uint16_t PortDst = tcp->getDstPort();
 	std::string TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 	// next layer
-	tcp.parseNextLayer();
-	Layer *nextLayer = tcp.getNextLayer();
+	tcp->parseNextLayer();
+	Layer *nextLayer = tcp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleTcpPayload: nextlayer of nullptr");
@@ -443,17 +449,17 @@ void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *p
 		PCPP_LOG_DEBUG("HandleSctpPayload: passing layer of nullptr to function");
 		return;
 	}
-	SctpLayer sctp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-
+	// SctpLayer sctp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	SctpLayer *sctp = static_cast<SctpLayer *>(layer);
 	// calculate 5-tuple name
 	std::string protoname = "sctp";
-	uint16_t PortSrc = sctp.getSrcPort();
-	uint16_t PortDst = sctp.getDstPort();
+	uint16_t PortSrc = sctp->getSrcPort();
+	uint16_t PortDst = sctp->getDstPort();
 	std::string TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 	// next layer
-	sctp.parseNextLayer();
-	Layer *nextLayer = sctp.getNextLayer();
+	sctp->parseNextLayer();
+	Layer *nextLayer = sctp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleSctpPayload: nextlayer of nullptr");
@@ -505,9 +511,10 @@ void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		PCPP_LOG_DEBUG("HandleRipPayload: passing layer of nullptr to function");
 		return;
 	}
-	RipLayer rip(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// RipLayer rip(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	RipLayer *rip = static_cast<RipLayer *>(layer);
 
-	ReassembleMessage(&rip, tuplename, cookie, OnMessageReadyCallback);
+	ReassembleMessage(rip, tuplename, cookie, OnMessageReadyCallback);
 }
 
 void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
@@ -521,10 +528,11 @@ void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	pcpp::GtpV1Layer gtp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// pcpp::GtpV1Layer gtp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	GtpV1Layer *gtp = static_cast<GtpV1Layer *>(layer);
 
-	gtp.parseNextLayer();
-	Layer *nextLayer = gtp.getNextLayer();
+	gtp->parseNextLayer();
+	Layer *nextLayer = gtp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleGtpPayload: nextlayer of nullptr");
@@ -552,10 +560,10 @@ void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	pcpp::PPP_PPTPLayer ppp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-
-	ppp.parseNextLayer();
-	Layer *nextLayer = ppp.getNextLayer();
+	// pcpp::PPP_PPTPLayer ppp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	PPP_PPTPLayer *ppp = static_cast<PPP_PPTPLayer *>(layer);
+	ppp->parseNextLayer();
+	Layer *nextLayer = ppp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandlePppPayload: nextlayer of nullptr");
@@ -586,10 +594,11 @@ void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 		PCPP_LOG_DEBUG("HandleL2tpPayload: passing layer of nullptr to function");
 		return;
 	}
-	pcpp::L2tpLayer l2tp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// pcpp::L2tpLayer l2tp(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	L2tpLayer *l2tp = static_cast<L2tpLayer *>(layer);
 
-	l2tp.parseNextLayer();
-	Layer *nextLayer = l2tp.getNextLayer();
+	l2tp->parseNextLayer();
+	Layer *nextLayer = l2tp->getNextLayer();
 	if (nextLayer == NULL)
 	{
 		PCPP_LOG_DEBUG("HandleL2tpPayload: nextlayer of nullptr");
@@ -610,8 +619,9 @@ void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	BgpLayer *bgp = BgpLayer::parseBgpLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-	ReassembleMessage(&(*bgp), tuplename, cookie, OnMessageReadyCallback);
+	// BgpLayer *bgp = BgpLayer::parseBgpLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	BgpLayer *bgp = static_cast<BgpLayer *>(layer);
+	ReassembleMessage(bgp, tuplename, cookie, OnMessageReadyCallback);
 
 	switch (bgp->getBgpMessageType())
 	{
@@ -689,8 +699,10 @@ void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	SSLLayer *ssl = SSLLayer::createSSLMessage(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-	ReassembleMessage(&(*ssl), tuplename, cookie, OnMessageReadyCallback);
+	// SSLLayer *ssl = SSLLayer::createSSLMessage(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	SSLLayer *ssl = static_cast<SSLLayer *>(layer);
+
+	ReassembleMessage(ssl, tuplename, cookie, OnMessageReadyCallback);
 
 	//单个包中可能包含多条SSL记录，所以需要检查这个SSL包。
 	//如果存在，就创建一个新的SSL记录，然后继续检查

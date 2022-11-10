@@ -53,7 +53,8 @@ IPv4Layer *getv4(Packet *packet)
 	}
 
 	PCPP_LOG_DEBUG("getv4: ipv4 layer found");
-	return new IPv4Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// return new IPv4Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	return static_cast<IPv4Layer *>(layer);
 }
 
 IPv6Layer *getv6(Packet *packet)
@@ -68,7 +69,8 @@ IPv6Layer *getv6(Packet *packet)
 	}
 
 	PCPP_LOG_DEBUG("getv6: ipv6 layer found");
-	return new IPv6Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	// return new IPv6Layer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
+	return static_cast<IPv6Layer *>(layer);
 }
 
 ////////////////////////////////////////////////
@@ -135,7 +137,7 @@ class IPv4FragmentWrapper : public IPFragmentWrapper
 	{
 		PCPP_LOG_DEBUG("stage processPacket: build IPv4FragmentWrapper...");
 
-		m_IPLayer =getv4(fragment);
+		m_IPLayer = getv4(fragment);
 
 		if (m_IPLayer == NULL)
 		{
@@ -361,7 +363,7 @@ Packet *IPReassembly::processPacket(Packet *fragment, ReassemblyStatus &status, 
 	status = NON_IP_PACKET;
 
 	// packet is not an IP packet
-	if (findLayer(fragment)==NULL)
+	if (findLayer(fragment) == NULL)
 	{
 		PCPP_LOG_DEBUG("Got a non-IP packet, returning packet to user");
 		status = NON_IP_PACKET;

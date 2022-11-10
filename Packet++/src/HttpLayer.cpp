@@ -140,15 +140,42 @@ void HttpRequestLayer::ToStructuredOutput(std::ostream &os) const
 		}
 
 		os << "First Line: " << first_line << '\n';
-		os << "Host: " << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue() << '\n';
-		os << "User-Agent: " << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue() << '\n';
-		os << "Accept: " << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue() << '\n';
-		os << "Accept-Encoding: " << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue() << '\n';
-		os << "Accept-Language: " << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue() << '\n';
-		os << "Cookie: " << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue() << '\n';
-		os << "Referer: " << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue() << '\n';
-		os << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
-		os << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+		os << "Host: ";
+		if (getFieldByName(PCPP_HTTP_HOST_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue();
+		os << '\n';
+		os << "User-Agent: ";
+		if (getFieldByName(PCPP_HTTP_USER_AGENT_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Accept: ";
+		if (getFieldByName(PCPP_HTTP_ACCEPT_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Accept-Encoding: ";
+		if (getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Accept-Language: ";
+		if (getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Cookie: ";
+		if (getFieldByName(PCPP_HTTP_COOKIE_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Referer: ";
+		if (getFieldByName(PCPP_HTTP_REFERER_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Content-Type: ";
+		if (getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue();
+		os << '\n';
+		os << "Content-Length: ";
+		if (getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD) != NULL)
+			os << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue();
+		os << '\n';
 	}
 }
 
@@ -716,9 +743,18 @@ void HttpResponseLayer::ToStructuredOutput(std::ostream &os) const
 	}
 
 	os << "First Line: " << first_line << '\n';
-	os << "Server: " << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue() << '\n';
-	os << "Content-Type: " << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue() << '\n';
-	os << "Content-Length: " << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue() << '\n';
+	os << "Server: ";
+	if (getFieldByName(PCPP_HTTP_SERVER_FIELD) != NULL)
+		os << getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue();
+	os << '\n';
+	os << "Content-Type: ";
+	if (getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD) != NULL)
+		os << getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue();
+	os << '\n';
+	os << "Content-Length: ";
+	if (getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD) != NULL)
+		os << getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue();
+	os << '\n';
 }
 
 std::string HttpResponseLayer::toString() const
