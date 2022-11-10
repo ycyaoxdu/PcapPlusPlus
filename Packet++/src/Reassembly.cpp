@@ -619,73 +619,21 @@ void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	// BgpLayer *bgp = BgpLayer::parseBgpLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-	BgpLayer *bgp = static_cast<BgpLayer *>(layer);
-	ReassembleMessage(bgp, tuplename, cookie, OnMessageReadyCallback);
-
-	switch (bgp->getBgpMessageType())
-	{
-	case pcpp::BgpLayer::Open: {
-		pcpp::BgpOpenMessageLayer bgpOpen =
-			pcpp::BgpOpenMessageLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		ReassembleMessage(&bgpOpen, tuplename, cookie, OnMessageReadyCallback);
-
-		break;
-	}
-	case pcpp::BgpLayer::Update: {
-		pcpp::BgpUpdateMessageLayer bgpUpdate =
-			pcpp::BgpUpdateMessageLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		ReassembleMessage(&bgpUpdate, tuplename, cookie, OnMessageReadyCallback);
-
-		break;
-	}
-	case pcpp::BgpLayer::Notification: {
-		pcpp::BgpNotificationMessageLayer bgpNotification =
-			pcpp::BgpNotificationMessageLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		ReassembleMessage(&bgpNotification, tuplename, cookie, OnMessageReadyCallback);
-
-		break;
-	}
-	case pcpp::BgpLayer::Keepalive: {
-		pcpp::BgpKeepaliveMessageLayer bgpKA =
-			pcpp::BgpKeepaliveMessageLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		ReassembleMessage(&bgpKA, tuplename, cookie, OnMessageReadyCallback);
-
-		break;
-	}
-	case pcpp::BgpLayer::RouteRefresh: {
-		pcpp::BgpRouteRefreshMessageLayer bgpRR =
-			pcpp::BgpRouteRefreshMessageLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-		ReassembleMessage(&bgpRR, tuplename, cookie, OnMessageReadyCallback);
-
-		break;
-	}
-	}
-
 	//与SSL类似，单个包中可能包含多条BGP消息，所以需要检查这个BGP包。
 	//如果存在，就创建一个新的BGP消息作为下一层，然后继续检查
 	//否则就退出
-
-	while (1)
+	while (layer != NULL)
 	{
-		size_t bgp_header_len = bgp->getHeaderLen();
-		size_t bgp_data_len = bgp->getDataLen();
-		uint8_t *bgp_data = bgp->getData();
-
-		bgp->parseNextLayer();
-		Layer *nextLayer = bgp->getNextLayer();
+		layer->parseNextLayer();
+		Layer *nextLayer = layer->getNextLayer();
 
 		if (nextLayer == NULL) //该数据包中不再有BGP消息
 		{
 			break;
 		}
-		else //存在BGP消息
-		{
-			bgp = BgpLayer::parseBgpLayer(bgp_data + bgp_header_len, bgp_data_len - bgp_header_len,
-										  layer->getPrevLayer(), packet);
-			ReassembleMessage(&(*bgp), tuplename, cookie, OnMessageReadyCallback);
-		}
+		layer = nextLayer;
 	}
+	ReassembleMessage(layer, tuplename, cookie, OnMessageReadyCallback);
 }
 
 void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
@@ -699,35 +647,21 @@ void HandleSslPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 		return;
 	}
 
-	// SSLLayer *ssl = SSLLayer::createSSLMessage(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
-	SSLLayer *ssl = static_cast<SSLLayer *>(layer);
-
-	ReassembleMessage(ssl, tuplename, cookie, OnMessageReadyCallback);
-
 	//单个包中可能包含多条SSL记录，所以需要检查这个SSL包。
 	//如果存在，就创建一个新的SSL记录，然后继续检查
 	//否则就退出
-
-	while (1)
+	while (layer != NULL)
 	{
-		size_t ssl_header_len = ssl->getHeaderLen();
-		size_t ssl_data_len = ssl->getDataLen();
-		uint8_t *ssl_data = ssl->getData();
-
-		ssl->parseNextLayer();
-		Layer *nextLayer = ssl->getNextLayer();
+		layer->parseNextLayer();
+		Layer *nextLayer = layer->getNextLayer();
 
 		if (nextLayer == NULL) //该数据包中不再有SSL记录
 		{
 			break;
 		}
-		else //存在SSL记录
-		{
-			ssl = SSLLayer::createSSLMessage(ssl_data + ssl_header_len, ssl_data_len - ssl_header_len,
-											 ssl->getPrevLayer(), packet);
-			ReassembleMessage(&(*ssl), tuplename, cookie, OnMessageReadyCallback);
-		}
+		layer = nextLayer;
 	}
+	ReassembleMessage(layer, tuplename, cookie, OnMessageReadyCallback);
 }
 
 void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
