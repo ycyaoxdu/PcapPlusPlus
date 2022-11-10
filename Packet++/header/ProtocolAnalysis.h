@@ -45,12 +45,14 @@
 #include <thread>
 #include <unistd.h>
 
-#define EXIT_WITH_ERROR(reason)                                                                                        \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		printUsage();                                                                                                  \
-		std::cout << std::endl << "ERROR: " << reason << std::endl << std::endl;                                       \
-		exit(1);                                                                                                       \
+#define EXIT_WITH_ERROR(reason)                       \
+	do                                                \
+	{                                                 \
+		printUsage();                                 \
+		std::cout << std::endl                        \
+				  << "ERROR: " << reason << std::endl \
+				  << std::endl;                       \
+		exit(1);                                      \
 	} while (0)
 
 #if defined(_WIN32)
@@ -92,7 +94,7 @@ void printUsage()
  */
 class GlobalConfig
 {
-  private:
+private:
 	/**
 	 * A private c'tor (as this is a singleton)
 	 */
@@ -109,7 +111,7 @@ class GlobalConfig
 	// file descl2tptors and we need to decide which files to close
 	pcpp::LRUList<std::string> *m_RecentFilesWithActivity;
 
-  public:
+public:
 	// calculate processed packet numbers
 	int PacketNum;
 
@@ -117,7 +119,7 @@ class GlobalConfig
 	bool writeMetadata;
 
 	// the directory to write files to (default is current directory)
-	std::string outputDir;
+	std::string outputDir = "../debug_data_output";
 
 	// a flag indicating whether to write L2TP data to actual files or to console
 	bool writeToConsole;

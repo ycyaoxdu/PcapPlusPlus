@@ -52,7 +52,6 @@ TcpReassembly::TcpReassembly(std::queue<pcpp::RawPacket> q, OnTcpMessageReady on
 TcpReassembly::ReassemblyStatus TcpReassembly::reassemblePacket(Packet *tcpData, Layer *nextLayer, IPAddress *IpSrc,
 																IPAddress *IpDst)
 {
-	std::cout << *tcpData << std::endl;
 	// automatic cleanup
 	if (m_RemoveConnInfo == true)
 	{
