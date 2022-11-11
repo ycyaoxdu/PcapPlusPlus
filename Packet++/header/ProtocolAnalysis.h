@@ -505,12 +505,12 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		}
 
 		// check if packet is of type IPv4 or IPv6
-		pcpp::Packet parsedPacket = new pcpp::Packet(&rawPacket);
-		if (parsedPacket.isPacketOfType(pcpp::IPv4))
+		pcpp::Packet *parsedPacket = new pcpp::Packet(&rawPacket);
+		if (parsedPacket->isPacketOfType(pcpp::IPv4))
 		{
 			stats->ipv4Packets++;
 		}
-		else if (parsedPacket.isPacketOfType(pcpp::IPv6))
+		else if (parsedPacket->isPacketOfType(pcpp::IPv6))
 		{
 			stats->ipv6Packets++;
 		}
@@ -523,7 +523,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		if (filterByIpID)
 		{
 			// get the IPv4 layer
-			pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+			pcpp::IPv4Layer *ipv4Layer = parsedPacket->getLayerOfType<pcpp::IPv4Layer>();
 			if (ipv4Layer != NULL)
 			{
 				// check if packet ID matches one of the IP IDs requested by the user
@@ -538,7 +538,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 			}
 
 			// get the IPv6 layer
-			pcpp::IPv6Layer *ipv6Layer = parsedPacket.getLayerOfType<pcpp::IPv6Layer>();
+			pcpp::IPv6Layer *ipv6Layer = parsedPacket->getLayerOfType<pcpp::IPv6Layer>();
 			if (ipv6Layer != NULL && ipv6Layer->isFragment())
 			{
 				// if this packet is a fragment, get the fragmentation header
@@ -560,13 +560,18 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		if (defragPacket)
 		{
 			stats->totalPacketsWritten++;
-			Reassemble(&ipReassembly, &status, quePointer, &parsedPacket, UserCookie, OnMessageReadyCallback,
+			Reassemble(&ipReassembly, &status, quePointer, parsedPacket, UserCookie, OnMessageReadyCallback,
 					   tcpReassembly);
 		}
 		// if packet isn't marked for de-fragmentation but the user asked to write all packets to output file
 		else
 		{
 			stats->totalPacketsWritten++;
+		}
+
+		if (!parsedPacket->ShouldNotDelete())
+		{
+			delete parsedPacket;
 		}
 	}
 

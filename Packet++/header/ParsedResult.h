@@ -10,49 +10,55 @@
 namespace pcpp
 {
 
-// ParsedResult is used to store results
-class ParsedResult
-{
-	bool m_tuplenameSet;
-	std::string m_tuplename;
-
-	int IpLayerCount;
-
-  public:
-	ParsedResult() : m_tuplenameSet(false), m_tuplename(""), IpLayerCount(0)
+	// ParsedResult is used to store results
+	class ParsedResult
 	{
-	}
+		bool m_tuplenameSet;
+		std::string m_tuplename;
 
-	void SetTuplename(std::string s)
-	{
-		if (m_tuplenameSet)
+		int IpLayerCount;
+		bool shouldNotDelete;
+
+	public:
+		ParsedResult() : m_tuplenameSet(false), m_tuplename(""), IpLayerCount(0), shouldNotDelete(false)
 		{
+		}
+
+		void SetTuplename(std::string s)
+		{
+			if (m_tuplenameSet)
+			{
+				return;
+			}
+			m_tuplename = s;
+			m_tuplenameSet = true;
 			return;
 		}
-		m_tuplename = s;
-		m_tuplenameSet = true;
-		return;
-	}
-	std::string GetTuplename()
-	{
-		return m_tuplename;
-	}
+		std::string GetTuplename()
+		{
+			return m_tuplename;
+		}
 
-	void CountIP()
-	{
-		IpLayerCount++;
-	}
+		void CountIP()
+		{
+			IpLayerCount++;
+		}
 
-	void DecreaseIP()
-	{
-		IpLayerCount--;
-	}
+		void DecreaseIP()
+		{
+			IpLayerCount--;
+		}
 
-	int getIPLayerCount()
-	{
-		return IpLayerCount;
-	}
-};
+		int getIPLayerCount()
+		{
+			return IpLayerCount;
+		}
+
+		bool ShouldNotDelete()
+		{
+			return shouldNotDelete;
+		}
+	};
 
 } // namespace pcpp
 
