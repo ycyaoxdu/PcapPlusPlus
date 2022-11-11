@@ -47,8 +47,8 @@
 #define DEFAULT_MAX_PACKETS_TO_STORE 500000
 
 // queue to cache ip packets
-std::queue<pcpp::RawPacket> q;
-std::queue<pcpp::RawPacket> *quePointer = &q;
+std::queue<pcpp::Packet> q;
+std::queue<pcpp::Packet> *quePointer = &q;
 
 static struct option DefragUtilOptions[] = {{"output-file", required_argument, 0, 'o'},
 											{"max-packet-number", required_argument, 0, 'p'},

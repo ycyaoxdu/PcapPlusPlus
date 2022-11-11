@@ -46,7 +46,7 @@ struct DefragStats
 typedef void (*OnMessageHandled)(std::string *data, std::string tuplename, void *userCookie);
 
 void Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr,
-				std::queue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie,
+				std::queue<pcpp::Packet> *quePointer, Packet *parsedPacket, void *UserCookie,
 				OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly);
 
 void HandleOspfPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
@@ -56,25 +56,25 @@ void HandleEspPayload(Layer *layer, std::string tuplename, Packet *packet, void 
 					  OnMessageHandled OnMessageReadyCallback);
 
 void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-					   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleRipPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback);
 
 void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleBgpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 					  OnMessageHandled OnMessageReadyCallback);
@@ -86,12 +86,12 @@ void HandleHttpPayload(Layer *layer, std::string tuplename, Packet *packet, void
 					   OnMessageHandled OnMessageReadyCallback);
 
 void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer);
+					  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer);
 
 void HandleGenericPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
 						  OnMessageHandled OnMessageReadyCallback);
 
-bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::RawPacket> *quePointer);
+bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::Packet> *quePointer);
 
 ReassemblyStatus ReassemblePayload(PayloadLayer *payloadlayer, std::string tuple, void *cookie,
 								   OnMessageHandled OnMessageHandledCallback);

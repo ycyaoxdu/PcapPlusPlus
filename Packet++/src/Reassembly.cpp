@@ -45,7 +45,7 @@ namespace pcpp
 
 	// add the object of tcpReassembly
 	void Reassemble(IPReassembly *ipReassembly, IPReassembly::ReassemblyStatus *statusPtr,
-					std::queue<pcpp::RawPacket> *quePointer, Packet *parsedPacket, void *UserCookie,
+					std::queue<pcpp::Packet> *quePointer, Packet *parsedPacket, void *UserCookie,
 					OnMessageHandled OnMessageReadyCallback, TcpReassembly &tcpReassembly)
 	{
 		PCPP_LOG_DEBUG("stage reassemble: start packet reassemble and analysis");
@@ -273,7 +273,7 @@ namespace pcpp
 	}
 
 	void HandleGrePayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		PCPP_LOG_DEBUG("HandleGrePayload: tuplename: " << tuplename);
 
@@ -326,7 +326,7 @@ namespace pcpp
 	}
 
 	void HandleUdpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		if (layer == NULL || packet == NULL)
 		{
@@ -380,7 +380,7 @@ namespace pcpp
 	}
 
 	void HandleTcpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		if (layer == NULL || packet == NULL)
 		{
@@ -440,7 +440,7 @@ namespace pcpp
 	}
 
 	void HandleSctpPayload(Layer *layer, IPAddress IpSrc, IPAddress IpDst, Packet *packet, void *cookie,
-						   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		if (layer == NULL || packet == NULL)
 		{
@@ -515,7 +515,7 @@ namespace pcpp
 	}
 
 	void HandleGtpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		PCPP_LOG_DEBUG("HandleGtpPayload: tuplename: " << tuplename);
 
@@ -545,7 +545,7 @@ namespace pcpp
 	}
 
 	void HandlePppPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						  OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		PCPP_LOG_DEBUG("HandlePppPayload: tuplename: " << tuplename);
 
@@ -578,7 +578,7 @@ namespace pcpp
 	}
 
 	void HandleL2tpPayload(Layer *layer, std::string tuplename, Packet *packet, void *cookie,
-						   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::RawPacket> *quePointer)
+						   OnMessageHandled OnMessageReadyCallback, std::queue<pcpp::Packet> *quePointer)
 	{
 		PCPP_LOG_DEBUG("HandleL2tpPayload: tuplename: " << tuplename);
 
@@ -700,7 +700,7 @@ namespace pcpp
 		delete payload;
 	}
 
-	bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::RawPacket> *quePointer)
+	bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::Packet> *quePointer)
 	{
 		PCPP_LOG_DEBUG("HandleIPPacket: tuplename: " << tuple);
 
@@ -716,7 +716,9 @@ namespace pcpp
 			return false;
 		}
 
-		quePointer->push(*packet->getRawPacket());
+		packet->SetNotDelete();
+
+		quePointer->push(*packet);
 		return true;
 	}
 
@@ -754,6 +756,7 @@ namespace pcpp
 			{
 				if (layer->packet()->getIPLayerCount() < 1)
 				{
+					layer->packet()->SetDelete();
 					break;
 				}
 				layer->packet()->DecreaseIP();
@@ -802,6 +805,7 @@ namespace pcpp
 			{
 				if (layer->packet()->getIPLayerCount() < 1)
 				{
+					layer->packet()->SetDelete();
 					break;
 				}
 				layer->packet()->DecreaseIP();

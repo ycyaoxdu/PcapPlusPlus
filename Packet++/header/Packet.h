@@ -3,6 +3,7 @@
 
 #include "Layer.h"
 #include "RawPacket.h"
+#include "ParsedResult.h"
 #include <vector>
 
 /// @file
@@ -24,7 +25,7 @@ namespace pcpp
 	 * this: EthLayer -> IPv4Layer -> TcpLayer -> HttpRequestLayer <BR> Packet instance isn't read only. The user can add or
 	 * remove layers, update current layer, etc.
 	 */
-	class Packet
+	class Packet : public ParsedResult
 	{
 		friend class Layer;
 
@@ -362,15 +363,6 @@ namespace pcpp
 		 * false
 		 */
 		void toStringList(std::vector<std::string> &result, bool timeAsLocalTime = true) const;
-
-		bool isRawPakcetValid();
-
-		void SetTuplename(std::string s);
-		std::string GetTuplename();
-		void CountIP();
-		void DecreaseIP();
-		int getIPLayerCount();
-		bool ShouldNotDelete();
 
 	private:
 		void copyDataFrom(const Packet &other);

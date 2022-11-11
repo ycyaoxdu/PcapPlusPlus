@@ -30,7 +30,7 @@ namespace pcpp
 		return out;
 	}
 
-	TcpReassembly::TcpReassembly(std::queue<pcpp::RawPacket> q, OnTcpMessageReady onMessageReadyCallback, void *userCookie,
+	TcpReassembly::TcpReassembly(std::queue<pcpp::Packet> q, OnTcpMessageReady onMessageReadyCallback, void *userCookie,
 								 OnTcpConnectionStart onConnectionStartCallback, OnTcpConnectionEnd onConnectionEndCallback,
 								 const TcpReassemblyConfiguration &config)
 	{
@@ -426,11 +426,12 @@ namespace pcpp
 			}
 
 			// create a new TcpFragment, copy the TCP data to it and add this packet to the the out-of-order packet list
+			nextLayer->packet()->SetNotDelete();
 			TcpFragment *newTcpFrag = new TcpFragment();
 			newTcpFrag->mm_IpSrc = *IpSrc;
 			newTcpFrag->mm_IpDst = *IpDst;
 			newTcpFrag->mm_NextLayer = nextLayer;
-			newTcpFrag->mm_Packet = *tcpData;
+			// newTcpFrag->mm_Packet = *tcpData;
 
 			newTcpFrag->data = new uint8_t[tcpPayloadSize];
 			newTcpFrag->dataLength = tcpPayloadSize;
@@ -538,7 +539,7 @@ namespace pcpp
 														 tcpReassemblyData->connData, curTcpFrag->timestamp);
 
 								m_OnMessageReadyCallback(
-									sideIndex, streamData, m_UserCookie, &curTcpFrag->mm_Packet,
+									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_NextLayer->packet(),
 									curTcpFrag->mm_NextLayer, &curTcpFrag->mm_IpSrc,
 									&curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
 							}
@@ -580,7 +581,7 @@ namespace pcpp
 														 0, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
 								m_OnMessageReadyCallback(
-									sideIndex, streamData, m_UserCookie, &curTcpFrag->mm_Packet,
+									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_NextLayer->packet(),
 									curTcpFrag->mm_NextLayer, &curTcpFrag->mm_IpSrc,
 									&curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
 							}
@@ -679,7 +680,7 @@ namespace pcpp
 						TcpStreamData streamData(&dataWithMissingDataText[0], dataWithMissingDataText.size(),
 												 missingDataLen, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-						m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, &curTcpFrag->mm_Packet,
+						m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, curTcpFrag->mm_NextLayer->packet(),
 												 curTcpFrag->mm_NextLayer, &curTcpFrag->mm_IpSrc,
 												 &curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
 

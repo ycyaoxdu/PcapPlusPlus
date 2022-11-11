@@ -386,7 +386,7 @@ static void OnMessageReadyCallback(std::string *data, std::string tuplename, voi
 static void tcpReassemblyMsgReadyCallback(int8_t sideIndex, const pcpp::TcpStreamData &tcpData, void *userCookie,
 										  pcpp::Packet *tcpPacket, pcpp::Layer *nextLayer, pcpp::IPAddress *IpSrc,
 										  pcpp::IPAddress *IpDst, void *UserCookie,
-										  std::queue<pcpp::RawPacket> *quePointer)
+										  std::queue<pcpp::Packet> *quePointer)
 {
 	// extract the connection manager from the user cookie
 	TcpReassemblyConnMgr *connMgr = (TcpReassemblyConnMgr *)userCookie;
@@ -465,7 +465,7 @@ static void tcpReassemblyConnectionEndCallback(const pcpp::ConnectionData &conne
 
 void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, bool filterByBpf, std::string bpfFilter,
 					bool filterByIpID, std::map<uint32_t, bool> fragIDs, pcpp::DefragStats *stats, void *UserCookie,
-					pcpp::TcpReassembly &tcpReassembly, std::queue<pcpp::RawPacket> *quePointer)
+					pcpp::TcpReassembly &tcpReassembly, std::queue<pcpp::Packet> *quePointer)
 {
 	PCPP_LOG_DEBUG("ip packet process started");
 
@@ -479,10 +479,12 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 	while (!quePointer->empty() || reader->getNextPacket(rawPacket))
 	{
 		PCPP_LOG_DEBUG("read a ip packet from queue");
+		pcpp::Packet *parsedPacket;
 
 		if (!quePointer->empty())
 		{
-			rawPacket = quePointer->front();
+			pcpp::Packet tempPacket = quePointer->front();
+			parsedPacket = &tempPacket;
 			quePointer->pop();
 		}
 
@@ -505,7 +507,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		}
 
 		// check if packet is of type IPv4 or IPv6
-		pcpp::Packet *parsedPacket = new pcpp::Packet(&rawPacket);
+		parsedPacket = new pcpp::Packet(&rawPacket);
 		if (parsedPacket->isPacketOfType(pcpp::IPv4))
 		{
 			stats->ipv4Packets++;

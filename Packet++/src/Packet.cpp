@@ -31,6 +31,7 @@ namespace pcpp
 		uint8_t *data = new uint8_t[maxPacketLen];
 		memset(data, 0, maxPacketLen);
 		m_RawPacket = new RawPacket(data, 0, time, true, LINKTYPE_ETHERNET);
+		ParsedResult();
 	}
 
 	Packet::Packet(uint8_t *buffer, size_t bufferSize)
@@ -41,77 +42,7 @@ namespace pcpp
 		gettimeofday(&time, NULL);
 		memset(buffer, 0, bufferSize);
 		m_RawPacket = new RawPacket(buffer, 0, time, false, LINKTYPE_ETHERNET);
-	}
-
-	bool Packet::isRawPakcetValid()
-	{
-		if (m_RawPacket == NULL)
-		{
-			PCPP_LOG_DEBUG("Packet: m_RawPacket not set!");
-			return false;
-		}
-		else
-			return true;
-	}
-	void Packet::SetTuplename(std::string s)
-	{
-		if (isRawPakcetValid())
-			m_RawPacket->SetTuplename(s);
-		else
-		{
-			PCPP_LOG_DEBUG("Packet: SetTuplename failed");
-			return;
-		}
-	}
-	std::string Packet::GetTuplename()
-	{
-		if (isRawPakcetValid())
-			return m_RawPacket->GetTuplename();
-		else
-		{
-			PCPP_LOG_DEBUG("Packet: GetTuplename failed");
-			return "";
-		}
-	}
-	void Packet::CountIP()
-	{
-		if (isRawPakcetValid())
-			m_RawPacket->CountIP();
-		else
-		{
-			PCPP_LOG_DEBUG("Packet: CountIP failed");
-			return;
-		}
-	}
-	void Packet::DecreaseIP()
-	{
-		if (isRawPakcetValid())
-			m_RawPacket->DecreaseIP();
-		else
-		{
-			PCPP_LOG_DEBUG("Packet: CountIP failed");
-			return;
-		}
-	}
-	int Packet::getIPLayerCount()
-	{
-		if (isRawPakcetValid())
-			return m_RawPacket->getIPLayerCount();
-		else
-		{
-			PCPP_LOG_DEBUG("Packet: getIPLayerCount failed");
-			return -1;
-		}
-	}
-	bool Packet::ShouldNotDelete()
-	{
-		if (isRawPakcetValid())
-			return m_RawPacket->ShouldNotDelete();
-		else
-		{
-			PCPP_LOG_DEBUG("Packet: getIPLayerCount failed");
-			return false;
-		}
+		ParsedResult();
 	}
 
 	void Packet::setRawPacket(RawPacket *rawPacket, bool freeRawPacket, ProtocolType parseUntil,

@@ -24,7 +24,6 @@ RawPacket::RawPacket(const uint8_t *pRawData, int rawDataLen, timeval timestamp,
 	TIMEVAL_TO_TIMESPEC(&timestamp, &nsec_time);
 	init(deleteRawDataAtDestructor);
 	setRawData(pRawData, rawDataLen, nsec_time, layerType);
-	ParsedResult();
 }
 
 RawPacket::RawPacket(const uint8_t *pRawData, int rawDataLen, timespec timestamp, bool deleteRawDataAtDestructor,
@@ -32,7 +31,6 @@ RawPacket::RawPacket(const uint8_t *pRawData, int rawDataLen, timespec timestamp
 {
 	init(deleteRawDataAtDestructor);
 	setRawData(pRawData, rawDataLen, timestamp, layerType);
-	ParsedResult();
 }
 
 RawPacket::RawPacket()

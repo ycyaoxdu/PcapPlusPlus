@@ -290,7 +290,7 @@ struct TcpReassemblyConfiguration
 class TcpReassembly
 {
   public:
-	std::queue<pcpp::RawPacket> *m_quePointer;
+	std::queue<pcpp::Packet> *m_quePointer;
 
 	/**
 	 * An enum for connection end reasons
@@ -391,7 +391,7 @@ class TcpReassembly
 	 */
 	typedef void (*OnTcpMessageReady)(int8_t side, const TcpStreamData &tcpData, void *userCookie, Packet *tcpPacket,
 									  Layer *nextlayer, IPAddress *IpSrc, IPAddress *IpDst, void *cookie,
-									  std::queue<pcpp::RawPacket> *quePointer);
+									  std::queue<pcpp::Packet> *quePointer);
 
 	/**
 	 * @typedef OnTcpConnectionStart
@@ -425,11 +425,11 @@ class TcpReassembly
 	 * @param[in] config Optional parameter for defining special configuration parameters. If not set the default
 	 * parameters will be set
 	 */
-	TcpReassembly(std::queue<pcpp::RawPacket> q, OnTcpMessageReady onMessageReadyCallback, void *userCookie = NULL,
+	TcpReassembly(std::queue<pcpp::Packet> q, OnTcpMessageReady onMessageReadyCallback, void *userCookie = NULL,
 				  OnTcpConnectionStart onConnectionStartCallback = NULL,
 				  OnTcpConnectionEnd onConnectionEndCallback = NULL,
 				  const TcpReassemblyConfiguration &config = TcpReassemblyConfiguration());
-	// TcpReassembly(std::queue<pcpp::RawPacket> q ,OnTcpMessageReady onMessageReadyCallback, void
+	// TcpReassembly(std::queue<pcpp::Packet> q ,OnTcpMessageReady onMessageReadyCallback, void
 	// *userCookie,OnTcpConnectionStart onConnectionStartCallback, OnTcpConnectionEnd onConnectionEndCallback,const
 	// TcpReassemblyConfiguration &config);
 

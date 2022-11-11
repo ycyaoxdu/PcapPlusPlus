@@ -58,6 +58,12 @@ namespace pcpp
 		{
 			return shouldNotDelete;
 		}
+		void SetNotDelete(){
+			shouldNotDelete=true;
+		}
+		void SetDelete(){
+			shouldNotDelete=false;
+		}
 	};
 
 } // namespace pcpp
