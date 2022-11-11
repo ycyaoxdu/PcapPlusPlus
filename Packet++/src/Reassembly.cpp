@@ -112,7 +112,6 @@ namespace pcpp
 				pcpp::IPv4Layer *ipv4Layer = getv4(result);
 				IpSrc = ipv4Layer->getSrcIPAddress();
 				IpDst = ipv4Layer->getDstIPAddress();
-				ipv4Layer->parseNextLayer();
 				ipLayer = ipv4Layer;
 			}
 			else if (isIPv6Packet)
@@ -120,7 +119,6 @@ namespace pcpp
 				pcpp::IPv6Layer *ipv6Layer = getv6(result);
 				IpSrc = ipv6Layer->getSrcIPAddress();
 				IpDst = ipv6Layer->getDstIPAddress();
-				ipv6Layer->parseNextLayer();
 				ipLayer = ipv6Layer;
 			}
 
@@ -152,7 +150,6 @@ namespace pcpp
 
 				// AuthenticationHeaderLayer ahlayer(nextLayer->getData(), nextLayer->getDataLen(), ipLayer, result);
 				AuthenticationHeaderLayer *ahlayer = static_cast<AuthenticationHeaderLayer *>(nextLayer);
-				ahlayer->parseNextLayer();
 				nextLayer = ahlayer->getNextLayer();
 
 				// esp handle
@@ -264,7 +261,6 @@ namespace pcpp
 		}
 
 		ESPLayer *esp = static_cast<ESPLayer *>(layer);
-		esp->parseNextLayer();
 		Layer *nextLayer = esp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -292,13 +288,11 @@ namespace pcpp
 		if (layer->getProtocol() == GREv0)
 		{
 			GREv0Layer *grev0 = static_cast<GREv0Layer *>(layer);
-			grev0->parseNextLayer();
 			nextLayer = grev0->getNextLayer();
 		}
 		else if (layer->getProtocol() == GREv1)
 		{
 			GREv1Layer *grev1 = static_cast<GREv1Layer *>(layer);
-			grev1->parseNextLayer();
 			nextLayer = grev1->getNextLayer();
 		}
 		else
@@ -349,7 +343,6 @@ namespace pcpp
 		std::string TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 		// next layer
-		udp->parseNextLayer();
 		Layer *nextLayer = udp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -404,7 +397,6 @@ namespace pcpp
 		std::string TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 		// next layer
-		tcp->parseNextLayer();
 		Layer *nextLayer = tcp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -464,7 +456,6 @@ namespace pcpp
 		std::string TupleName = getTupleName(IpSrc, IpDst, PortSrc, PortDst, protoname);
 
 		// next layer
-		sctp->parseNextLayer();
 		Layer *nextLayer = sctp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -536,7 +527,6 @@ namespace pcpp
 
 		GtpV1Layer *gtp = static_cast<GtpV1Layer *>(layer);
 
-		gtp->parseNextLayer();
 		Layer *nextLayer = gtp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -566,7 +556,6 @@ namespace pcpp
 		}
 
 		PPP_PPTPLayer *ppp = static_cast<PPP_PPTPLayer *>(layer);
-		ppp->parseNextLayer();
 		Layer *nextLayer = ppp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -601,7 +590,6 @@ namespace pcpp
 
 		L2tpLayer *l2tp = static_cast<L2tpLayer *>(layer);
 
-		l2tp->parseNextLayer();
 		Layer *nextLayer = l2tp->getNextLayer();
 		if (nextLayer == NULL)
 		{
@@ -628,7 +616,6 @@ namespace pcpp
 		//否则就退出
 		while (layer != NULL)
 		{
-			layer->parseNextLayer();
 			Layer *nextLayer = layer->getNextLayer();
 
 			if (nextLayer == NULL) //该数据包中不再有BGP消息
@@ -656,7 +643,6 @@ namespace pcpp
 		//否则就退出
 		while (layer != NULL)
 		{
-			layer->parseNextLayer();
 			Layer *nextLayer = layer->getNextLayer();
 
 			if (nextLayer == NULL) //该数据包中不再有SSL记录
@@ -711,6 +697,7 @@ namespace pcpp
 
 		PayloadLayer *payload = new PayloadLayer(layer->getData(), layer->getDataLen(), layer->getPrevLayer(), packet);
 		ReassemblePayload(payload, tuplename, cookie, OnMessageReadyCallback);
+		delete payload;
 	}
 
 	bool HandleIPPacket(Packet *packet, Layer *iplayer, std::string tuple, std::queue<pcpp::RawPacket> *quePointer)

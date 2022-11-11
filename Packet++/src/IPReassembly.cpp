@@ -34,7 +34,6 @@ Layer *findLayer(Packet *packet)
 			}
 			cnt--;
 		}
-		layer->parseNextLayer();
 		layer = layer->getNextLayer();
 	}
 	PCPP_LOG_DEBUG("findLayer: layer NOT found!");

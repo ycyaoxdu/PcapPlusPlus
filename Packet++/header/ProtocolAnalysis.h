@@ -505,7 +505,7 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		}
 
 		// check if packet is of type IPv4 or IPv6
-		pcpp::Packet parsedPacket(&rawPacket);
+		pcpp::Packet parsedPacket = new pcpp::Packet(&rawPacket);
 		if (parsedPacket.isPacketOfType(pcpp::IPv4))
 		{
 			stats->ipv4Packets++;
