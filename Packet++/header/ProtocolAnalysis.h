@@ -487,6 +487,10 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 			parsedPacket = &tempPacket;
 			quePointer->pop();
 		}
+		else
+		{
+			parsedPacket = new pcpp::Packet(&rawPacket);
+		}
 
 		bool defragPacket = true;
 
@@ -507,7 +511,6 @@ void processPackets(size_t maxPacketsToStore, pcpp::IFileReaderDevice *reader, b
 		}
 
 		// check if packet is of type IPv4 or IPv6
-		parsedPacket = new pcpp::Packet(&rawPacket);
 		if (parsedPacket->isPacketOfType(pcpp::IPv4))
 		{
 			stats->ipv4Packets++;
