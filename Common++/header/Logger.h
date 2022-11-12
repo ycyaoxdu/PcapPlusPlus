@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <stdio.h>
+#include <fstream>
 
 #ifndef LOG_MODULE
 #define LOG_MODULE UndefinedLogModule
@@ -232,12 +233,27 @@ class Logger
 		m_LogPrinter = printer;
 	}
 
+	void setOutputFile(std::string filename)
+	{
+		outfile.open(filename);
+	}
+
+	void closeOutputFile()
+	{
+		outfile.close();
+	}
+
 	/**
 	 * Set the log printer back to the default printer
 	 */
 	void resetLogPrinter()
 	{
 		m_LogPrinter = &defaultLogPrinter;
+	}
+
+	void setMyLogPrinter()
+	{
+		m_LogPrinter = &myLogPrinter;
 	}
 
 	/**
@@ -298,6 +314,8 @@ class Logger
 		return instance;
 	}
 
+
+
   private:
 	bool m_LogsEnabled;
 	Logger::LogLevel m_LogModulesArray[NumOfLogModules];
@@ -305,12 +323,40 @@ class Logger
 	std::string m_LastError;
 	std::ostringstream *m_LogStream;
 
+	// 以写模式打开文件
+	std::ofstream outfile;
+
 	// private c'tor - this class is a singleton
 	Logger();
 
 	static void defaultLogPrinter(LogLevel logLevel, const std::string &logMessage, const std::string &file,
 								  const std::string &method, const int line);
+
+	static void myLogPrinter(LogLevel logLevel, const std::string &logMessage, const std::string &file,
+								  const std::string &method, const int line)
+	{
+		std::ostringstream sstream;
+		sstream << file << ": " << method << ":" << line;
+		getInstance().outfile << std::left
+		<< "["
+		<< std::setw(5) << Logger::logLevelAsString(logLevel) << ": "
+		<< std::setw(45) << sstream.str()
+		<< "] "
+		<< logMessage << std::endl;
+	}
 };
+
+#define PCPP_LOG_INFO(message)                                                                                        \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		if (pcpp::Logger::getInstance().logsEnabled())       \
+		{                                                                                                              \
+			std::ostringstream *sstream = pcpp::Logger::getInstance().internalCreateLogStream();                       \
+			(*sstream) << message;                                                                                     \
+			pcpp::Logger::getInstance().internalPrintLogMessage(sstream, pcpp::Logger::Info, __FILE__, __FUNCTION__,  \
+																__LINE__);                                             \
+		}                                                                                                              \
+	} while (0)
 
 #define PCPP_LOG_DEBUG(message)                                                                                        \
 	do                                                                                                                 \
