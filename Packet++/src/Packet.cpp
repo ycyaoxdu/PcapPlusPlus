@@ -55,7 +55,7 @@ namespace pcpp
 		m_ProtocolTypes = UnknownProtocol;
 		m_MaxPacketLen = rawPacket->getRawDataLen();
 		m_FreeRawPacket = freeRawPacket;
-		m_RawPacket = rawPacket;
+		m_RawPacket = new pcpp::RawPacket(*rawPacket);
 		m_CanReallocateData = true;
 		if (m_RawPacket == NULL)
 			return;
@@ -111,10 +111,10 @@ namespace pcpp
 
 	Packet::Packet(RawPacket *rawPacket, bool freeRawPacket, ProtocolType parseUntil, OsiModelLayer parseUntilLayer)
 	{
-		m_FreeRawPacket = false;
+		m_FreeRawPacket = true;
 		m_RawPacket = NULL;
 		m_FirstLayer = NULL;
-		setRawPacket(rawPacket, freeRawPacket, parseUntil, parseUntilLayer);
+		setRawPacket(rawPacket, m_FreeRawPacket, parseUntil, parseUntilLayer);
 	}
 
 	Packet::Packet(RawPacket *rawPacket, ProtocolType parseUntil)
