@@ -274,7 +274,7 @@ struct TcpReassemblyConfiguration
 	 * side than the side seen before
 	 */
 	TcpReassemblyConfiguration(bool removeConnInfo = true, uint32_t closedConnectionDelay = 5,
-							   uint32_t maxNumToClean = 30, uint32_t maxOutOfOrderFragments = 0,
+							   uint32_t maxNumToClean = 30, uint32_t maxOutOfOrderFragments = 100000,
 							   bool enableBaseBufferClearCondition = true)
 		: removeConnInfo(removeConnInfo), closedConnectionDelay(closedConnectionDelay), maxNumToClean(maxNumToClean),
 		  maxOutOfOrderFragments(maxOutOfOrderFragments), enableBaseBufferClearCondition(enableBaseBufferClearCondition)
