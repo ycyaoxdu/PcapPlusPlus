@@ -426,12 +426,12 @@ namespace pcpp
 			}
 
 			// create a new TcpFragment, copy the TCP data to it and add this packet to the the out-of-order packet list
-			nextLayer->packet()->SetNotDelete();
+			//nextLayer->packet()->SetNotDelete();
 			TcpFragment *newTcpFrag = new TcpFragment();
-			newTcpFrag->mm_IpSrc = *IpSrc;
-			newTcpFrag->mm_IpDst = *IpDst;
-			newTcpFrag->mm_NextLayer = nextLayer;
-			// newTcpFrag->mm_Packet = *tcpData;
+			newTcpFrag->mm_IpSrc =new IPAddress(*IpSrc);
+			newTcpFrag->mm_IpDst = new IPAddress(*IpDst);
+			newTcpFrag->mm_LayerNumber = nextLayer->m_LayerNumber;
+			newTcpFrag->mm_Packet = new Packet(*tcpData);
 
 			newTcpFrag->data = new uint8_t[tcpPayloadSize];
 			newTcpFrag->dataLength = tcpPayloadSize;
@@ -538,13 +538,18 @@ namespace pcpp
 								TcpStreamData streamData(curTcpFrag->data, curTcpFrag->dataLength, 0,
 														 tcpReassemblyData->connData, curTcpFrag->timestamp);
 
+
+
 								m_OnMessageReadyCallback(
-									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_NextLayer->packet(),
-									curTcpFrag->mm_NextLayer, &curTcpFrag->mm_IpSrc,
-									&curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
+									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_Packet,
+									curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
+									curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
 							}
 						}
 
+						delete curTcpFrag->mm_Packet;
+						delete curTcpFrag->mm_IpSrc;
+						delete curTcpFrag->mm_IpDst;
 						// remove fragment from list
 						tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
 							tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.begin() + index);
@@ -581,9 +586,9 @@ namespace pcpp
 														 0, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
 								m_OnMessageReadyCallback(
-									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_NextLayer->packet(),
-									curTcpFrag->mm_NextLayer, &curTcpFrag->mm_IpSrc,
-									&curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
+									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_Packet,
+									curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
+									curTcpFrag->mm_IpDst,m_cookie, m_quePointer);
 							}
 
 							foundSomething = true;
@@ -594,6 +599,11 @@ namespace pcpp
 										   "ignoring it. Fragment size is "
 										   << curTcpFrag->dataLength << " on side " << sideIndex);
 						}
+
+
+						delete curTcpFrag->mm_Packet;
+						delete curTcpFrag->mm_IpSrc;
+						delete curTcpFrag->mm_IpDst;
 
 						// delete fragment from list
 						tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(
@@ -680,9 +690,9 @@ namespace pcpp
 						TcpStreamData streamData(&dataWithMissingDataText[0], dataWithMissingDataText.size(),
 												 missingDataLen, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-						m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, curTcpFrag->mm_NextLayer->packet(),
-												 curTcpFrag->mm_NextLayer, &curTcpFrag->mm_IpSrc,
-												 &curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
+						m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, curTcpFrag->mm_Packet,
+									curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
+									curTcpFrag->mm_IpDst,m_cookie, m_quePointer);
 
 						PCPP_LOG_DEBUG("Found missing data on side "
 									   << sideIndex << ": " << missingDataLen
@@ -691,6 +701,10 @@ namespace pcpp
 									   << missingDataTextStr.length());
 					}
 				}
+
+				delete curTcpFrag->mm_Packet;
+				delete curTcpFrag->mm_IpSrc;
+				delete curTcpFrag->mm_IpDst;
 
 				// remove fragment from list
 				tcpReassemblyData->twoSides[sideIndex].tcpFragmentList.erase(

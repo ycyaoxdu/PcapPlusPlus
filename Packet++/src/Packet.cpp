@@ -72,6 +72,8 @@ namespace pcpp
 			m_ProtocolTypes |= curLayer->getProtocol();
 			curLayer->parseNextLayer();
 			curLayer->m_IsAllocatedInPacket = true;
+			if(curLayer->m_PrevLayer!=NULL)
+				curLayer->m_LayerNumber=curLayer->m_PrevLayer->m_LayerNumber+1;
 			curLayer = curLayer->getNextLayer();
 			if (curLayer != NULL)
 				m_LastLayer = curLayer;

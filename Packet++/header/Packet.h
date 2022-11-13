@@ -178,6 +178,19 @@ namespace pcpp
 			return m_FirstLayer;
 		}
 
+		Layer *getNLayer(int number) const
+		{
+			Layer *first = m_FirstLayer;
+
+			for (int i = 0; i < number; i++)
+			{
+				first = first->getNextLayer();
+				if (first == NULL)
+					break;
+			}
+
+			return first;
+		}
 		/**
 		 * Get a pointer to the last (highest) layer in the packet
 		 * @return A pointer to the last (highest) layer in the packet

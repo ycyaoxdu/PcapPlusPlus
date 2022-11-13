@@ -507,10 +507,10 @@ class TcpReassembly
   private:
 	struct TcpFragment
 	{
-		IPAddress mm_IpSrc;
-		IPAddress mm_IpDst;
-		Layer *mm_NextLayer;
-		Packet mm_Packet;
+		IPAddress *mm_IpSrc;
+		IPAddress *mm_IpDst;
+		int mm_LayerNumber;
+		Packet *mm_Packet;
 
 		uint32_t sequence;
 		size_t dataLength;
