@@ -426,9 +426,9 @@ namespace pcpp
 			}
 
 			// create a new TcpFragment, copy the TCP data to it and add this packet to the the out-of-order packet list
-			//nextLayer->packet()->SetNotDelete();
+			// nextLayer->packet()->SetNotDelete();
 			TcpFragment *newTcpFrag = new TcpFragment();
-			newTcpFrag->mm_IpSrc =new IPAddress(*IpSrc);
+			newTcpFrag->mm_IpSrc = new IPAddress(*IpSrc);
 			newTcpFrag->mm_IpDst = new IPAddress(*IpDst);
 			newTcpFrag->mm_LayerNumber = nextLayer->m_LayerNumber;
 			newTcpFrag->mm_Packet = new Packet(*tcpData);
@@ -538,8 +538,6 @@ namespace pcpp
 								TcpStreamData streamData(curTcpFrag->data, curTcpFrag->dataLength, 0,
 														 tcpReassemblyData->connData, curTcpFrag->timestamp);
 
-
-
 								m_OnMessageReadyCallback(
 									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_Packet,
 									curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
@@ -588,7 +586,7 @@ namespace pcpp
 								m_OnMessageReadyCallback(
 									sideIndex, streamData, m_UserCookie, curTcpFrag->mm_Packet,
 									curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
-									curTcpFrag->mm_IpDst,m_cookie, m_quePointer);
+									curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
 							}
 
 							foundSomething = true;
@@ -599,7 +597,6 @@ namespace pcpp
 										   "ignoring it. Fragment size is "
 										   << curTcpFrag->dataLength << " on side " << sideIndex);
 						}
-
 
 						delete curTcpFrag->mm_Packet;
 						delete curTcpFrag->mm_IpSrc;
@@ -691,8 +688,8 @@ namespace pcpp
 												 missingDataLen, tcpReassemblyData->connData, curTcpFrag->timestamp);
 
 						m_OnMessageReadyCallback(sideIndex, streamData, m_UserCookie, curTcpFrag->mm_Packet,
-									curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
-									curTcpFrag->mm_IpDst,m_cookie, m_quePointer);
+												 curTcpFrag->mm_Packet->getNLayer(curTcpFrag->mm_LayerNumber), curTcpFrag->mm_IpSrc,
+												 curTcpFrag->mm_IpDst, m_cookie, m_quePointer);
 
 						PCPP_LOG_DEBUG("Found missing data on side "
 									   << sideIndex << ": " << missingDataLen
@@ -840,4 +837,33 @@ namespace pcpp
 		return count;
 	}
 
+	void TcpReassembly::PrintConnectionList()
+	{
+		std::cout << "ConnectionList:" << std::endl;
+		for (auto iter = m_ConnectionList.begin(); iter != m_ConnectionList.end(); iter++)
+		{
+			std::cout << "tuple information: " << iter->second.connData.srcIP << ":" << iter->second.connData.srcPort << "->" << iter->second.connData.dstIP << ":" << iter->second.connData.dstPort << std::endl;
+
+			std::cout << "first side: " << std::endl;
+			int index = 0;
+			while (index < (int)iter->second.twoSides[0].tcpFragmentList.size())
+			{
+				TcpFragment *curTcpFrag = iter->second.twoSides[0].tcpFragmentList.at(index);
+				std::cout << "\tsequence number: " << curTcpFrag->sequence << std::endl;
+				index++;
+			}
+
+			std::cout << "second side: " << std::endl;
+			index = 0;
+			while (index < (int)iter->second.twoSides[0].tcpFragmentList.size())
+			{
+				TcpFragment *curTcpFrag = iter->second.twoSides[0].tcpFragmentList.at(index);
+				std::cout << "\tsequence number: " << curTcpFrag->sequence << std::endl;
+				index++;
+			}
+			std::cout << std::endl;
+		}
+		std::cout << "ConnectionList Printed." << std::endl;
+		return;
+	}
 } // namespace pcpp

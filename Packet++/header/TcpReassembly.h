@@ -291,7 +291,7 @@ class TcpReassembly
 {
   public:
 	std::queue<pcpp::Packet> *m_quePointer;
-
+void PrintConnectionList();
 	/**
 	 * An enum for connection end reasons
 	 */
