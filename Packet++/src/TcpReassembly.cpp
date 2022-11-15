@@ -845,22 +845,22 @@ namespace pcpp
 			std::cout << "tuple information: " << iter->second.connData.srcIP << ":" << iter->second.connData.srcPort << "->" << iter->second.connData.dstIP << ":" << iter->second.connData.dstPort << std::endl;
 
 			std::cout << "first side: " << std::endl;
-			int index = 0;
-			while (index < (int)iter->second.twoSides[0].tcpFragmentList.size())
-			{
-				TcpFragment *curTcpFrag = iter->second.twoSides[0].tcpFragmentList.at(index);
-				std::cout << "\tsequence number: " << curTcpFrag->sequence << std::endl;
-				index++;
-			}
+			//int index = 0;
+			//while (index < (int)iter->second.twoSides[0].tcpFragmentList.size())
+			//{
+			//	TcpFragment *curTcpFrag = iter->second.twoSides[0].tcpFragmentList.at(index);
+				std::cout << "\tsequence number: " << iter->second.twoSides[0].sequence << std::endl;
+			//	index++;
+			//}
 
 			std::cout << "second side: " << std::endl;
-			index = 0;
-			while (index < (int)iter->second.twoSides[0].tcpFragmentList.size())
-			{
-				TcpFragment *curTcpFrag = iter->second.twoSides[0].tcpFragmentList.at(index);
-				std::cout << "\tsequence number: " << curTcpFrag->sequence << std::endl;
-				index++;
-			}
+			//index = 0;
+			//while (index < (int)iter->second.twoSides[0].tcpFragmentList.size())
+			//{
+			//	TcpFragment *curTcpFrag = iter->second.twoSides[0].tcpFragmentList.at(index);
+				std::cout << "\tsequence number: " << iter->second.twoSides[0].sequence << std::endl;
+			//	index++;
+			//}
 			std::cout << std::endl;
 		}
 		std::cout << "ConnectionList Printed." << std::endl;
