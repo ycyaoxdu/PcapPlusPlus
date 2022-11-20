@@ -109,7 +109,7 @@ bool DpdkDeviceList::initDpdk(CoreMask coreMask, uint32_t mBufPoolSizePerDevice,
 	dpdkParamsStream << "--master-lcore ";
 	dpdkParamsStream << (int)masterCore << " ";
 
-	uint32_t i = 0;
+	uint32_t i = 1;
 	while (i < initDpdkArgc && initDpdkArgv[i] != NULL)
 	{
 		dpdkParamsStream << initDpdkArgv[i] << " ";
